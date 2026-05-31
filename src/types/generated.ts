@@ -59,9 +59,9 @@ export type SourceProject = {
 	name: string,
 	rootPath: string,
 	isGitRepo: boolean,
-	/**  ISO-8601 timestamp of when this project was first detected. */
+	/**  Timestamp (Unix epoch milliseconds, as a string) of when this project was scanned. */
 	detectedAt: string,
-	/**  ISO-8601 timestamp of the most recent update check, if any. */
+	/**  Timestamp (Unix epoch milliseconds, as a string) of the most recent update check, if any. */
 	lastCheckedAt: string | null,
 	skills: Skill[],
 };

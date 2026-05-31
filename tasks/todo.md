@@ -18,7 +18,7 @@
 - [ ] 人工复核（check:all 编排器在 T17 落地）
 
 ## Phase 1：扫描 → 展示
-- [ ] **T7** Rust scanner + parser + 三分类 + `scan_project` 命令 + 单测 — 依赖：T4 — M
+- [x] **T7** Rust scanner + parser + 三分类 + `scan_project` 命令 + 单测（14 headless 测试；逻辑放 tauri-free `agentmix-core` crate 以便 cargo test 不被 wry 崩溃；1000 文件 <5s 基准留到 T17 perf 核验）— 依赖：T4 — M
 - [ ] **T8** 前端扫描接线（SourcePanel、按钮+拖拽等价、筛选、invalid 隐藏）— 依赖：T6, T7 — M
 
 ### Checkpoint B（T7–T8）
