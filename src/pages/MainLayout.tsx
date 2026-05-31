@@ -188,7 +188,17 @@ export default function MainLayout() {
     keepOne,
     refreshConflicts,
   } = useCompositionStore();
-  const { exportTargets, toggleTarget } = useExportStore();
+  const {
+    targetPath,
+    plan,
+    building,
+    buildError,
+    overwriteConfirmed,
+    setTargetPath,
+    buildPlan,
+    setOverwriteConfirmed,
+    resetPlan,
+  } = useExportStore();
   const {
     view,
     selectedSkill,
@@ -213,7 +223,23 @@ export default function MainLayout() {
   const handleAddToCombo = addToCombo;
   const handleRemoveComboItem = removeItem;
   const handleMoveComboItem = moveItem;
-  const handleToggleExportTarget = toggleTarget;
+
+  // Export target selection + Dry-run preview. Execute (writing files) lands in
+  // T13; onExport is wired then.
+  const handlePickTarget = async () => {
+    const dir = await pickDirectory();
+    if (dir) setTargetPath(dir);
+  };
+
+  const handleBuildPlan = () => {
+    const items = comboItems.map((c) => ({
+      assetId: c.skill.id,
+      sourceDir: c.skill.skillDirPath,
+      exportedName: c.exportedName,
+      sourceRef: `${c.skill.sourceProjectId}:${c.skill.relativePathInProject}`,
+    }));
+    void buildPlan(items);
+  };
 
   // Folder-selection entry: pick a directory, then scan it. The drag-drop entry
   // below is equivalent (both call scanAndAdd); adding the first project flips
@@ -266,10 +292,11 @@ export default function MainLayout() {
   };
 
   // Whenever the selection changes, re-detect conflicts via the Rust composer
-  // (the authoritative single source). Conflicts block export until resolved.
+  // (the authoritative single source) and drop any now-stale Dry-run preview.
   useEffect(() => {
     void refreshConflicts();
-  }, [comboItems, refreshConflicts]);
+    resetPlan();
+  }, [comboItems, refreshConflicts, resetPlan]);
 
   const isWelcome = projects.length === 0;
   const effectiveView = isWelcome ? 'welcome' : view;
@@ -403,12 +430,16 @@ export default function MainLayout() {
                 />
                 <div className="flex-1" style={{ minHeight: 0 }}>
                   <ExportPanel
-                    exportTargets={exportTargets}
                     comboItems={comboItems}
-                    conflicts={conflicts}
-                    onToggleTarget={handleToggleExportTarget}
+                    plan={plan}
+                    targetPath={targetPath}
+                    building={building}
+                    buildError={buildError}
+                    overwriteConfirmed={overwriteConfirmed}
+                    onPickTarget={handlePickTarget}
+                    onBuildPlan={handleBuildPlan}
+                    onToggleOverwrite={setOverwriteConfirmed}
                     onExport={() => {}}
-                    onEditPath={() => {}}
                     simpleMode={simpleMode}
                   />
                 </div>

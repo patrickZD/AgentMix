@@ -18,12 +18,19 @@ export type {
   HealthLevel,
   HealthIssue,
   ConflictCandidate,
+  ConflictKind,
   ExportConflict,
+  ExportPlan,
+  ExportRequestItem,
+  FileOperation,
+  FileOperationKind,
+  BackupPlan,
+  ManagedManifest,
+  ManagedAsset,
 } from './generated';
 
 import type { Skill, SourceProject } from './generated';
 
-export type ExportTool = 'claude-code' | 'cursor' | 'codex-cli' | 'opencode';
 export type AppView = 'welcome' | 'main' | 'merge-workbench' | 'health-check';
 
 export interface ComboItem {
@@ -34,16 +41,6 @@ export interface ComboItem {
   // changed by conflict resolution (rename). Conflicts are detected from these
   // by the Rust composer, not flagged per-item here.
   exportedName: string;
-}
-
-export interface ExportTarget {
-  id: string;
-  tool: ExportTool;
-  label: string;
-  path: string;
-  enabled: boolean;
-  level: 'project' | 'global';
-  detected: boolean;
 }
 
 export interface MergeBlock {

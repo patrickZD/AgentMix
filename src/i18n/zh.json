@@ -63,13 +63,22 @@
   "exportPanel": {
     "titleSimple": "导出到",
     "titleFull": "导出目标",
-    "noTargets": "尚未配置导出目标。",
-    "exporting": "导出中…",
+    "deferred": "v0.2",
+    "selectTarget": "选择目标项目…",
+    "preview": "生成预览 (Dry-run)",
+    "previewing": "正在生成预览…",
+    "buildFailed": "生成预览失败：{{error}}",
+    "createCount": "新建 {{count}}",
+    "overwriteCount": "覆盖 {{count}}",
+    "affectedSkills": "{{count}} 个 Skill",
+    "backupAt": "备份 → {{path}}（{{size}}）",
+    "nameCollisionWarn": "请先在组合清单解决 {{count}} 个名称冲突",
+    "confirmOverwrite": "确认覆盖目标中 {{count}} 个同名 Skill",
     "export": "导出",
     "exportWithCount": "导出 {{count}} 个 Skill",
     "emptyComboSimple": "请先把 Skill 加入组合",
     "emptyComboFull": "组合清单为空。",
-    "resolveConflicts_other": "导出前请先解决 {{count}} 个名称冲突"
+    "noTarget": "请先选择目标项目"
   },
   "healthPanel": {
     "titleSimple": "Skill 健康",

@@ -1,226 +1,243 @@
-import { useState } from 'react';
 import {
   UploadIcon,
   CheckIcon,
   XIcon,
   FolderIcon,
-  ZapIcon,
+  AlertTriangleIcon,
+  FileEditIcon,
+  FilePlusIcon,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
-import Switch from '@/components/ui/Switch';
-import type { ExportTarget, ComboItem, ExportConflict } from '../types';
+import { exportGate } from '@/lib/exportGate';
+import type { ComboItem, ExportPlan } from '../types';
 
-const TOOL_META: Record<string, { label: string; level: string; color: string }> = {
-  'claude-code': { label: `Claude Code`, level: `project`, color: `#D97706` },
-  cursor: { label: `Cursor`, level: `project`, color: `#2563EB` },
-  'codex-cli': { label: `Codex CLI`, level: `global`, color: `#7C3AED` },
-  opencode: { label: `OpenCode`, level: `project`, color: `#059669` },
-};
+// v0.1 ships a single export target. The other tools are shown but deferred.
+const TARGET_TOOLS: ReadonlyArray<{ label: string; level: string; color: string; active: boolean }> = [
+  { label: 'Claude Code', level: 'project', color: '#D97706', active: true },
+  { label: 'Cursor', level: 'project', color: '#2563EB', active: false },
+  { label: 'Codex CLI', level: 'global', color: '#7C3AED', active: false },
+  { label: 'OpenCode', level: 'project', color: '#059669', active: false },
+];
 
 interface ExportPanelProps {
-  exportTargets?: ExportTarget[];
   comboItems?: ComboItem[];
-  conflicts?: ExportConflict[];
-  onToggleTarget?: (id: string, enabled: boolean) => void;
-  onExport?: (targetIds: string[]) => void;
-  onEditPath?: (id: string) => void;
+  plan?: ExportPlan | null;
+  targetPath?: string | null;
+  building?: boolean;
+  buildError?: string | null;
+  overwriteConfirmed?: boolean;
+  onPickTarget?: () => void;
+  onBuildPlan?: () => void;
+  onToggleOverwrite?: (confirmed: boolean) => void;
+  onExport?: () => void;
   simpleMode?: boolean;
 }
 
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
 export default function ExportPanel({
-  exportTargets = [],
   comboItems = [],
-  conflicts = [],
-  onToggleTarget = () => {},
+  plan = null,
+  targetPath = null,
+  building = false,
+  buildError = null,
+  overwriteConfirmed = false,
+  onPickTarget = () => {},
+  onBuildPlan = () => {},
+  onToggleOverwrite = () => {},
   onExport = () => {},
-  onEditPath = () => {},
   simpleMode = false,
 }: ExportPanelProps) {
   const { t } = useTranslation();
-  const [exporting, setExporting] = useState(false);
-  const [lastExported, setLastExported] = useState<string | null>(null);
 
-  const enabledTargets = exportTargets.filter((t) => t.enabled);
-  // Unresolved ExportConflicts block export until resolved (DESIGN.md §6.2).
-  const hasConflicts = conflicts.length > 0;
-  const canExport = comboItems.length > 0 && enabledTargets.length > 0 && !hasConflicts;
-
-  const handleExport = async () => {
-    if (!canExport) return;
-    setExporting(true);
-    // simulate async
-    await new Promise((r) => setTimeout(r, 900));
-    onExport(enabledTargets.map((t) => t.id));
-    setLastExported(new Date().toLocaleTimeString());
-    setExporting(false);
-  };
+  const canPreview = !!targetPath && comboItems.length > 0 && !building;
+  const gate = exportGate(plan, overwriteConfirmed);
+  const createCount = plan?.operations.filter((o) => o.kind === 'create').length ?? 0;
+  const overwriteCount = plan?.operations.filter((o) => o.kind === 'overwrite').length ?? 0;
+  const affectedSkills = plan ? new Set(plan.operations.map((o) => o.sourceAsset)).size : 0;
+  const relPath = (p: string) =>
+    plan && p.startsWith(`${plan.targetDir}/`) ? p.slice(plan.targetDir.length + 1) : p;
 
   return (
-    <div
-      data-cmp="ExportPanel"
-      className="flex flex-col bg-card"
-      style={{ minHeight: 0 }}
-    >
+    <div data-cmp="ExportPanel" className="flex flex-col bg-card" style={{ minHeight: 0 }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-3 border-b border-t border-border flex-shrink-0"
+        className="flex items-center px-3 border-b border-t border-border flex-shrink-0"
         style={{ height: 'var(--am-toolbar-h)', background: 'var(--am-panel-bg)' }}
       >
-        <div className="flex items-center gap-1.5">
-          <UploadIcon size={13} className="text-muted-foreground" />
-          <span className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
-            {t(simpleMode ? 'exportPanel.titleSimple' : 'exportPanel.titleFull')}
-          </span>
-          {enabledTargets.length > 0 && (
-            <span
-              className="rounded-full px-1.5"
-              style={{
-                background: 'var(--am-green-bg)',
-                color: 'var(--am-green)',
-                fontSize: '10px',
-                fontWeight: 600,
-              }}
-            >
-              {t('exportPanel.activeCount', { count: enabledTargets.length })}
-            </span>
-          )}
-        </div>
-
-        {/* Auto-detect */}
-        <Tooltip title={t('exportPanel.autoDetectTip')} placement="bottom">
-          <button
-            className="flex items-center gap-1 px-2 py-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            style={{ fontSize: '11px' }}
-          >
-            <ZapIcon size={11} />
-            {t('exportPanel.autoDetect')}
-          </button>
-        </Tooltip>
+        <UploadIcon size={13} className="text-muted-foreground" />
+        <span className="font-semibold text-foreground ml-1.5" style={{ fontSize: '12px' }}>
+          {t(simpleMode ? 'exportPanel.titleSimple' : 'exportPanel.titleFull')}
+        </span>
       </div>
 
-      {/* Target list */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin py-2 px-3 flex flex-col gap-2">
-        {exportTargets.length === 0 && (
-          <div className="py-4 text-center text-muted-foreground" style={{ fontSize: '11.5px' }}>
-            {t('exportPanel.noTargets')}
+      <div className="flex-1 overflow-y-auto scrollbar-thin py-2 px-3 flex flex-col gap-2" style={{ minHeight: 0 }}>
+        {/* Target tools — Claude Code active, others deferred */}
+        {TARGET_TOOLS.map((tool) => (
+          <div
+            key={tool.label}
+            className={`rounded-lg border p-2.5 ${
+              tool.active ? 'border-border bg-card' : 'border-border bg-muted opacity-60'
+            }`}
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold" style={{ fontSize: '12px', color: tool.color }}>
+                {tool.label}
+              </span>
+              <span
+                className="rounded px-1 text-muted-foreground bg-secondary"
+                style={{ fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase' }}
+              >
+                {tool.level}
+              </span>
+              {!tool.active && (
+                <span className="text-muted-foreground" style={{ fontSize: '9.5px', fontWeight: 600 }}>
+                  {t('exportPanel.deferred')}
+                </span>
+              )}
+            </div>
+
+            {/* Target project path picker (active tool only) */}
+            {tool.active && (
+              <button
+                onClick={onPickTarget}
+                className="flex items-center gap-1 mt-1.5 w-full text-left group/path"
+              >
+                <FolderIcon size={11} className="text-muted-foreground flex-shrink-0" />
+                <span
+                  className="truncate group-hover/path:text-foreground transition-colors"
+                  style={{
+                    fontSize: '10.5px',
+                    fontFamily: 'monospace',
+                    color: targetPath ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
+                  }}
+                >
+                  {targetPath ?? t('exportPanel.selectTarget')}
+                </span>
+              </button>
+            )}
           </div>
+        ))}
+
+        {/* Preview (Dry-run) trigger */}
+        <button
+          onClick={onBuildPlan}
+          disabled={!canPreview}
+          className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border font-medium transition-colors ${
+            canPreview ? 'border-border hover:bg-secondary text-foreground' : 'border-border opacity-40 cursor-not-allowed text-muted-foreground'
+          }`}
+          style={{ fontSize: '12px' }}
+        >
+          {building ? t('exportPanel.previewing') : t('exportPanel.preview')}
+        </button>
+
+        {buildError && (
+          <p style={{ fontSize: '10.5px', color: 'var(--am-red)' }}>
+            {t('exportPanel.buildFailed', { error: buildError })}
+          </p>
         )}
 
-        {exportTargets.map((target) => {
-          const meta = TOOL_META[target.tool] || { label: target.tool, level: target.level, color: '#6B7280' };
-
-          return (
-            <div
-              key={target.id}
-              className={`rounded-lg border p-2.5 transition-colors ${
-                target.enabled
-                  ? 'border-border bg-card'
-                  : 'border-border bg-muted opacity-60'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                {/* Toggle */}
-                <Switch
-                  checked={target.enabled}
-                  onCheckedChange={(checked) => onToggleTarget(target.id, checked)}
-                />
-
-                {/* Tool label */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="font-semibold"
-                      style={{ fontSize: '12px', color: meta.color }}
-                    >
-                      {meta.label}
-                    </span>
-                    <span
-                      className="rounded px-1 text-muted-foreground bg-secondary"
-                      style={{ fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase' }}
-                    >
-                      {meta.level}
-                    </span>
-                    {target.detected && (
-                      <span
-                        className="flex items-center gap-0.5"
-                        style={{ fontSize: '10px', color: 'var(--am-green)' }}
-                      >
-                        <CheckIcon size={9} />
-                        {t('exportPanel.detected')}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Path */}
-                  {!simpleMode && (
-                    <div
-                      className="flex items-center gap-1 mt-0.5 cursor-pointer group/path"
-                      onClick={() => onEditPath(target.id)}
-                    >
-                      <FolderIcon size={10} className="text-muted-foreground flex-shrink-0" />
-                      <span
-                        className="text-muted-foreground truncate group-hover/path:text-foreground transition-colors"
-                        style={{ fontSize: '10.5px', fontFamily: 'monospace' }}
-                      >
-                        {target.path || t('exportPanel.setPath')}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Detected/Not found indicator */}
-                <span className="flex-shrink-0" style={{ color: target.detected ? 'var(--am-green)' : '#94A3B8' }}>
-                  {target.detected ? <CheckIcon size={12} /> : <XIcon size={12} />}
+        {/* Dry-run plan preview */}
+        {plan && (
+          <div className="flex flex-col gap-2 rounded-lg border border-border p-2.5">
+            {/* Summary */}
+            <div className="flex items-center flex-wrap gap-x-3 gap-y-1" style={{ fontSize: '11px' }}>
+              <span className="flex items-center gap-1" style={{ color: 'var(--am-green)' }}>
+                <FilePlusIcon size={11} />
+                {t('exportPanel.createCount', { count: createCount })}
+              </span>
+              {overwriteCount > 0 && (
+                <span className="flex items-center gap-1" style={{ color: 'var(--am-orange)' }}>
+                  <FileEditIcon size={11} />
+                  {t('exportPanel.overwriteCount', { count: overwriteCount })}
                 </span>
-              </div>
+              )}
+              <span className="text-muted-foreground">
+                {t('exportPanel.affectedSkills', { count: affectedSkills })}
+              </span>
+              <span className="text-muted-foreground">{formatBytes(plan.totalBytes)}</span>
             </div>
-          );
-        })}
+
+            {/* Backup location */}
+            {plan.backups.map((b) => (
+              <p key={b.backupArchive} className="text-muted-foreground" style={{ fontSize: '10px', fontFamily: 'monospace' }}>
+                {t('exportPanel.backupAt', { path: b.backupArchive, size: formatBytes(b.sizeBytes) })}
+              </p>
+            ))}
+
+            {/* Operations list */}
+            <div className="overflow-y-auto scrollbar-thin" style={{ maxHeight: 140 }}>
+              {plan.operations.map((op) => (
+                <div key={op.path} className="flex items-center gap-1.5 py-0.5" style={{ fontSize: '10.5px' }}>
+                  {op.kind === 'create' ? (
+                    <FilePlusIcon size={10} style={{ color: 'var(--am-green)', flexShrink: 0 }} />
+                  ) : (
+                    <FileEditIcon size={10} style={{ color: 'var(--am-orange)', flexShrink: 0 }} />
+                  )}
+                  <span className="flex-1 truncate text-foreground" style={{ fontFamily: 'monospace' }}>
+                    {relPath(op.path)}
+                  </span>
+                  <span className="text-muted-foreground flex-shrink-0">{formatBytes(op.size)}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Conflict reports */}
+            {gate.nameCollisions > 0 && (
+              <p className="flex items-start gap-1" style={{ fontSize: '10.5px', color: 'var(--am-red)' }}>
+                <AlertTriangleIcon size={11} style={{ flexShrink: 0, marginTop: 1 }} />
+                {t('exportPanel.nameCollisionWarn', { count: gate.nameCollisions })}
+              </p>
+            )}
+            {gate.targetExists > 0 && (
+              <label className="flex items-start gap-1.5 cursor-pointer" style={{ fontSize: '10.5px' }}>
+                <input
+                  type="checkbox"
+                  checked={overwriteConfirmed}
+                  onChange={(e) => onToggleOverwrite(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <span style={{ color: 'var(--am-orange)' }}>
+                  {t('exportPanel.confirmOverwrite', { count: gate.targetExists })}
+                </span>
+              </label>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Export action footer */}
+      {/* Execute footer */}
       <div className="px-3 pb-3 pt-2 border-t border-border flex flex-col gap-2">
         <button
-          onClick={handleExport}
-          disabled={!canExport || exporting}
-          className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg font-semibold transition-all ${
-            canExport && !exporting
-              ? 'text-primary-foreground hover:opacity-90 active:scale-99'
-              : 'opacity-40 cursor-not-allowed text-primary-foreground'
-          }`}
+          onClick={onExport}
+          disabled={!gate.canExport}
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg font-semibold transition-all text-primary-foreground"
           style={{
-            background: canExport && !exporting ? 'var(--am-blue)' : 'var(--am-blue)',
+            background: 'var(--am-blue)',
             fontSize: '12.5px',
+            opacity: gate.canExport ? 1 : 0.4,
+            cursor: gate.canExport ? 'pointer' : 'not-allowed',
           }}
         >
-          <UploadIcon size={13} />
-          {exporting
-            ? t('exportPanel.exporting')
-            : comboItems.length > 0
+          {gate.canExport ? <CheckIcon size={13} /> : <XIcon size={13} />}
+          {comboItems.length > 0
             ? t('exportPanel.exportWithCount', { count: comboItems.length })
             : t('exportPanel.export')}
         </button>
-
-        {lastExported && (
-          <p
-            className="text-center flex items-center justify-center gap-1"
-            style={{ fontSize: '10.5px', color: 'var(--am-green)' }}
-          >
-            <CheckIcon size={10} />
-            {t('exportPanel.exportedAt', { time: lastExported })}
-          </p>
-        )}
 
         {comboItems.length === 0 && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10.5px' }}>
             {t(simpleMode ? 'exportPanel.emptyComboSimple' : 'exportPanel.emptyComboFull')}
           </p>
         )}
-
-        {hasConflicts && (
-          <p className="text-center" style={{ fontSize: '10.5px', color: 'var(--am-orange)' }}>
-            {t('exportPanel.resolveConflicts', { count: conflicts.length })}
+        {comboItems.length > 0 && !targetPath && (
+          <p className="text-muted-foreground text-center" style={{ fontSize: '10.5px' }}>
+            {t('exportPanel.noTarget')}
           </p>
         )}
       </div>
