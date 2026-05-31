@@ -36,11 +36,15 @@
   - HealthReport 重写为消费 `Skill.healthIssues`（弃 Pixso 的 `HealthCheckResult{checks}` interim 类型），含 v0.2 编辑器 deferred 占位
   - 偏差：health 逻辑放 tauri-free `agentmix-core/src/health.rs`（沿用 T7 规避 wry headless 崩溃）；`HealthIssue.message`/`suggestion` 承载 i18n key（形状不变），前端 `t(key)` 本地化，守住 i18n 红线；HealthReport 展示全部已扫描 Skill（DESIGN「所选 Skill」语义留到 T12 导出前门禁细化）
   - 12 个 health 单测（真阳/真阴，含中文触发短语）；门禁全绿（26 Rust 测试 / clippy / fmt / 29 前端测试 / 全 lint / build / 类型无漂移）
-- [ ] **T10** `composer.rs` ExportConflict + 选择→Composition + ConflictPanel 重命名/保留一个 — 依赖：T8, T9 — M
+- [x] **T10** `composer.rs` ExportConflict + 选择→Composition + ConflictPanel 重命名/保留一个 — 依赖：T8, T9 — M
+  - 2 个 checkpoint commit：(1) `agentmix-core/composer.rs` 大小写不敏感 ExportConflict 检测（7 单测）+ `ConflictCandidate`/`ExportConflict` 域类型 + `detect_conflicts` 命令；(2) compositionStore 重构（`ComboItem.exportedName`，去掉 Pixso 精确同名 flag）+ `refreshConflicts` 调 Rust + ComboListPanel 行内重命名/保留一个 + ExportPanel 冲突阻断
+  - 单一冲突逻辑：检测只在 Rust 实现一次，前端经 `lib/composer` IPC 调用（T11 ExportPlan 复用同一函数），UI 实时预警与导出门禁不会漂移
+  - 偏差：冲突解决 UI 内联进 ComboListPanel（对齐 DESIGN mockup 与 plan 文件清单，不单建 ConflictPanel 组件）；合并工作台按钮 disabled 标注 v0.1.5；HealthReport 的「所选 Skill」语义留到 T12
+  - 门禁全绿（33 Rust 测试 / clippy / fmt / 30 前端测试 / 全 lint / build / 类型无漂移）
 
 ### Checkpoint C（T9–T10）
-- [ ] 健康状态可见；同名 Skill 触发冲突并可解决
-- [ ] Rust 冲突单测 + 前端 store 分支单测通过
+- [x] Rust 冲突单测（7）+ 前端 store 选择/解决分支单测通过
+- [ ] 健康状态可见；同名 Skill 触发冲突并可解决（需 `pnpm tauri dev` 人工验证 UI）
 - [ ] 人工复核
 
 ## Phase 3：导出计划 → 预览 → 执行 → 备份
