@@ -6,6 +6,7 @@ import {
   FolderIcon,
   ZapIcon,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import Switch from '@/components/ui/Switch';
 import type { ExportTarget, ComboItem } from '../types';
@@ -34,6 +35,7 @@ export default function ExportPanel({
   onEditPath = () => {},
   simpleMode = false,
 }: ExportPanelProps) {
+  const { t } = useTranslation();
   const [exporting, setExporting] = useState(false);
   const [lastExported, setLastExported] = useState<string | null>(null);
 
@@ -64,7 +66,7 @@ export default function ExportPanel({
         <div className="flex items-center gap-1.5">
           <UploadIcon size={13} className="text-muted-foreground" />
           <span className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
-            {simpleMode ? `Export To` : `Export Targets`}
+            {t(simpleMode ? 'exportPanel.titleSimple' : 'exportPanel.titleFull')}
           </span>
           {enabledTargets.length > 0 && (
             <span
@@ -76,19 +78,19 @@ export default function ExportPanel({
                 fontWeight: 600,
               }}
             >
-              {enabledTargets.length} active
+              {t('exportPanel.activeCount', { count: enabledTargets.length })}
             </span>
           )}
         </div>
 
         {/* Auto-detect */}
-        <Tooltip title="Auto-detect installed tools" placement="bottom">
+        <Tooltip title={t('exportPanel.autoDetectTip')} placement="bottom">
           <button
             className="flex items-center gap-1 px-2 py-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             style={{ fontSize: '11px' }}
           >
             <ZapIcon size={11} />
-            Auto-detect
+            {t('exportPanel.autoDetect')}
           </button>
         </Tooltip>
       </div>
@@ -97,7 +99,7 @@ export default function ExportPanel({
       <div className="flex-1 overflow-y-auto scrollbar-thin py-2 px-3 flex flex-col gap-2">
         {exportTargets.length === 0 && (
           <div className="py-4 text-center text-muted-foreground" style={{ fontSize: '11.5px' }}>
-            No export targets configured.
+            {t('exportPanel.noTargets')}
           </div>
         )}
 
@@ -141,7 +143,7 @@ export default function ExportPanel({
                         style={{ fontSize: '10px', color: 'var(--am-green)' }}
                       >
                         <CheckIcon size={9} />
-                        detected
+                        {t('exportPanel.detected')}
                       </span>
                     )}
                   </div>
@@ -157,7 +159,7 @@ export default function ExportPanel({
                         className="text-muted-foreground truncate group-hover/path:text-foreground transition-colors"
                         style={{ fontSize: '10.5px', fontFamily: 'monospace' }}
                       >
-                        {target.path || `(click to set path)`}
+                        {target.path || t('exportPanel.setPath')}
                       </span>
                     </div>
                   )}
@@ -190,8 +192,10 @@ export default function ExportPanel({
         >
           <UploadIcon size={13} />
           {exporting
-            ? `Exporting…`
-            : `Export ${comboItems.length > 0 ? `${comboItems.length} Skills` : ``}`}
+            ? t('exportPanel.exporting')
+            : comboItems.length > 0
+            ? t('exportPanel.exportWithCount', { count: comboItems.length })
+            : t('exportPanel.export')}
         </button>
 
         {lastExported && (
@@ -200,13 +204,13 @@ export default function ExportPanel({
             style={{ fontSize: '10.5px', color: 'var(--am-green)' }}
           >
             <CheckIcon size={10} />
-            Exported at {lastExported}
+            {t('exportPanel.exportedAt', { time: lastExported })}
           </p>
         )}
 
         {!canExport && comboItems.length === 0 && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10.5px' }}>
-            {simpleMode ? `Add skills to your combo first` : `No skills in Combo List.`}
+            {t(simpleMode ? 'exportPanel.emptyComboSimple' : 'exportPanel.emptyComboFull')}
           </p>
         )}
       </div>

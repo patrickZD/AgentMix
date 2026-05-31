@@ -1,0 +1,91 @@
+{
+  "common": {
+    "appName": "AgentMix"
+  },
+  "titleBar": {
+    "workspace": "工作区",
+    "mergeWorkbench": "合并工作台",
+    "healthCheck": "健康检查",
+    "simple": "简洁",
+    "settings": "设置",
+    "about": "关于 AgentMix"
+  },
+  "welcome": {
+    "subtitleSimple": "把项目里的 AI 编程 Skill 组合并导出",
+    "subtitleFull": "本地工具：跨项目组合 Agent Skills 并导出到 AI 编程工具",
+    "ctaSimple": "打开项目文件夹",
+    "ctaFull": "添加来源项目",
+    "hintSimple": "选择一个包含 AI Skill 的文件夹",
+    "hintFull": "打开包含 `.claude/skills/` 或 `skills/` 的目录",
+    "docs": "文档",
+    "github": "GitHub",
+    "featureMixTitle": "组合 Agent Skills",
+    "featureMixDesc": "把多个项目里的 Skill 组合成一份配置。",
+    "featureExportTitle": "随处导出",
+    "featureExportDesc": "一键发送到 Claude Code、Cursor、Codex CLI、OpenCode。",
+    "featureMergeTitle": "解决冲突",
+    "featureMergeDesc": "用可视化合并工作台解决 Skill 冲突。",
+    "featureHealthTitle": "健康检查",
+    "featureHealthDesc": "校验 frontmatter，即时发现失效或损坏的 Skill。"
+  },
+  "sourcePanel": {
+    "title": "来源项目",
+    "addProject": "添加来源项目",
+    "rescan": "重新扫描",
+    "removeProject": "移除项目",
+    "emptySimple": "还没有项目。\n点击 + 添加文件夹。",
+    "emptyFull": "还没有来源项目。\n点击 + 打开一个目录。",
+    "noSkills": "未发现 Skill"
+  },
+  "skillItem": {
+    "alreadyInCombo": "已在组合中",
+    "addToCombo": "加入组合"
+  },
+  "comboPanel": {
+    "titleSimple": "我的组合",
+    "titleFull": "组合清单",
+    "conflicts_other": "{{count}} 个冲突",
+    "openMergeWorkbench": "打开合并工作台",
+    "emptySimple": "从左侧面板添加 Skill",
+    "emptyFull": "组合为空，请从来源项目添加。",
+    "removeFromCombo": "从组合移除"
+  },
+  "exportPanel": {
+    "titleSimple": "导出到",
+    "titleFull": "导出目标",
+    "noTargets": "尚未配置导出目标。",
+    "exporting": "导出中…",
+    "export": "导出",
+    "exportWithCount": "导出 {{count}} 个 Skill",
+    "emptyComboSimple": "请先把 Skill 加入组合",
+    "emptyComboFull": "组合清单为空。"
+  },
+  "healthPanel": {
+    "titleSimple": "Skill 健康",
+    "titleFull": "健康检查",
+    "backToWorkspace": "返回工作区",
+    "rerun": "重新运行健康检查",
+    "scanning": "正在扫描 Skill…",
+    "noResults": "暂无结果，点击刷新运行。"
+  },
+  "mainLayout": {
+    "selectSkillSimple": "选择一个 Skill 预览",
+    "selectSkillFull": "选择一个 Skill 预览其内容",
+    "skillPreview": "Skill 预览",
+    "healthCheck": "健康检查"
+  },
+  "settings": {
+    "title": "设置",
+    "simpleMode": "简洁模式",
+    "simpleModeDesc": "隐藏技术字段名",
+    "footer": "AgentMix v0.1.0 —— 本地开源工具。",
+    "close": "关闭"
+  },
+  "badge": {
+    "conflict": "冲突"
+  },
+  "notFound": {
+    "message": "哎呀！页面不存在",
+    "returnHome": "返回首页"
+  }
+}

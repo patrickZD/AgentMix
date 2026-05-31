@@ -1,4 +1,5 @@
 import { PlusCircleIcon, CheckCircleIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import Badge from './Badge';
 import type { Skill, SourceProject, ComboItem } from '../types';
@@ -22,6 +23,7 @@ export default function SkillItem({
   onAddToCombo = () => {},
   simpleMode = false,
 }: SkillItemProps) {
+  const { t } = useTranslation();
   if (!skill || !project) return null;
 
   const isInCombo = comboItems.some(
@@ -65,7 +67,7 @@ export default function SkillItem({
 
       {/* Add to combo button */}
       <Tooltip
-        title={isInCombo ? `Already in Combo` : `Add to Combo`}
+        title={isInCombo ? t('skillItem.alreadyInCombo') : t('skillItem.addToCombo')}
         placement="left"
       >
         <span

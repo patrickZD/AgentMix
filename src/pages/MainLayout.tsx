@@ -6,6 +6,7 @@ import {
   ChevronRightIcon,
   ChevronLeftIcon,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
 import TitleBar from '../components/TitleBar';
@@ -41,12 +42,13 @@ function SkillPreviewPanel({
   project: SourceProject | null;
   simpleMode: boolean;
 }) {
+  const { t } = useTranslation();
   if (!skill || !project) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
         <BookOpenIcon size={28} className="opacity-30" />
         <p style={{ fontSize: '12px' }}>
-          {simpleMode ? `Select a skill to preview` : `Select a skill to preview its content`}
+          {t(simpleMode ? 'mainLayout.selectSkillSimple' : 'mainLayout.selectSkillFull')}
         </p>
       </div>
     );
@@ -127,6 +129,7 @@ function SettingsDialog({
   simpleMode: boolean;
   onSimpleModeToggle: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center ${open ? '' : 'hidden'}`}
@@ -141,16 +144,16 @@ function SettingsDialog({
           className="font-bold text-foreground mb-4"
           style={{ fontSize: '14px' }}
         >
-          Settings
+          {t('settings.title')}
         </h3>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-foreground font-medium" style={{ fontSize: '12.5px' }}>
-                Simple Mode
+                {t('settings.simpleMode')}
               </p>
               <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
-                Hides technical field names
+                {t('settings.simpleModeDesc')}
               </p>
             </div>
             <button
@@ -173,7 +176,7 @@ function SettingsDialog({
           <hr className="border-border" />
 
           <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
-            AgentMix v0.1.0 — Local open-source tool.
+            {t('settings.footer')}
           </p>
         </div>
 
@@ -182,7 +185,7 @@ function SettingsDialog({
           className="mt-4 w-full py-2 rounded-lg bg-secondary text-secondary-foreground font-medium hover:bg-muted transition-colors"
           style={{ fontSize: '12px' }}
         >
-          Close
+          {t('settings.close')}
         </button>
       </div>
     </div>
@@ -190,6 +193,7 @@ function SettingsDialog({
 }
 
 export default function MainLayout() {
+  const { t } = useTranslation();
   const [view, setView] = useState<AppView>('main');
   const [projects, setProjects] = useState<SourceProject[]>(MOCK_PROJECTS);
   const [comboItems, setComboItems] = useState<ComboItem[]>([]);
@@ -358,7 +362,7 @@ export default function MainLayout() {
 
             {leftCollapsed && (
               <div className="flex justify-center pt-2">
-                <Tooltip title="Expand Projects Panel" placement="right">
+                <Tooltip title={t('mainLayout.expandPanel')} placement="right">
                   <IconButton
                     onClick={() => setLeftCollapsed(false)}
                     className="h-[24px] w-[24px]"
@@ -375,7 +379,7 @@ export default function MainLayout() {
             className="flex flex-col items-center justify-center border-r border-border bg-card cursor-pointer hover:bg-secondary transition-colors flex-shrink-0"
             style={{ width: 12 }}
             onClick={() => setLeftCollapsed((s) => !s)}
-            title={leftCollapsed ? `Expand` : `Collapse`}
+            title={leftCollapsed ? t('mainLayout.expand') : t('mainLayout.collapse')}
           >
             <PanelLeftIcon size={10} className="text-muted-foreground opacity-40" />
           </div>
@@ -391,7 +395,7 @@ export default function MainLayout() {
               >
                 <BookOpenIcon size={13} className="text-muted-foreground" />
                 <span className="text-foreground font-semibold" style={{ fontSize: '12px' }}>
-                  {simpleMode ? `Skill Preview` : `Skill Preview`}
+                  {t('mainLayout.skillPreview')}
                 </span>
                 {selectedSkill && (
                   <>
@@ -402,7 +406,7 @@ export default function MainLayout() {
                   </>
                 )}
                 <div className="flex-1" />
-                <Tooltip title="Health Check">
+                <Tooltip title={t('mainLayout.healthCheck')}>
                   <IconButton
                     onClick={() => handleNavigate('health-check')}
                     className="h-[26px] w-[26px]"

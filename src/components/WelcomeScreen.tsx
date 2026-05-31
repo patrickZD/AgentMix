@@ -5,6 +5,7 @@ import {
   GithubIcon,
   ZapIcon,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { AppView } from '../types';
 
 interface WelcomeScreenProps {
@@ -14,26 +15,10 @@ interface WelcomeScreenProps {
 }
 
 const features = [
-  {
-    icon: `🧩`,
-    title: `Mix Agent Skills`,
-    desc: `Combine skills from multiple projects into one powerful combo.`,
-  },
-  {
-    icon: `⚡`,
-    title: `Export Anywhere`,
-    desc: `Send to Claude Code, Cursor, Codex CLI, OpenCode in one click.`,
-  },
-  {
-    icon: `🔀`,
-    title: `Merge Conflicts`,
-    desc: `Use the visual Merge Workbench to resolve skill conflicts.`,
-  },
-  {
-    icon: `❤️`,
-    title: `Health Checks`,
-    desc: `Validate frontmatter, detect stale or broken skills instantly.`,
-  },
+  { icon: `🧩`, titleKey: `welcome.featureMixTitle`, descKey: `welcome.featureMixDesc` },
+  { icon: `⚡`, titleKey: `welcome.featureExportTitle`, descKey: `welcome.featureExportDesc` },
+  { icon: `🔀`, titleKey: `welcome.featureMergeTitle`, descKey: `welcome.featureMergeDesc` },
+  { icon: `❤️`, titleKey: `welcome.featureHealthTitle`, descKey: `welcome.featureHealthDesc` },
 ];
 
 export default function WelcomeScreen({
@@ -41,6 +26,7 @@ export default function WelcomeScreen({
   onNavigate = () => {},
   simpleMode = false,
 }: WelcomeScreenProps) {
+  const { t } = useTranslation();
   return (
     <div
       data-cmp="WelcomeScreen"
@@ -65,12 +51,10 @@ export default function WelcomeScreen({
               className="font-bold text-foreground"
               style={{ fontSize: '24px', letterSpacing: '-0.025em' }}
             >
-              AgentMix
+              {t('common.appName')}
             </h1>
             <p className="text-muted-foreground" style={{ fontSize: '13px', marginTop: 4 }}>
-              {simpleMode
-                ? `Mix and export AI coding skills from your projects`
-                : `Local tool for mixing Agent Skills across projects and exporting to AI coding tools`}
+              {t(simpleMode ? 'welcome.subtitleSimple' : 'welcome.subtitleFull')}
             </p>
           </div>
         </div>
@@ -88,13 +72,11 @@ export default function WelcomeScreen({
             }}
           >
             <FolderPlusIcon size={16} />
-            {simpleMode ? `Open a Project Folder` : `Add Source Project`}
+            {t(simpleMode ? 'welcome.ctaSimple' : 'welcome.ctaFull')}
           </button>
 
           <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
-            {simpleMode
-              ? `Choose a folder that contains AI skills`
-              : `Open a directory containing a \`.claude/skills/\` or \`skills/\` folder`}
+            {t(simpleMode ? 'welcome.hintSimple' : 'welcome.hintFull')}
           </p>
         </div>
 
@@ -102,17 +84,17 @@ export default function WelcomeScreen({
         <div className="w-full flex flex-wrap gap-2">
           {features.map((f) => (
             <div
-              key={f.title}
+              key={f.titleKey}
               className="flex items-start gap-2.5 rounded-lg border border-border bg-card p-3"
               style={{ width: 'calc(50% - 4px)' }}
             >
               <span style={{ fontSize: '18px', lineHeight: 1 }}>{f.icon}</span>
               <div>
                 <p className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
-                  {f.title}
+                  {t(f.titleKey)}
                 </p>
                 <p className="text-muted-foreground" style={{ fontSize: '11px', marginTop: 2 }}>
-                  {f.desc}
+                  {t(f.descKey)}
                 </p>
               </div>
             </div>
@@ -127,7 +109,7 @@ export default function WelcomeScreen({
             onClick={(e) => e.preventDefault()}
           >
             <BookOpenIcon size={11} />
-            Docs
+            {t('welcome.docs')}
           </a>
           <span>·</span>
           <a
@@ -136,7 +118,7 @@ export default function WelcomeScreen({
             onClick={(e) => e.preventDefault()}
           >
             <GithubIcon size={11} />
-            GitHub
+            {t('welcome.github')}
           </a>
           <span>·</span>
           <a

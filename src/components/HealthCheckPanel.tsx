@@ -9,6 +9,7 @@ import {
   ChevronRightIcon,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
 import type { HealthCheckResult, AppView } from '../types';
@@ -28,6 +29,7 @@ export default function HealthCheckPanel({
   simpleMode = false,
   scanning = false,
 }: HealthCheckPanelProps) {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const totalPassed = results.reduce(
@@ -53,14 +55,14 @@ export default function HealthCheckPanel({
         className="flex items-center gap-2 px-3 border-b border-border flex-shrink-0"
         style={{ height: 'var(--am-toolbar-h)', background: 'var(--am-panel-bg)' }}
       >
-        <Tooltip title="Back to Workspace">
+        <Tooltip title={t('healthPanel.backToWorkspace')}>
           <IconButton onClick={() => onNavigate('main')} className="h-[26px] w-[26px]">
             <ArrowLeftIcon size={13} />
           </IconButton>
         </Tooltip>
         <HeartPulseIcon size={13} className="text-muted-foreground" />
         <span className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
-          {simpleMode ? `Skill Health` : `Health Check`}
+          {t(simpleMode ? 'healthPanel.titleSimple' : 'healthPanel.titleFull')}
         </span>
 
         <div className="flex-1" />
@@ -70,27 +72,27 @@ export default function HealthCheckPanel({
           <div className="flex items-center gap-2" style={{ fontSize: '11px' }}>
             <span className="flex items-center gap-0.5" style={{ color: 'var(--am-green)' }}>
               <CheckCircleIcon size={11} />
-              {healthySkills} ok
+              {t('healthPanel.okCount', { count: healthySkills })}
             </span>
             {warningSkills > 0 && (
               <span className="flex items-center gap-0.5" style={{ color: 'var(--am-orange)' }}>
                 <AlertTriangleIcon size={11} />
-                {warningSkills} warn
+                {t('healthPanel.warnCount', { count: warningSkills })}
               </span>
             )}
             {errorSkills > 0 && (
               <span className="flex items-center gap-0.5" style={{ color: 'var(--am-red)' }}>
                 <XCircleIcon size={11} />
-                {errorSkills} err
+                {t('healthPanel.errCount', { count: errorSkills })}
               </span>
             )}
             <span className="text-muted-foreground">
-              {totalPassed}/{totalChecks} checks
+              {t('healthPanel.checksCount', { passed: totalPassed, total: totalChecks })}
             </span>
           </div>
         )}
 
-        <Tooltip title="Re-run Health Check" placement="bottom">
+        <Tooltip title={t('healthPanel.rerun')} placement="bottom">
           <IconButton
             onClick={onRescan}
             disabled={scanning}
@@ -107,7 +109,7 @@ export default function HealthCheckPanel({
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
             <HeartPulseIcon size={36} className="opacity-30" />
             <p style={{ fontSize: '13px' }}>
-              {scanning ? `Scanning skills…` : `No results yet. Click refresh to run.`}
+              {t(scanning ? 'healthPanel.scanning' : 'healthPanel.noResults')}
             </p>
           </div>
         )}

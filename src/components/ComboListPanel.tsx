@@ -6,6 +6,7 @@ import {
   ArrowDownIcon,
   AlertTriangleIcon,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
 import Badge from './Badge';
@@ -28,6 +29,7 @@ export default function ComboListPanel({
   onNavigate = () => {},
   simpleMode = false,
 }: ComboListPanelProps) {
+  const { t } = useTranslation();
   const conflictCount = comboItems.filter((c) => c.hasConflict).length;
 
   return (
@@ -44,7 +46,7 @@ export default function ComboListPanel({
         <div className="flex items-center gap-1.5">
           <ListChecksIcon size={13} className="text-muted-foreground" />
           <span className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
-            {simpleMode ? `My Combo` : `Combo List`}
+            {t(simpleMode ? 'comboPanel.titleSimple' : 'comboPanel.titleFull')}
           </span>
           {comboItems.length > 0 && (
             <span
@@ -65,13 +67,13 @@ export default function ComboListPanel({
               }}
             >
               <AlertTriangleIcon size={9} />
-              {conflictCount} conflict{conflictCount > 1 ? 's' : ''}
+              {t('comboPanel.conflicts', { count: conflictCount })}
             </span>
           )}
         </div>
 
         <div className="flex items-center">
-          <Tooltip title="Open Merge Workbench" placement="bottom">
+          <Tooltip title={t('comboPanel.openMergeWorkbench')} placement="bottom">
             <span>
               <IconButton
                 onClick={() => onNavigate('merge-workbench')}
@@ -91,9 +93,7 @@ export default function ComboListPanel({
           <div className="flex flex-col items-center justify-center py-6 gap-1.5">
             <ListChecksIcon size={24} className="text-muted-foreground opacity-30" />
             <p className="text-muted-foreground" style={{ fontSize: '11.5px' }}>
-              {simpleMode
-                ? `Add skills from the left panel`
-                : `No skills in combo. Add from Source Projects.`}
+              {t(simpleMode ? 'comboPanel.emptySimple' : 'comboPanel.emptyFull')}
             </p>
           </div>
         )}
@@ -146,7 +146,7 @@ export default function ComboListPanel({
               {/* Actions - shown on hover */}
               <div className="flex items-center gap-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                 {item.hasConflict && (
-                  <Tooltip title="Open in Merge Workbench" placement="left">
+                  <Tooltip title={t('comboPanel.openInMergeWorkbench')} placement="left">
                     <IconButton
                       onClick={() => onOpenMerge(item.id)}
                       className="h-[20px] w-[20px]"
@@ -155,7 +155,7 @@ export default function ComboListPanel({
                     </IconButton>
                   </Tooltip>
                 )}
-                <Tooltip title="Move Up" placement="left">
+                <Tooltip title={t('comboPanel.moveUp')} placement="left">
                   <span>
                     <IconButton
                       disabled={isFirst}
@@ -166,7 +166,7 @@ export default function ComboListPanel({
                     </IconButton>
                   </span>
                 </Tooltip>
-                <Tooltip title="Move Down" placement="left">
+                <Tooltip title={t('comboPanel.moveDown')} placement="left">
                   <span>
                     <IconButton
                       disabled={isLast}
@@ -177,7 +177,7 @@ export default function ComboListPanel({
                     </IconButton>
                   </span>
                 </Tooltip>
-                <Tooltip title="Remove from Combo" placement="left">
+                <Tooltip title={t('comboPanel.removeFromCombo')} placement="left">
                   <IconButton
                     onClick={() => onRemoveItem(item.id)}
                     className="h-[20px] w-[20px]"

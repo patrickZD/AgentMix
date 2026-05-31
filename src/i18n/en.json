@@ -1,0 +1,112 @@
+{
+  "common": {
+    "appName": "AgentMix"
+  },
+  "titleBar": {
+    "workspace": "Workspace",
+    "mergeWorkbench": "Merge Workbench",
+    "healthCheck": "Health Check",
+    "simple": "Simple",
+    "settings": "Settings",
+    "about": "About AgentMix"
+  },
+  "welcome": {
+    "subtitleSimple": "Mix and export AI coding skills from your projects",
+    "subtitleFull": "Local tool for mixing Agent Skills across projects and exporting to AI coding tools",
+    "ctaSimple": "Open a Project Folder",
+    "ctaFull": "Add Source Project",
+    "hintSimple": "Choose a folder that contains AI skills",
+    "hintFull": "Open a directory containing a `.claude/skills/` or `skills/` folder",
+    "docs": "Docs",
+    "github": "GitHub",
+    "featureMixTitle": "Mix Agent Skills",
+    "featureMixDesc": "Combine skills from multiple projects into one powerful combo.",
+    "featureExportTitle": "Export Anywhere",
+    "featureExportDesc": "Send to Claude Code, Cursor, Codex CLI, OpenCode in one click.",
+    "featureMergeTitle": "Merge Conflicts",
+    "featureMergeDesc": "Use the visual Merge Workbench to resolve skill conflicts.",
+    "featureHealthTitle": "Health Checks",
+    "featureHealthDesc": "Validate frontmatter, detect stale or broken skills instantly."
+  },
+  "sourcePanel": {
+    "title": "Source Projects",
+    "counts": "{{projects}}p · {{skills}}s",
+    "addProject": "Add Source Project",
+    "rescan": "Re-scan",
+    "removeProject": "Remove Project",
+    "emptySimple": "No projects yet.\nClick + to add a folder.",
+    "emptyFull": "No source projects.\nClick + to open a directory.",
+    "noSkills": "No skills found"
+  },
+  "skillItem": {
+    "alreadyInCombo": "Already in Combo",
+    "addToCombo": "Add to Combo"
+  },
+  "comboPanel": {
+    "titleSimple": "My Combo",
+    "titleFull": "Combo List",
+    "conflicts_one": "{{count}} conflict",
+    "conflicts_other": "{{count}} conflicts",
+    "openMergeWorkbench": "Open Merge Workbench",
+    "emptySimple": "Add skills from the left panel",
+    "emptyFull": "No skills in combo. Add from Source Projects.",
+    "openInMergeWorkbench": "Open in Merge Workbench",
+    "moveUp": "Move Up",
+    "moveDown": "Move Down",
+    "removeFromCombo": "Remove from Combo"
+  },
+  "exportPanel": {
+    "titleSimple": "Export To",
+    "titleFull": "Export Targets",
+    "activeCount": "{{count}} active",
+    "autoDetect": "Auto-detect",
+    "autoDetectTip": "Auto-detect installed tools",
+    "noTargets": "No export targets configured.",
+    "detected": "detected",
+    "setPath": "(click to set path)",
+    "exporting": "Exporting…",
+    "export": "Export",
+    "exportWithCount": "Export {{count}} Skills",
+    "exportedAt": "Exported at {{time}}",
+    "emptyComboSimple": "Add skills to your combo first",
+    "emptyComboFull": "No skills in Combo List."
+  },
+  "healthPanel": {
+    "titleSimple": "Skill Health",
+    "titleFull": "Health Check",
+    "backToWorkspace": "Back to Workspace",
+    "rerun": "Re-run Health Check",
+    "okCount": "{{count}} ok",
+    "warnCount": "{{count}} warn",
+    "errCount": "{{count}} err",
+    "checksCount": "{{passed}}/{{total}} checks",
+    "scanning": "Scanning skills…",
+    "noResults": "No results yet. Click refresh to run."
+  },
+  "mainLayout": {
+    "selectSkillSimple": "Select a skill to preview",
+    "selectSkillFull": "Select a skill to preview its content",
+    "skillPreview": "Skill Preview",
+    "healthCheck": "Health Check",
+    "expandPanel": "Expand Projects Panel",
+    "expand": "Expand",
+    "collapse": "Collapse"
+  },
+  "settings": {
+    "title": "Settings",
+    "simpleMode": "Simple Mode",
+    "simpleModeDesc": "Hides technical field names",
+    "footer": "AgentMix v0.1.0 — Local open-source tool.",
+    "close": "Close"
+  },
+  "badge": {
+    "new": "NEW",
+    "updated": "UPD",
+    "removed": "DEL",
+    "conflict": "CONFLICT"
+  },
+  "notFound": {
+    "message": "Oops! Page not found",
+    "returnHome": "Return to Home"
+  }
+}

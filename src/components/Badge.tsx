@@ -1,9 +1,18 @@
+import { useTranslation } from 'react-i18next';
 import type { SkillChangeTag } from '../types';
 
 interface BadgeProps {
   variant?: SkillChangeTag | 'conflict' | 'healthy' | 'warning' | 'error';
   label?: string;
 }
+
+// Word-based badges resolve their label via i18n; status badges stay literal glyphs.
+const badgeI18nKey: Record<string, string> = {
+  NEW: 'badge.new',
+  UPDATED: 'badge.updated',
+  REMOVED: 'badge.removed',
+  conflict: 'badge.conflict',
+};
 
 const variantConfig = {
   NEW: { cls: 'am-badge-new', text: 'NEW' },
@@ -40,11 +49,12 @@ const variantConfig = {
 };
 
 export default function Badge({ variant = null, label }: BadgeProps) {
+  const { t } = useTranslation();
   if (!variant) return null;
   const cfg = variantConfig[variant as keyof typeof variantConfig];
   if (!cfg) return null;
 
-  const text = label ?? cfg.text;
+  const text = label ?? (badgeI18nKey[variant] ? t(badgeI18nKey[variant]) : cfg.text);
 
   if ('style' in cfg) {
     return (

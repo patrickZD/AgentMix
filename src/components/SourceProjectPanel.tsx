@@ -7,6 +7,7 @@ import {
   ChevronRightIcon,
   Trash2Icon,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
 import SkillItem from './SkillItem';
@@ -35,6 +36,7 @@ export default function SourceProjectPanel({
   onAddToCombo = () => {},
   simpleMode = false,
 }: SourceProjectPanelProps) {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const toggleCollapse = (id: string) => {
@@ -57,20 +59,20 @@ export default function SourceProjectPanel({
         <div className="flex items-center gap-1.5">
           <FolderOpenIcon size={13} className="text-muted-foreground" />
           <span className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
-            {simpleMode ? `Source Projects` : `Source Projects`}
+            {t('sourcePanel.title')}
           </span>
           {projects.length > 0 && (
             <span
               className="text-muted-foreground bg-secondary rounded-full px-1.5"
               style={{ fontSize: '10px', fontWeight: 600 }}
             >
-              {projects.length}p · {totalSkills}s
+              {t('sourcePanel.counts', { projects: projects.length, skills: totalSkills })}
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-0">
-          <Tooltip title="Add Source Project" placement="bottom">
+          <Tooltip title={t('sourcePanel.addProject')} placement="bottom">
             <IconButton onClick={onAddProject} className="h-[26px] w-[26px]">
               <PlusIcon size={13} />
             </IconButton>
@@ -84,9 +86,7 @@ export default function SourceProjectPanel({
           <div className="flex flex-col items-center justify-center h-full gap-2 p-4">
             <FolderOpenIcon size={28} className="text-muted-foreground opacity-40" />
             <p className="text-muted-foreground text-center" style={{ fontSize: '12px' }}>
-              {simpleMode
-                ? `No projects yet.\nClick + to add a folder.`
-                : `No source projects.\nClick + to open a directory.`}
+              {t(simpleMode ? 'sourcePanel.emptySimple' : 'sourcePanel.emptyFull')}
             </p>
           </div>
         )}
@@ -128,7 +128,7 @@ export default function SourceProjectPanel({
                   className="flex items-center gap-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Tooltip title="Re-scan" placement="bottom">
+                  <Tooltip title={t('sourcePanel.rescan')} placement="bottom">
                     <IconButton
                       onClick={() => onScanProject(project.id)}
                       className="h-[20px] w-[20px]"
@@ -136,7 +136,7 @@ export default function SourceProjectPanel({
                       <RefreshCwIcon size={11} />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Remove Project" placement="bottom">
+                  <Tooltip title={t('sourcePanel.removeProject')} placement="bottom">
                     <IconButton
                       onClick={() => onRemoveProject(project.id)}
                       className="h-[20px] w-[20px]"
@@ -151,7 +151,7 @@ export default function SourceProjectPanel({
               <div className={`pl-5 pr-1 ${isCollapsed ? 'hidden' : ''}`}>
                 {project.skills.length === 0 && (
                   <p className="text-muted-foreground py-1 px-2" style={{ fontSize: '11.5px' }}>
-                    No skills found
+                    {t('sourcePanel.noSkills')}
                   </p>
                 )}
                 {project.skills.map((skill) => (

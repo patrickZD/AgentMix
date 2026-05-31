@@ -4,6 +4,7 @@ import {
   LayersIcon,
   ChevronRightIcon,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import IconButton from '@/components/ui/IconButton';
 import Tooltip from '@/components/ui/Tooltip';
 import type { AppView } from '../types';
@@ -27,11 +28,12 @@ export default function TitleBar({
   simpleMode = false,
   onSimpleModeToggle = () => {},
 }: TitleBarProps) {
+  const { t } = useTranslation();
   const breadcrumbMap: Record<AppView, string> = {
     welcome: '',
-    main: 'Workspace',
-    'merge-workbench': 'Merge Workbench',
-    'health-check': 'Health Check',
+    main: t('titleBar.workspace'),
+    'merge-workbench': t('titleBar.mergeWorkbench'),
+    'health-check': t('titleBar.healthCheck'),
   };
 
   return (
@@ -48,7 +50,7 @@ export default function TitleBar({
         >
           <LayersIcon size={15} className="text-primary" />
           <span className="font-semibold text-foreground" style={{ fontSize: '13px', letterSpacing: '-0.01em' }}>
-            AgentMix
+            {t('common.appName')}
           </span>
         </button>
 
@@ -59,7 +61,7 @@ export default function TitleBar({
               className={currentView === 'main' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground cursor-pointer transition-colors'}
               onClick={() => currentView !== 'main' && onNavigate('main')}
             >
-              Workspace
+              {t('titleBar.workspace')}
             </span>
             {(currentView === 'merge-workbench' || currentView === 'health-check') && (
               <>
@@ -83,16 +85,16 @@ export default function TitleBar({
           }`}
           style={{ fontSize: '11px' }}
         >
-          {simpleMode ? `Simple` : `Simple`}
+          {t('titleBar.simple')}
         </button>
 
-        <Tooltip title="Settings" placement="bottom">
+        <Tooltip title={t('titleBar.settings')} placement="bottom">
           <IconButton onClick={onSettingsClick} className="h-[28px] w-[28px]">
             <SettingsIcon size={14} />
           </IconButton>
         </Tooltip>
 
-        <Tooltip title="About AgentMix" placement="bottom">
+        <Tooltip title={t('titleBar.about')} placement="bottom">
           <IconButton onClick={onAboutClick} className="h-[28px] w-[28px]">
             <InfoIcon size={14} />
           </IconButton>
