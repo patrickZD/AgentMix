@@ -54,7 +54,13 @@
   - 备份仅当存在 overwrite 时规划，且只落 `~/.agentmix/backups/<target-hash>/`，绝不进目标项目
   - 偏差：`targets`/`runtimeWarnings`/`ToolAdapter`/`FileOperationKind::Delete` 等多目标/反向同步字段 v0.1 不接入；u64 字节字段 schema 覆写为 TS `number`（字段仍 u64，求和不溢出）
   - 4 个 exporter 单测（clean→全 create+字节数、plan 不写文件、已存在→overwrite+TargetExists+backup、同名 NameCollision）；37 Rust 测试 + 全门禁绿 + 类型无漂移
-- [ ] **T12** Dry-run 预览 UI（ExportPanel）+ 目标路径选择（预览不写文件）— 依赖：T11 — M
+- [x] **T12** Dry-run 预览 UI（ExportPanel）+ 目标路径选择（预览不写文件）— 依赖：T11 — M
+  - ExportPanel 从 Pixso 多目标 toggle 改为 v0.1 单目标：Claude Code (project) active + 目标项目选择器（复用 pick_directory），Cursor/Codex/OpenCode disabled 标 v0.2
+  - 「生成预览 (Dry-run)」调 `build_export_plan` 渲染 ExportPlan：create/overwrite 计数、受影响 Skill、总字节、备份位置+大小、逐文件操作列表、冲突报告；预览不写任何文件
+  - 执行按钮启用由纯函数 `exportGate()` 决定：无 plan/零操作禁用；NameCollision 未解决禁用（去组合改）；TargetExists 需勾选「确认覆盖」才解禁。execute 本体（写文件）留 T13，onExport 暂为占位
+  - exportStore 重构为 `{ targetPath, plan, building, buildError, overwriteConfirmed }`；选择或目标变化即清除过期预览。删除 v0.2 多目标 toggle/mock/`ExportTarget`/`ExportTool`
+  - 偏差：组件渲染无 jsdom 单测（node env，未引入 testing-library），渲染靠 `exportGate`/store 纯逻辑单测 + `pnpm tauri dev` 人工 + T16 e2e
+  - 9 个新单测（exportGate 5 + exportStore build/branch/error/reset）；39 前端测试 + 全门禁绿
 - [ ] **T13** `ExportCoordinator.execute` + 备份 + 重命名/frontmatter 同步 + `lint:no-direct-write`— 依赖：T12 — M
 
 ### Checkpoint D（T11–T13）— 核心里程碑
