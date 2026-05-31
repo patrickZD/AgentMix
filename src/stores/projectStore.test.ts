@@ -10,7 +10,6 @@ beforeEach(() => {
   mockScan.mockReset();
   useProjectStore.setState({
     projects: [],
-    healthResults: [],
     scanning: false,
     scanError: null,
   });

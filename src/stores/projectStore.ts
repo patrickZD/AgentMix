@@ -1,12 +1,12 @@
 import { create } from 'zustand';
-import type { SourceProject, HealthCheckResult } from '@/types';
+import type { SourceProject } from '@/types';
 import { scanProject } from '@/lib/scan';
 import { normalizePath } from '@/lib/path';
 
-// Source projects + their scan/health results.
+// Source projects from scanning. Each scanned Skill already carries its
+// deterministic health (healthStatus + healthIssues), computed in the scanner.
 interface ProjectState {
   projects: SourceProject[];
-  healthResults: HealthCheckResult[];
   scanning: boolean;
   scanError: string | null;
   addProject: (project: SourceProject) => void;
@@ -18,11 +18,9 @@ interface ProjectState {
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
-  // Projects come from the real `scan_project` command; health results are
-  // populated by the deterministic health checks (T9). Both start empty so the
+  // Projects come from the real `scan_project` command and start empty, so the
   // app opens on the welcome screen until a folder is scanned.
   projects: [],
-  healthResults: [],
   scanning: false,
   scanError: null,
 

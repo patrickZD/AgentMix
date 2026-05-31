@@ -48,18 +48,3 @@ export interface MergeBlock {
   source: 'A' | 'B' | 'draft';
   text: string;
 }
-
-// Interim view shape for the health report. T9 replaces `checks` with the
-// backend's deterministic HealthIssue[] carried on each Skill.
-export interface HealthCheckResult {
-  skill: Skill;
-  project: SourceProject;
-  checks: HealthCheck[];
-}
-
-export interface HealthCheck {
-  id: string;
-  label: string;
-  passed: boolean;
-  message?: string;
-}

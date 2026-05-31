@@ -70,8 +70,11 @@
     "titleFull": "健康检查",
     "backToWorkspace": "返回工作区",
     "rerun": "重新运行健康检查",
+    "okCount": "{{count}} 正常",
+    "warnCount": "{{count}} 警告",
+    "errCount": "{{count}} 错误",
     "scanning": "正在扫描 Skill…",
-    "noResults": "暂无结果，点击刷新运行。"
+    "noResults": "还没有可检查的 Skill，请先扫描项目。"
   },
   "mainLayout": {
     "selectSkillSimple": "选择一个 Skill 预览",
@@ -93,6 +96,31 @@
     "portable": "通用",
     "toolSpecific": "工具专用",
     "invalid": "无效"
+  },
+  "health": {
+    "ok": "正常",
+    "warning": "警告",
+    "error": "错误",
+    "noIssues": "未发现问题",
+    "editDeferred": "Skill 编辑器 —— v0.2 提供",
+    "frontmatterInvalid": "缺少 YAML frontmatter 或解析失败",
+    "frontmatterInvalidFix": "补一个合法的 `---` frontmatter，含 name 与 description",
+    "nameMissing": "缺少 name",
+    "nameMissingFix": "补一个与 Skill 目录一致的 name 字段",
+    "nameMismatch": "name 与 Skill 目录不一致",
+    "nameMismatchFix": "重命名字段或目录，使二者一致",
+    "nameTooLong": "name 超过 64 字符",
+    "nameTooLongFix": "把 name 缩短到 64 字符以内",
+    "nameFormat": "name 应使用小写字母、数字和连字符",
+    "nameFormatFix": "改用 kebab-case，如 code-review",
+    "descriptionMissing": "缺少 description",
+    "descriptionMissingFix": "补一个说明何时使用该 Skill 的 description",
+    "descriptionTooLong": "description 超过 1024 字符",
+    "descriptionTooLongFix": "把 description 精简到 1024 字符以内",
+    "descriptionNoTrigger": "description 缺少触发场景短语",
+    "descriptionNoTriggerFix": "写明何时使用，如“当…时使用”",
+    "scriptsNoCompatibility": "包含脚本但未声明 compatibility",
+    "scriptsNoCompatibilityFix": "补一个 compatibility 字段说明运行环境"
   },
   "notFound": {
     "message": "哎呀！页面不存在",

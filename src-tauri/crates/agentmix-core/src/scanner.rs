@@ -3,9 +3,10 @@
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use agentmix_types::{AssetKind, HealthStatus, Skill, SourceProject};
+use agentmix_types::{AssetKind, Skill, SourceProject};
 use walkdir::{DirEntry, WalkDir};
 
+use crate::health::check_health;
 use crate::parser::{classify, parse_frontmatter};
 
 /// Default recursion depth; callers may raise it up to MAX_SCAN_DEPTH.
@@ -88,6 +89,7 @@ fn build_skill(skill_md: &Path, root: &Path, project_id: &str) -> Option<Skill> 
         .to_string_lossy()
         .replace('\\', "/");
     let has_scripts = skill_dir.join("scripts").is_dir();
+    let (health_status, health_issues) = check_health(&fm, &dir_name, has_scripts);
 
     Some(Skill {
         id: format!("{project_id}:{rel}"),
@@ -95,9 +97,8 @@ fn build_skill(skill_md: &Path, root: &Path, project_id: &str) -> Option<Skill> 
         identity_key: name.clone(),
         source_project_id: project_id.to_string(),
         category,
-        // Deterministic health is computed in T9; default to Ok/none for now.
-        health_status: HealthStatus::Ok,
-        health_issues: Vec::new(),
+        health_status,
+        health_issues,
         name,
         description,
         compatibility: fm.compatibility.clone(),

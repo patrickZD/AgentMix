@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
 import { filterSkills, groupByCategory, EMPTY_FILTER, type SkillFilter } from '@/lib/skillFilter';
-import type { AssetCategory, SourceProject, Skill, ComboItem } from '../types';
+import type { AssetCategory, HealthStatus, SourceProject, Skill, ComboItem } from '../types';
 import SkillItem from './SkillItem';
 
 interface SourceProjectPanelProps {
@@ -36,6 +36,20 @@ const CATEGORY_CHIPS: ReadonlyArray<{ value: SkillFilter['category']; labelKey: 
   { value: 'portable', labelKey: 'category.portable' },
   { value: 'tool-specific', labelKey: 'category.toolSpecific' },
 ];
+
+const HEALTH_CHIPS: ReadonlyArray<{ value: SkillFilter['health']; labelKey: string }> = [
+  { value: 'all', labelKey: 'sourcePanel.filterAll' },
+  { value: 'ok', labelKey: 'health.ok' },
+  { value: 'warning', labelKey: 'health.warning' },
+  { value: 'error', labelKey: 'health.error' },
+];
+
+const chipStyle = (active: boolean): React.CSSProperties => ({
+  fontSize: '10px',
+  fontWeight: 600,
+  background: active ? 'var(--am-blue-bg)' : 'transparent',
+  color: active ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
+});
 
 export default function SourceProjectPanel({
   projects = [],
@@ -150,27 +164,33 @@ export default function SourceProjectPanel({
               </IconButton>
             </Tooltip>
           </div>
-          <div className="flex items-center gap-1">
-            {CATEGORY_CHIPS.map((chip) => {
-              const active = filter.category === chip.value;
-              return (
-                <button
-                  key={chip.value}
-                  onClick={() =>
-                    setFilter((f) => ({ ...f, category: chip.value as AssetCategory | 'all' }))
-                  }
-                  className="rounded px-1.5 py-0.5 transition-colors"
-                  style={{
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    background: active ? 'var(--am-blue-bg)' : 'transparent',
-                    color: active ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
-                  }}
-                >
-                  {t(chip.labelKey)}
-                </button>
-              );
-            })}
+          <div className="flex items-center flex-wrap gap-1">
+            {CATEGORY_CHIPS.map((chip) => (
+              <button
+                key={chip.value}
+                onClick={() =>
+                  setFilter((f) => ({ ...f, category: chip.value as AssetCategory | 'all' }))
+                }
+                className="rounded px-1.5 py-0.5 transition-colors"
+                style={chipStyle(filter.category === chip.value)}
+              >
+                {t(chip.labelKey)}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center flex-wrap gap-1">
+            {HEALTH_CHIPS.map((chip) => (
+              <button
+                key={chip.value}
+                onClick={() =>
+                  setFilter((f) => ({ ...f, health: chip.value as HealthStatus | 'all' }))
+                }
+                className="rounded px-1.5 py-0.5 transition-colors"
+                style={chipStyle(filter.health === chip.value)}
+              >
+                {t(chip.labelKey)}
+              </button>
+            ))}
           </div>
         </div>
       )}

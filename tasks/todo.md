@@ -26,11 +26,16 @@
 
 ### Checkpoint B（T7–T8）
 - [x] Rust 扫描/解析单测通过（14 headless 测试）
-- [ ] 选真实目录 → 左栏出现分类后的 Skill 树（需 `pnpm tauri dev` 人工验证文件夹选择/拖拽）
-- [ ] 人工复核
+- [x] 选真实目录 → 左栏出现分类后的 Skill 树（`pnpm tauri dev` 人工验证：拖拽 + 展示正常）
+- [x] 人工复核
 
 ## Phase 2：健康检查 + 选择 + 冲突
-- [ ] **T9** `health.rs` 确定性检查 + HealthReport + 状态点 + 单测 — 依赖：T7 — M
+- [x] **T9** `health.rs` 确定性检查 + HealthReport + 状态点 + 单测 — 依赖：T7 — M
+  - 四类确定性检查（frontmatter 合规 / name 一致 / 触发动词 / 脚本依赖），三级 ok/warning/error；error 集合与 `invalid` 分类一致
+  - 健康度在扫描时算好并挂在 `Skill.healthStatus`/`healthIssues` 上：SkillItem 状态点、SourcePanel 健康度筛选（T8 deferred 的控件本任务补齐）、HealthReport 三处复用同一份数据
+  - HealthReport 重写为消费 `Skill.healthIssues`（弃 Pixso 的 `HealthCheckResult{checks}` interim 类型），含 v0.2 编辑器 deferred 占位
+  - 偏差：health 逻辑放 tauri-free `agentmix-core/src/health.rs`（沿用 T7 规避 wry headless 崩溃）；`HealthIssue.message`/`suggestion` 承载 i18n key（形状不变），前端 `t(key)` 本地化，守住 i18n 红线；HealthReport 展示全部已扫描 Skill（DESIGN「所选 Skill」语义留到 T12 导出前门禁细化）
+  - 12 个 health 单测（真阳/真阴，含中文触发短语）；门禁全绿（26 Rust 测试 / clippy / fmt / 29 前端测试 / 全 lint / build / 类型无漂移）
 - [ ] **T10** `composer.rs` ExportConflict + 选择→Composition + ConflictPanel 重命名/保留一个 — 依赖：T8, T9 — M
 
 ### Checkpoint C（T9–T10）

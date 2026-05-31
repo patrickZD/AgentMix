@@ -84,9 +84,8 @@
     "okCount": "{{count}} ok",
     "warnCount": "{{count}} warn",
     "errCount": "{{count}} err",
-    "checksCount": "{{passed}}/{{total}} checks",
     "scanning": "Scanning skills…",
-    "noResults": "No results yet. Click refresh to run."
+    "noResults": "No skills to check yet. Scan a project first."
   },
   "mainLayout": {
     "selectSkillSimple": "Select a skill to preview",
@@ -111,6 +110,31 @@
     "portable": "Portable",
     "toolSpecific": "Tool-specific",
     "invalid": "Invalid"
+  },
+  "health": {
+    "ok": "OK",
+    "warning": "Warning",
+    "error": "Error",
+    "noIssues": "No issues found",
+    "editDeferred": "Skill editor — available in v0.2",
+    "frontmatterInvalid": "YAML frontmatter is missing or could not be parsed",
+    "frontmatterInvalidFix": "Add a valid `---` frontmatter block with name and description",
+    "nameMissing": "name is required",
+    "nameMissingFix": "Add a name field that matches the skill directory",
+    "nameMismatch": "name does not match the skill directory",
+    "nameMismatchFix": "Rename the field or the directory so they match",
+    "nameTooLong": "name exceeds 64 characters",
+    "nameTooLongFix": "Shorten the name to 64 characters or fewer",
+    "nameFormat": "name should use lowercase letters, digits and hyphens",
+    "nameFormatFix": "Use a kebab-case name, e.g. code-review",
+    "descriptionMissing": "description is required",
+    "descriptionMissingFix": "Add a description that says when to use this skill",
+    "descriptionTooLong": "description exceeds 1024 characters",
+    "descriptionTooLongFix": "Trim the description to 1024 characters or fewer",
+    "descriptionNoTrigger": "description has no trigger phrase",
+    "descriptionNoTriggerFix": "State when to use it, e.g. 'Use when...'",
+    "scriptsNoCompatibility": "bundles scripts but declares no compatibility",
+    "scriptsNoCompatibilityFix": "Add a compatibility field describing the runtime requirements"
   },
   "notFound": {
     "message": "Oops! Page not found",

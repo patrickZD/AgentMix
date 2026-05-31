@@ -176,7 +176,7 @@ function SettingsDialog({
 export default function MainLayout() {
   const { t } = useTranslation();
 
-  const { projects, healthResults, scanAndAdd, removeProject } = useProjectStore();
+  const { projects, scanning, scanAndAdd, removeProject } = useProjectStore();
   const { comboItems, addToCombo, removeItem, moveItem, removeItemsByProject } =
     useCompositionStore();
   const { exportTargets, toggleTarget } = useExportStore();
@@ -218,6 +218,12 @@ export default function MainLayout() {
   const handleScanProject = (projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
     if (project) void scanAndAdd(project.rootPath);
+  };
+
+  // Health-report "re-run" re-scans every loaded project; health is recomputed
+  // as part of each scan.
+  const handleRescanAll = () => {
+    for (const project of projects) void scanAndAdd(project.rootPath);
   };
 
   // Drag-drop entry, equivalent to the folder button. The webview API is only
@@ -415,9 +421,10 @@ export default function MainLayout() {
         {/* Health Check */}
         <div className={effectiveView === 'health-check' ? 'flex-1 overflow-hidden' : 'hidden'}>
           <HealthCheckPanel
-            results={healthResults}
+            projects={projects}
             onNavigate={handleNavigate}
-            onRescan={() => {}}
+            onRescan={handleRescanAll}
+            scanning={scanning}
             simpleMode={simpleMode}
           />
         </div>
