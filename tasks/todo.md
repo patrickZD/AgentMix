@@ -19,11 +19,14 @@
 
 ## Phase 1：扫描 → 展示
 - [x] **T7** Rust scanner + parser + 三分类 + `scan_project` 命令 + 单测（14 headless 测试；逻辑放 tauri-free `agentmix-core` crate 以便 cargo test 不被 wry 崩溃；1000 文件 <5s 基准留到 T17 perf 核验）— 依赖：T4 — M
-- [ ] **T8** 前端扫描接线（SourcePanel、按钮+拖拽等价、筛选、invalid 隐藏）— 依赖：T6, T7 — M
+- [x] **T8** 前端扫描接线（SourcePanel、按钮+拖拽等价、筛选、invalid 隐藏）— 依赖：T6, T7 — M
+  - 3 个 checkpoint commit：(1) 全量迁移 UI 到 generated 域类型（弃 Pixso view-model，单一 Skill 类型）；(2) `pick_directory` Rust 命令 + `lib/scan` IPC seam + `projectStore.scanAndAdd`（按 normalizePath 去重/替换、失败显式入 `scanError`）+ 折叠按钮/拖拽等价 webview 监听；(3) 分类树 + keyword/category 筛选 + `showInvalid` 隐藏（`lib/skillFilter` 纯函数+单测）
+  - 偏差：dialog/fs JS 插件包未装，folder picker 改用已有 `tauri-plugin-dialog` Cargo 依赖的 Rust 命令（零新 npm 依赖）；changeTag/displayName/frontmatter.tags 等 Pixso 装饰按 v0.1 范围去除；health 筛选逻辑已实现+测试，UI 控件留到 T9（届时才有真实健康度数据）
+  - 自动化门禁全绿（type-check / eslint / 29 前端测试 / asset-purity / i18n / i18n:keys / build / 14 Rust 测试 / clippy / fmt）；`pick_directory` 与拖拽为 Tauri 原生入口，需 `pnpm tauri dev` 人工验证
 
 ### Checkpoint B（T7–T8）
-- [ ] 选真实目录 → 左栏出现分类后的 Skill 树
-- [ ] Rust 扫描/解析单测通过
+- [x] Rust 扫描/解析单测通过（14 headless 测试）
+- [ ] 选真实目录 → 左栏出现分类后的 Skill 树（需 `pnpm tauri dev` 人工验证文件夹选择/拖拽）
 - [ ] 人工复核
 
 ## Phase 2：健康检查 + 选择 + 冲突
