@@ -6,44 +6,90 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   Trash2Icon,
+  SearchIcon,
+  EyeIcon,
+  EyeOffIcon,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
+import { filterSkills, groupByCategory, EMPTY_FILTER, type SkillFilter } from '@/lib/skillFilter';
+import type { AssetCategory, SourceProject, Skill, ComboItem } from '../types';
 import SkillItem from './SkillItem';
-import type { SourceProject, Skill, ComboItem } from '../types';
 
 interface SourceProjectPanelProps {
   projects?: SourceProject[];
   comboItems?: ComboItem[];
   selectedSkill?: Skill | null;
+  showInvalid?: boolean;
   onSelectSkill?: (skill: Skill, project: SourceProject) => void;
   onAddProject?: () => void;
   onRemoveProject?: (projectId: string) => void;
   onScanProject?: (projectId: string) => void;
   onAddToCombo?: (skill: Skill, project: SourceProject) => void;
+  onToggleShowInvalid?: () => void;
   simpleMode?: boolean;
 }
+
+const CATEGORY_CHIPS: ReadonlyArray<{ value: SkillFilter['category']; labelKey: string }> = [
+  { value: 'all', labelKey: 'sourcePanel.filterAll' },
+  { value: 'portable', labelKey: 'category.portable' },
+  { value: 'tool-specific', labelKey: 'category.toolSpecific' },
+];
 
 export default function SourceProjectPanel({
   projects = [],
   comboItems = [],
   selectedSkill = null,
+  showInvalid = false,
   onSelectSkill = () => {},
   onAddProject = () => {},
   onRemoveProject = () => {},
   onScanProject = () => {},
   onAddToCombo = () => {},
+  onToggleShowInvalid = () => {},
   simpleMode = false,
 }: SourceProjectPanelProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [filter, setFilter] = useState<SkillFilter>(EMPTY_FILTER);
 
   const toggleCollapse = (id: string) => {
     setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const totalSkills = projects.reduce((s, p) => s + p.skills.length, 0);
+
+  // One category subsection of a project's tree; hidden when it has no skills.
+  const renderSection = (
+    project: SourceProject,
+    labelKey: string,
+    skills: Skill[],
+  ) => {
+    if (skills.length === 0) return null;
+    return (
+      <div key={labelKey}>
+        <div
+          className="px-2 pt-1 text-muted-foreground uppercase"
+          style={{ fontSize: '9.5px', fontWeight: 600, letterSpacing: '0.04em' }}
+        >
+          {t(labelKey)} · {skills.length}
+        </div>
+        {skills.map((skill) => (
+          <SkillItem
+            key={skill.id}
+            skill={skill}
+            project={project}
+            comboItems={comboItems}
+            selected={selectedSkill?.id === skill.id}
+            onClick={(s) => onSelectSkill(s, project)}
+            onAddToCombo={onAddToCombo}
+            simpleMode={simpleMode}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div
@@ -80,6 +126,55 @@ export default function SourceProjectPanel({
         </div>
       </div>
 
+      {/* Filter bar */}
+      {projects.length > 0 && (
+        <div className="flex flex-col gap-1.5 px-2 py-1.5 border-b border-border flex-shrink-0">
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-1 rounded bg-secondary px-1.5">
+              <SearchIcon size={11} className="text-muted-foreground flex-shrink-0" />
+              <input
+                type="text"
+                value={filter.keyword}
+                onChange={(e) => setFilter((f) => ({ ...f, keyword: e.target.value }))}
+                placeholder={t('sourcePanel.search')}
+                className="flex-1 bg-transparent outline-none text-foreground placeholder-muted-foreground py-1"
+                style={{ fontSize: '11.5px', minWidth: 0 }}
+              />
+            </div>
+            <Tooltip
+              title={t(showInvalid ? 'sourcePanel.hideInvalid' : 'sourcePanel.showInvalid')}
+              placement="bottom"
+            >
+              <IconButton onClick={onToggleShowInvalid} className="h-[24px] w-[24px]">
+                {showInvalid ? <EyeIcon size={12} /> : <EyeOffIcon size={12} />}
+              </IconButton>
+            </Tooltip>
+          </div>
+          <div className="flex items-center gap-1">
+            {CATEGORY_CHIPS.map((chip) => {
+              const active = filter.category === chip.value;
+              return (
+                <button
+                  key={chip.value}
+                  onClick={() =>
+                    setFilter((f) => ({ ...f, category: chip.value as AssetCategory | 'all' }))
+                  }
+                  className="rounded px-1.5 py-0.5 transition-colors"
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    background: active ? 'var(--am-blue-bg)' : 'transparent',
+                    color: active ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
+                  }}
+                >
+                  {t(chip.labelKey)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Project list */}
       <div className="flex-1 overflow-y-auto scrollbar-thin py-1">
         {projects.length === 0 && (
@@ -93,7 +188,8 @@ export default function SourceProjectPanel({
 
         {projects.map((project) => {
           const isCollapsed = collapsed[project.id];
-          const projectSkillCount = project.skills.length;
+          const visible = filterSkills(project.skills, filter, showInvalid);
+          const groups = groupByCategory(visible);
 
           return (
             <div key={project.id} className="mb-1">
@@ -120,7 +216,7 @@ export default function SourceProjectPanel({
                   className="text-muted-foreground flex-shrink-0"
                   style={{ fontSize: '10px' }}
                 >
-                  {projectSkillCount}
+                  {visible.length}
                 </span>
 
                 {/* Hover actions */}
@@ -147,25 +243,16 @@ export default function SourceProjectPanel({
                 </div>
               </div>
 
-              {/* Skill list */}
+              {/* Categorized skill tree */}
               <div className={`pl-5 pr-1 ${isCollapsed ? 'hidden' : ''}`}>
-                {project.skills.length === 0 && (
+                {visible.length === 0 && (
                   <p className="text-muted-foreground py-1 px-2" style={{ fontSize: '11.5px' }}>
-                    {t('sourcePanel.noSkills')}
+                    {t(project.skills.length === 0 ? 'sourcePanel.noSkills' : 'sourcePanel.noMatch')}
                   </p>
                 )}
-                {project.skills.map((skill) => (
-                  <SkillItem
-                    key={skill.id}
-                    skill={skill}
-                    project={project}
-                    comboItems={comboItems}
-                    selected={selectedSkill?.id === skill.id}
-                    onClick={(s) => onSelectSkill(s, project)}
-                    onAddToCombo={onAddToCombo}
-                    simpleMode={simpleMode}
-                  />
-                ))}
+                {renderSection(project, 'category.portable', groups.portable)}
+                {renderSection(project, 'category.toolSpecific', groups.toolSpecific)}
+                {renderSection(project, 'category.invalid', groups.invalid)}
               </div>
             </div>
           );

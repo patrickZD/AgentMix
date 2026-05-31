@@ -35,7 +35,12 @@
     "removeProject": "移除项目",
     "emptySimple": "还没有项目。\n点击 + 添加文件夹。",
     "emptyFull": "还没有来源项目。\n点击 + 打开一个目录。",
-    "noSkills": "未发现 Skill"
+    "noSkills": "未发现 Skill",
+    "noMatch": "没有符合筛选条件的 Skill",
+    "search": "搜索 Skill",
+    "filterAll": "全部",
+    "showInvalid": "显示无效候选",
+    "hideInvalid": "隐藏无效候选"
   },
   "skillItem": {
     "alreadyInCombo": "已在组合中",

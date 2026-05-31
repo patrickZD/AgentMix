@@ -6,6 +6,7 @@ beforeEach(() =>
   useUiStore.setState({
     view: 'main',
     simpleMode: false,
+    showInvalid: false,
     leftCollapsed: false,
     selectedSkill: null,
     selectedProject: null,
@@ -22,6 +23,12 @@ describe('uiStore', () => {
     expect(useUiStore.getState().simpleMode).toBe(false);
     useUiStore.getState().toggleSimpleMode();
     expect(useUiStore.getState().simpleMode).toBe(true);
+  });
+
+  it('toggleShowInvalid flips showInvalid', () => {
+    expect(useUiStore.getState().showInvalid).toBe(false);
+    useUiStore.getState().toggleShowInvalid();
+    expect(useUiStore.getState().showInvalid).toBe(true);
   });
 
   it('selectSkill records both the skill and its project', () => {

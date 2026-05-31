@@ -36,7 +36,12 @@
     "removeProject": "Remove Project",
     "emptySimple": "No projects yet.\nClick + to add a folder.",
     "emptyFull": "No source projects.\nClick + to open a directory.",
-    "noSkills": "No skills found"
+    "noSkills": "No skills found",
+    "noMatch": "No skills match the filter",
+    "search": "Search skills",
+    "filterAll": "All",
+    "showInvalid": "Show invalid candidates",
+    "hideInvalid": "Hide invalid candidates"
   },
   "skillItem": {
     "alreadyInCombo": "Already in Combo",

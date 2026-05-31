@@ -185,6 +185,7 @@ export default function MainLayout() {
     selectedSkill,
     selectedProject,
     simpleMode,
+    showInvalid,
     settingsOpen,
     leftCollapsed,
     mergeSkillA,
@@ -192,6 +193,7 @@ export default function MainLayout() {
     setView,
     selectSkill,
     toggleSimpleMode,
+    toggleShowInvalid,
     setSettingsOpen,
     toggleLeftCollapsed,
     setMergeSkills,
@@ -298,11 +300,13 @@ export default function MainLayout() {
                 projects={projects}
                 comboItems={comboItems}
                 selectedSkill={selectedSkill}
+                showInvalid={showInvalid}
                 onSelectSkill={handleSelectSkill}
                 onAddProject={handleAddProject}
                 onRemoveProject={handleRemoveProject}
                 onScanProject={handleScanProject}
                 onAddToCombo={handleAddToCombo}
+                onToggleShowInvalid={toggleShowInvalid}
                 simpleMode={simpleMode}
               />
             </div>
