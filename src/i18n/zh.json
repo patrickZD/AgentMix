@@ -67,6 +67,7 @@
     "selectTarget": "选择目标项目…",
     "preview": "生成预览 (Dry-run)",
     "previewing": "正在生成预览…",
+    "previewNeedsCombo": "请先把 Skill 加入组合（悬浮 Skill，点 +）",
     "buildFailed": "生成预览失败：{{error}}",
     "createCount": "新建 {{count}}",
     "overwriteCount": "覆盖 {{count}}",

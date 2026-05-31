@@ -104,22 +104,25 @@ export default function ExportPanel({
 
             {/* Target project path picker (active tool only) */}
             {tool.active && (
-              <button
-                onClick={onPickTarget}
-                className="flex items-center gap-1 mt-1.5 w-full text-left group/path"
-              >
-                <FolderIcon size={11} className="text-muted-foreground flex-shrink-0" />
-                <span
-                  className="truncate group-hover/path:text-foreground transition-colors"
-                  style={{
-                    fontSize: '10.5px',
-                    fontFamily: 'monospace',
-                    color: targetPath ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
-                  }}
+              <Tooltip title={targetPath ?? t('exportPanel.selectTarget')} placement="top">
+                <button
+                  onClick={onPickTarget}
+                  className="flex items-center gap-1 mt-1.5 w-full text-left group/path"
                 >
-                  {targetPath ?? t('exportPanel.selectTarget')}
-                </span>
-              </button>
+                  <FolderIcon size={11} className="text-muted-foreground flex-shrink-0" />
+                  <span
+                    className="truncate group-hover/path:text-foreground transition-colors"
+                    style={{
+                      minWidth: 0,
+                      fontSize: '10.5px',
+                      fontFamily: 'monospace',
+                      color: targetPath ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
+                    }}
+                  >
+                    {targetPath ?? t('exportPanel.selectTarget')}
+                  </span>
+                </button>
+              </Tooltip>
             )}
           </div>
         ))}
@@ -135,6 +138,14 @@ export default function ExportPanel({
         >
           {building ? t('exportPanel.previewing') : t('exportPanel.preview')}
         </button>
+
+        {!canPreview && !building && (
+          <p className="text-muted-foreground text-center" style={{ fontSize: '10px' }}>
+            {comboItems.length === 0
+              ? t('exportPanel.previewNeedsCombo')
+              : t('exportPanel.noTarget')}
+          </p>
+        )}
 
         {buildError && (
           <p style={{ fontSize: '10.5px', color: 'var(--am-red)' }}>

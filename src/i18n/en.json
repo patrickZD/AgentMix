@@ -69,6 +69,7 @@
     "selectTarget": "Select target project…",
     "preview": "Preview (Dry-run)",
     "previewing": "Building preview…",
+    "previewNeedsCombo": "Add skills to the combo first (hover a skill, click +)",
     "buildFailed": "Preview failed: {{error}}",
     "createCount": "{{count}} new",
     "overwriteCount": "{{count}} overwrite",
