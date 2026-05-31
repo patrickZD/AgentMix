@@ -8,7 +8,7 @@
 
 use std::collections::HashMap;
 
-use agentmix_types::{ConflictCandidate, ExportConflict};
+use agentmix_types::{ConflictCandidate, ConflictKind, ExportConflict};
 
 /// Detect v0.1 export conflicts: candidates whose exported name collides
 /// case-insensitively (Windows rule, DESIGN.md §9.8). Returns one
@@ -33,6 +33,7 @@ pub fn detect_export_conflicts(candidates: &[ConflictCandidate]) -> Vec<ExportCo
         .filter_map(|key| {
             let (name, ids) = groups.remove(&key)?;
             (ids.len() >= 2).then_some(ExportConflict {
+                kind: ConflictKind::NameCollision,
                 exported_name: name,
                 asset_ids: ids,
             })
@@ -58,6 +59,7 @@ mod tests {
             candidate("b", "code-review"),
         ]);
         assert_eq!(conflicts.len(), 1);
+        assert_eq!(conflicts[0].kind, ConflictKind::NameCollision);
         assert_eq!(conflicts[0].exported_name, "code-review");
         assert_eq!(conflicts[0].asset_ids, vec!["a", "b"]);
     }

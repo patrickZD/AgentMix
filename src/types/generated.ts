@@ -15,6 +15,18 @@ export type AssetCategory =
 export type AssetKind = "skill";
 
 /**
+ *  Where the pre-export backup archive will be written, and how big the content
+ *  being backed up is. The archive itself is created by execute (T13), not here.
+ */
+export type BackupPlan = {
+	/**  The target directory whose existing content is backed up before writes. */
+	targetPath: string,
+	/**  Destination archive: ~/.agentmix/backups/<project-hash>/<timestamp>.zip. */
+	backupArchive: string,
+	sizeBytes: number,
+};
+
+/**
  *  One asset competing for a name in the export target, fed to conflict
  *  detection. Kept asset-kind-agnostic: only the id and the name it would be
  *  written as matter, so the pipeline never branches on a concrete asset type.
@@ -28,17 +40,80 @@ export type ConflictCandidate = {
 	exportedName: string,
 };
 
+/**  Why an export conflict was raised (DESIGN.md §6.2). Both block export. */
+export type ConflictKind = 
+/**  Two or more selected assets share the same exported name. */
+"nameCollision" | 
+/**  A selected asset's exported name already exists in the target directory. */
+"targetExists";
+
 /**
- *  A v0.1 export conflict: two or more selected assets would be written to the
- *  same target directory under the same name (compared case-insensitively).
- *  Must be resolved before export (DESIGN.md §6.2).
+ *  A v0.1 export conflict: assets that would collide on a name in the target
+ *  directory (compared case-insensitively). Must be resolved before export.
  */
 export type ExportConflict = {
+	kind: ConflictKind,
 	/**  The colliding exported name, as first encountered among the candidates. */
 	exportedName: string,
-	/**  Ids of the candidates that collide on this name (length >= 2). */
+	/**
+	 *  Ids of the candidates that collide on this name. For NameCollision this
+	 *  is the >= 2 selected assets; for TargetExists it is the single selected
+	 *  asset whose name already exists at the target.
+	 */
 	assetIds: string[],
 };
+
+/**
+ *  The single object the Dry-run preview renders and execute consumes
+ *  (DESIGN.md §8.2). v0.1 targets one directory (Claude Code project-level), so
+ *  the multi-target / runtime-warning fields are omitted until v0.2.
+ */
+export type ExportPlan = {
+	/**  Resolved target directory: <project>/.claude/skills. */
+	targetDir: string,
+	operations: FileOperation[],
+	/**  Must be empty before execute is allowed (DESIGN.md §8.2). */
+	conflicts: ExportConflict[],
+	backups: BackupPlan[],
+	managedManifest: ManagedManifest,
+	/**  Sum of all operation sizes — the total bytes the export will write. */
+	totalBytes: number,
+};
+
+/**
+ *  One selected asset to export: the source directory to copy and the name it
+ *  will be written as. Asset-kind-agnostic — the planner copies directories and
+ *  never inspects a concrete asset type.
+ */
+export type ExportRequestItem = {
+	assetId: string,
+	/**  Absolute path of the asset's source directory (a Skill's skillDirPath). */
+	sourceDir: string,
+	exportedName: string,
+	/**  Source reference recorded in the manifest (e.g. sourceProjectId:relPath). */
+	sourceRef: string,
+};
+
+/**  One planned file write (DESIGN.md §8.2 FileOperation). */
+export type FileOperation = {
+	kind: FileOperationKind,
+	/**  Absolute destination path. */
+	path: string,
+	/**
+	 *  Bytes that will be written (from the source file). Exported to TS as
+	 *  `number` (byte counts stay well within JS's safe-integer range).
+	 */
+	size: number,
+	/**  Id of the asset this operation belongs to. */
+	sourceAsset: string,
+};
+
+/**
+ *  A single file write planned for export. Produced only by the planner; never
+ *  written by it. v0.1 produces Create / Overwrite (delete-on-reexport is a
+ *  later reconciliation concern and is not modelled yet).
+ */
+export type FileOperationKind = "create" | "overwrite";
 
 /**  A single deterministic health finding (no AI involved). */
 export type HealthIssue = {
@@ -54,6 +129,22 @@ export type HealthLevel = "warning" | "error";
 
 /**  Overall deterministic health of an asset. */
 export type HealthStatus = "ok" | "warning" | "error";
+
+/**  One entry in the target-side ledger of AgentMix-managed assets. */
+export type ManagedAsset = {
+	name: string,
+	/**  Where this asset came from (source project id + relative path). */
+	sourceRef: string,
+	/**  Content hash of the asset's SKILL.md, for later reconciliation. */
+	contentHash: string,
+};
+
+/**  The target-side ledger written alongside the exported assets. */
+export type ManagedManifest = {
+	/**  e.g. <target>/.claude/skills/.agentmix-manifest.json. */
+	manifestPath: string,
+	managedAssets: ManagedAsset[],
+};
 
 /**
  *  A Skill asset discovered by scanning — the concrete v0.1 provider of the

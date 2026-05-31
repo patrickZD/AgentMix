@@ -1,4 +1,8 @@
-use agentmix_types::{ConflictCandidate, ExportConflict, SourceProject};
+use std::path::PathBuf;
+
+use agentmix_types::{
+    ConflictCandidate, ExportConflict, ExportPlan, ExportRequestItem, SourceProject,
+};
 use tauri_plugin_dialog::DialogExt;
 
 // IPC smoke-test command.
@@ -39,6 +43,34 @@ fn detect_conflicts(candidates: Vec<ConflictCandidate>) -> Vec<ExportConflict> {
     agentmix_core::composer::detect_export_conflicts(&candidates)
 }
 
+/// Resolve the per-user backups root: ~/.agentmix/backups (never inside a target
+/// project). Backups are isolated here per DESIGN.md §6.2 / the architecture red
+/// lines.
+fn backups_root() -> Result<PathBuf, String> {
+    let home = std::env::var("USERPROFILE")
+        .or_else(|_| std::env::var("HOME"))
+        .map_err(|_| "could not resolve home directory".to_string())?;
+    Ok(PathBuf::from(home).join(".agentmix").join("backups"))
+}
+
+/// Build the Dry-run ExportPlan for the selected assets into the target project.
+/// Only produces the plan; no user files are written (DESIGN.md §6.12).
+#[tauri::command]
+fn build_export_plan(
+    items: Vec<ExportRequestItem>,
+    target_project_path: String,
+) -> Result<ExportPlan, String> {
+    let target = std::path::Path::new(&target_project_path);
+    if !target.is_dir() {
+        return Err(format!("not a directory: {target_project_path}"));
+    }
+    Ok(agentmix_core::exporter::build_export_plan(
+        &items,
+        target,
+        &backups_root()?,
+    ))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -48,7 +80,8 @@ pub fn run() {
             ping,
             scan_project,
             pick_directory,
-            detect_conflicts
+            detect_conflicts,
+            build_export_plan
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

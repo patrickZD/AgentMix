@@ -16,7 +16,9 @@ fn main() {
     let types = Types::default()
         .register::<agentmix_types::SourceProject>()
         .register::<agentmix_types::ConflictCandidate>()
-        .register::<agentmix_types::ExportConflict>();
+        .register::<agentmix_types::ExportConflict>()
+        .register::<agentmix_types::ExportPlan>()
+        .register::<agentmix_types::ExportRequestItem>();
 
     let rendered = Typescript::default()
         .header(

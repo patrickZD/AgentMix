@@ -3,6 +3,7 @@
 //! GUI on Windows). The src-tauri app crate calls into here from its commands.
 
 pub mod composer;
+pub mod exporter;
 pub mod health;
 pub mod parser;
 pub mod scanner;

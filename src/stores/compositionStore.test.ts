@@ -90,7 +90,9 @@ describe('compositionStore.refreshConflicts', () => {
     store().addToCombo(makeSkill('s1', 'code-review'), makeProject('p1'));
     store().addToCombo(makeSkill('s2', 'code-review'), makeProject('p2'));
     const ids = store().comboItems.map((c) => c.id);
-    mockDetect.mockResolvedValue([{ exportedName: 'code-review', assetIds: ids }]);
+    mockDetect.mockResolvedValue([
+      { kind: 'nameCollision', exportedName: 'code-review', assetIds: ids },
+    ]);
 
     await store().refreshConflicts();
 
