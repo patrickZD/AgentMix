@@ -1,0 +1,154 @@
+import {
+  LayersIcon,
+  FolderPlusIcon,
+  BookOpenIcon,
+  GithubIcon,
+  ZapIcon,
+} from 'lucide-react';
+import type { AppView } from '../types';
+
+interface WelcomeScreenProps {
+  onAddProject?: () => void;
+  onNavigate?: (view: AppView) => void;
+  simpleMode?: boolean;
+}
+
+const features = [
+  {
+    icon: `🧩`,
+    title: `Mix Agent Skills`,
+    desc: `Combine skills from multiple projects into one powerful combo.`,
+  },
+  {
+    icon: `⚡`,
+    title: `Export Anywhere`,
+    desc: `Send to Claude Code, Cursor, Codex CLI, OpenCode in one click.`,
+  },
+  {
+    icon: `🔀`,
+    title: `Merge Conflicts`,
+    desc: `Use the visual Merge Workbench to resolve skill conflicts.`,
+  },
+  {
+    icon: `❤️`,
+    title: `Health Checks`,
+    desc: `Validate frontmatter, detect stale or broken skills instantly.`,
+  },
+];
+
+export default function WelcomeScreen({
+  onAddProject = () => {},
+  onNavigate = () => {},
+  simpleMode = false,
+}: WelcomeScreenProps) {
+  return (
+    <div
+      data-cmp="WelcomeScreen"
+      className="flex flex-col items-center justify-center h-full w-full bg-background"
+      style={{ minHeight: '100vh' }}
+    >
+      <div className="flex flex-col items-center gap-6 max-w-lg w-full px-8">
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="flex items-center justify-center rounded-xl"
+            style={{
+              width: 56,
+              height: 56,
+              background: 'var(--am-blue-bg)',
+            }}
+          >
+            <LayersIcon size={28} style={{ color: 'var(--am-blue)' }} />
+          </div>
+          <div className="text-center">
+            <h1
+              className="font-bold text-foreground"
+              style={{ fontSize: '24px', letterSpacing: '-0.025em' }}
+            >
+              AgentMix
+            </h1>
+            <p className="text-muted-foreground" style={{ fontSize: '13px', marginTop: 4 }}>
+              {simpleMode
+                ? `Mix and export AI coding skills from your projects`
+                : `Local tool for mixing Agent Skills across projects and exporting to AI coding tools`}
+            </p>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="flex flex-col items-center gap-3 w-full">
+          <button
+            onClick={onAddProject}
+            className="flex items-center justify-center gap-2 w-full rounded-lg font-semibold transition-all hover:opacity-90 active:scale-99"
+            style={{
+              background: 'var(--am-blue)',
+              color: '#fff',
+              padding: '10px 20px',
+              fontSize: '13.5px',
+            }}
+          >
+            <FolderPlusIcon size={16} />
+            {simpleMode ? `Open a Project Folder` : `Add Source Project`}
+          </button>
+
+          <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
+            {simpleMode
+              ? `Choose a folder that contains AI skills`
+              : `Open a directory containing a \`.claude/skills/\` or \`skills/\` folder`}
+          </p>
+        </div>
+
+        {/* Feature grid */}
+        <div className="w-full flex flex-wrap gap-2">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="flex items-start gap-2.5 rounded-lg border border-border bg-card p-3"
+              style={{ width: 'calc(50% - 4px)' }}
+            >
+              <span style={{ fontSize: '18px', lineHeight: 1 }}>{f.icon}</span>
+              <div>
+                <p className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
+                  {f.title}
+                </p>
+                <p className="text-muted-foreground" style={{ fontSize: '11px', marginTop: 2 }}>
+                  {f.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer links */}
+        <div className="flex items-center gap-4 text-muted-foreground" style={{ fontSize: '11px' }}>
+          <a
+            href="#"
+            className="flex items-center gap-1 hover:text-foreground transition-colors"
+            onClick={(e) => e.preventDefault()}
+          >
+            <BookOpenIcon size={11} />
+            Docs
+          </a>
+          <span>·</span>
+          <a
+            href="#"
+            className="flex items-center gap-1 hover:text-foreground transition-colors"
+            onClick={(e) => e.preventDefault()}
+          >
+            <GithubIcon size={11} />
+            GitHub
+          </a>
+          <span>·</span>
+          <a
+            href="#"
+            className="flex items-center gap-1 hover:text-foreground transition-colors"
+            onClick={(e) => e.preventDefault()}
+          >
+            <ZapIcon size={11} />
+            v0.1.0
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}

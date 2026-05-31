@@ -1,0 +1,61 @@
+{
+  "routes": [
+    {
+      "path": "/",
+      "src": "src/pages/Index.tsx"
+    }
+  ],
+  "components": [
+    {
+      "name": "Badge",
+      "src": "src/components/Badge.tsx",
+      "route": "/preview/badge"
+    },
+    {
+      "name": "ComboListPanel",
+      "src": "src/components/ComboListPanel.tsx",
+      "route": "/preview/combo-list-panel"
+    },
+    {
+      "name": "ExportPanel",
+      "src": "src/components/ExportPanel.tsx",
+      "route": "/preview/export-panel"
+    },
+    {
+      "name": "HealthCheckPanel",
+      "src": "src/components/HealthCheckPanel.tsx",
+      "route": "/preview/health-check-panel"
+    },
+    {
+      "name": "MergeWorkbench",
+      "src": "src/components/MergeWorkbench.tsx",
+      "route": "/preview/merge-workbench"
+    },
+    {
+      "name": "SkillItem",
+      "src": "src/components/SkillItem.tsx",
+      "route": "/preview/skill-item"
+    },
+    {
+      "name": "SourceProjectPanel",
+      "src": "src/components/SourceProjectPanel.tsx",
+      "route": "/preview/source-project-panel"
+    },
+    {
+      "name": "TitleBar",
+      "src": "src/components/TitleBar.tsx",
+      "route": "/preview/title-bar"
+    },
+    {
+      "name": "WelcomeScreen",
+      "src": "src/components/WelcomeScreen.tsx",
+      "route": "/preview/welcome-screen"
+    }
+  ],
+  "data": [
+    {
+      "name": "mockData",
+      "src": "src/data/mockData.ts"
+    }
+  ]
+}
