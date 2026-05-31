@@ -48,7 +48,12 @@
 - [ ] 人工复核
 
 ## Phase 3：导出计划 → 预览 → 执行 → 备份
-- [ ] **T11** `exporter.rs` 构建 ExportPlan + `build_export_plan` 命令 + 单测（只产 plan）— 依赖：T10 — M
+- [x] **T11** `exporter.rs` 构建 ExportPlan + `build_export_plan` 命令 + 单测（只产 plan）— 依赖：T10 — M
+  - `agentmix-core/exporter.rs::build_export_plan`：逐 Skill 走源目录，每文件产一条 create/overwrite `FileOperation` → `<project>/.claude/skills/<exportedName>/`；产 BackupPlan / ManagedManifest / total_bytes；**不写任何文件**（execute 在 T13）。backups_root 注入，headless 可测
+  - 冲突复用单一 composer 规则：组合内 `NameCollision` + 目标已存在同名目录 `TargetExists`；`ExportConflict` 加 `kind` 区分，二者都阻断导出
+  - 备份仅当存在 overwrite 时规划，且只落 `~/.agentmix/backups/<target-hash>/`，绝不进目标项目
+  - 偏差：`targets`/`runtimeWarnings`/`ToolAdapter`/`FileOperationKind::Delete` 等多目标/反向同步字段 v0.1 不接入；u64 字节字段 schema 覆写为 TS `number`（字段仍 u64，求和不溢出）
+  - 4 个 exporter 单测（clean→全 create+字节数、plan 不写文件、已存在→overwrite+TargetExists+backup、同名 NameCollision）；37 Rust 测试 + 全门禁绿 + 类型无漂移
 - [ ] **T12** Dry-run 预览 UI（ExportPanel）+ 目标路径选择（预览不写文件）— 依赖：T11 — M
 - [ ] **T13** `ExportCoordinator.execute` + 备份 + 重命名/frontmatter 同步 + `lint:no-direct-write`— 依赖：T12 — M
 
