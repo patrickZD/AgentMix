@@ -9,8 +9,8 @@ import {
   ChevronRightIcon,
 } from 'lucide-react';
 import { useState } from 'react';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
+import Tooltip from '@/components/ui/Tooltip';
+import IconButton from '@/components/ui/IconButton';
 import type { HealthCheckResult, AppView } from '../types';
 
 interface HealthCheckPanelProps {
@@ -54,7 +54,7 @@ export default function HealthCheckPanel({
         style={{ height: 'var(--am-toolbar-h)', background: 'var(--am-panel-bg)' }}
       >
         <Tooltip title="Back to Workspace">
-          <IconButton size="small" onClick={() => onNavigate('main')} sx={{ width: 26, height: 26, color: 'text.secondary' }}>
+          <IconButton onClick={() => onNavigate('main')} className="h-[26px] w-[26px]">
             <ArrowLeftIcon size={13} />
           </IconButton>
         </Tooltip>
@@ -92,10 +92,9 @@ export default function HealthCheckPanel({
 
         <Tooltip title="Re-run Health Check" placement="bottom">
           <IconButton
-            size="small"
             onClick={onRescan}
             disabled={scanning}
-            sx={{ width: 26, height: 26, color: 'text.secondary' }}
+            className="h-[26px] w-[26px]"
           >
             <RefreshCwIcon size={13} className={scanning ? 'animate-spin' : ''} />
           </IconButton>

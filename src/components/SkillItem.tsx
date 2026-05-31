@@ -1,5 +1,5 @@
 import { PlusCircleIcon, CheckCircleIcon } from 'lucide-react';
-import Tooltip from '@mui/material/Tooltip';
+import Tooltip from '@/components/ui/Tooltip';
 import Badge from './Badge';
 import type { Skill, SourceProject, ComboItem } from '../types';
 

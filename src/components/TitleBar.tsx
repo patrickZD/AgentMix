@@ -4,8 +4,8 @@ import {
   LayersIcon,
   ChevronRightIcon,
 } from 'lucide-react';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@/components/ui/IconButton';
+import Tooltip from '@/components/ui/Tooltip';
 import type { AppView } from '../types';
 
 interface TitleBarProps {
@@ -87,13 +87,13 @@ export default function TitleBar({
         </button>
 
         <Tooltip title="Settings" placement="bottom">
-          <IconButton size="small" onClick={onSettingsClick} sx={{ color: 'text.secondary', width: 28, height: 28 }}>
+          <IconButton onClick={onSettingsClick} className="h-[28px] w-[28px]">
             <SettingsIcon size={14} />
           </IconButton>
         </Tooltip>
 
         <Tooltip title="About AgentMix" placement="bottom">
-          <IconButton size="small" onClick={onAboutClick} sx={{ color: 'text.secondary', width: 28, height: 28 }}>
+          <IconButton onClick={onAboutClick} className="h-[28px] w-[28px]">
             <InfoIcon size={14} />
           </IconButton>
         </Tooltip>

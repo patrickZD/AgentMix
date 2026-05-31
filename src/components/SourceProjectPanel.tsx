@@ -7,8 +7,8 @@ import {
   ChevronRightIcon,
   Trash2Icon,
 } from 'lucide-react';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
+import Tooltip from '@/components/ui/Tooltip';
+import IconButton from '@/components/ui/IconButton';
 import SkillItem from './SkillItem';
 import type { SourceProject, Skill, ComboItem } from '../types';
 
@@ -71,7 +71,7 @@ export default function SourceProjectPanel({
 
         <div className="flex items-center gap-0">
           <Tooltip title="Add Source Project" placement="bottom">
-            <IconButton size="small" onClick={onAddProject} sx={{ width: 26, height: 26, color: 'text.secondary' }}>
+            <IconButton onClick={onAddProject} className="h-[26px] w-[26px]">
               <PlusIcon size={13} />
             </IconButton>
           </Tooltip>
@@ -130,18 +130,16 @@ export default function SourceProjectPanel({
                 >
                   <Tooltip title="Re-scan" placement="bottom">
                     <IconButton
-                      size="small"
                       onClick={() => onScanProject(project.id)}
-                      sx={{ width: 20, height: 20, color: 'text.secondary' }}
+                      className="h-[20px] w-[20px]"
                     >
                       <RefreshCwIcon size={11} />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Remove Project" placement="bottom">
                     <IconButton
-                      size="small"
                       onClick={() => onRemoveProject(project.id)}
-                      sx={{ width: 20, height: 20, color: 'text.secondary' }}
+                      className="h-[20px] w-[20px]"
                     >
                       <Trash2Icon size={11} />
                     </IconButton>

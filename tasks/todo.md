@@ -3,7 +3,7 @@
 任务详情见 `tasks/plan.md`。每个任务含验收标准与验证命令；checkpoint 处人工复核后再继续。
 
 ## Phase 0：地基与工具链
-- [ ] **T1** 重构到根目录 + 迁移 pnpm（删 `bun.lock`，补 `type-check`/`format` 脚本）— 依赖：无 — M
+- [x] **T1** 重构到根目录 + 迁移 pnpm（删 `bun.lock`，补 `type-check` 脚本；`format` 待选 formatter）— 依赖：无 — M
 - [ ] **T2** 清理 Pixso 多余 UI 套件（移除 MUI/Emotion/Arco/antd/tdesign，MUI 组件换 Radix）— 依赖：T1 — M
 - [ ] **T3** Tauri 2.0 后端脚手架（`src-tauri/`、dialog/fs 插件、`ping` 命令）— 依赖：T1 — M
 - [ ] **T4** tauri-specta 数据模型 + 生成 TS 类型 + `lint:asset-purity`— 依赖：T3 — M

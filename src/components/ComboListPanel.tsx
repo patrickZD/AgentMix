@@ -6,8 +6,8 @@ import {
   ArrowDownIcon,
   AlertTriangleIcon,
 } from 'lucide-react';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
+import Tooltip from '@/components/ui/Tooltip';
+import IconButton from '@/components/ui/IconButton';
 import Badge from './Badge';
 import type { ComboItem, AppView } from '../types';
 
@@ -74,10 +74,9 @@ export default function ComboListPanel({
           <Tooltip title="Open Merge Workbench" placement="bottom">
             <span>
               <IconButton
-                size="small"
                 onClick={() => onNavigate('merge-workbench')}
                 disabled={comboItems.length < 2}
-                sx={{ width: 26, height: 26, color: 'text.secondary' }}
+                className="h-[26px] w-[26px]"
               >
                 <MergeIcon size={13} />
               </IconButton>
@@ -149,9 +148,8 @@ export default function ComboListPanel({
                 {item.hasConflict && (
                   <Tooltip title="Open in Merge Workbench" placement="left">
                     <IconButton
-                      size="small"
                       onClick={() => onOpenMerge(item.id)}
-                      sx={{ width: 20, height: 20, color: 'text.secondary' }}
+                      className="h-[20px] w-[20px]"
                     >
                       <MergeIcon size={11} />
                     </IconButton>
@@ -160,10 +158,9 @@ export default function ComboListPanel({
                 <Tooltip title="Move Up" placement="left">
                   <span>
                     <IconButton
-                      size="small"
                       disabled={isFirst}
                       onClick={() => onMoveItem(item.id, 'up')}
-                      sx={{ width: 20, height: 20, color: 'text.secondary' }}
+                      className="h-[20px] w-[20px]"
                     >
                       <ArrowUpIcon size={11} />
                     </IconButton>
@@ -172,10 +169,9 @@ export default function ComboListPanel({
                 <Tooltip title="Move Down" placement="left">
                   <span>
                     <IconButton
-                      size="small"
                       disabled={isLast}
                       onClick={() => onMoveItem(item.id, 'down')}
-                      sx={{ width: 20, height: 20, color: 'text.secondary' }}
+                      className="h-[20px] w-[20px]"
                     >
                       <ArrowDownIcon size={11} />
                     </IconButton>
@@ -183,9 +179,8 @@ export default function ComboListPanel({
                 </Tooltip>
                 <Tooltip title="Remove from Combo" placement="left">
                   <IconButton
-                    size="small"
                     onClick={() => onRemoveItem(item.id)}
-                    sx={{ width: 20, height: 20, color: 'text.secondary' }}
+                    className="h-[20px] w-[20px]"
                   >
                     <Trash2Icon size={11} />
                   </IconButton>

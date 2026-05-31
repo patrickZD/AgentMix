@@ -8,8 +8,8 @@ import {
   ArrowLeftIcon,
   GripVerticalIcon,
 } from 'lucide-react';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
+import Tooltip from '@/components/ui/Tooltip';
+import IconButton from '@/components/ui/IconButton';
 import type { Skill, MergeBlock, AppView } from '../types';
 
 interface MergeWorkbenchProps {
@@ -87,7 +87,7 @@ export default function MergeWorkbench({
         style={{ height: 'var(--am-toolbar-h)', background: 'var(--am-panel-bg)' }}
       >
         <Tooltip title="Back to Workspace">
-          <IconButton size="small" onClick={() => onNavigate('main')} sx={{ width: 26, height: 26, color: 'text.secondary' }}>
+          <IconButton onClick={() => onNavigate('main')} className="h-[26px] w-[26px]">
             <ArrowLeftIcon size={13} />
           </IconButton>
         </Tooltip>
@@ -108,10 +108,9 @@ export default function MergeWorkbench({
         <Tooltip title="Copy Draft">
           <span>
             <IconButton
-              size="small"
               onClick={copyDraft}
               disabled={draftBlocks.length === 0}
-              sx={{ width: 26, height: 26, color: 'text.secondary' }}
+              className="h-[26px] w-[26px]"
             >
               <CopyIcon size={12} />
             </IconButton>
@@ -120,10 +119,9 @@ export default function MergeWorkbench({
         <Tooltip title="Clear Draft">
           <span>
             <IconButton
-              size="small"
               onClick={() => setDraftBlocks([])}
               disabled={draftBlocks.length === 0}
-              sx={{ width: 26, height: 26, color: 'text.secondary' }}
+              className="h-[26px] w-[26px]"
             >
               <Trash2Icon size={12} />
             </IconButton>

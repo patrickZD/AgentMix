@@ -6,8 +6,8 @@ import {
   ChevronRightIcon,
   ChevronLeftIcon,
 } from 'lucide-react';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
+import Tooltip from '@/components/ui/Tooltip';
+import IconButton from '@/components/ui/IconButton';
 import TitleBar from '../components/TitleBar';
 import SourceProjectPanel from '../components/SourceProjectPanel';
 import ComboListPanel from '../components/ComboListPanel';
@@ -360,9 +360,8 @@ export default function MainLayout() {
               <div className="flex justify-center pt-2">
                 <Tooltip title="Expand Projects Panel" placement="right">
                   <IconButton
-                    size="small"
                     onClick={() => setLeftCollapsed(false)}
-                    sx={{ width: 24, height: 24, color: 'text.secondary' }}
+                    className="h-[24px] w-[24px]"
                   >
                     <ChevronRightIcon size={13} />
                   </IconButton>
@@ -405,9 +404,8 @@ export default function MainLayout() {
                 <div className="flex-1" />
                 <Tooltip title="Health Check">
                   <IconButton
-                    size="small"
                     onClick={() => handleNavigate('health-check')}
-                    sx={{ width: 26, height: 26, color: 'text.secondary' }}
+                    className="h-[26px] w-[26px]"
                   >
                     <HeartPulseIcon size={13} />
                   </IconButton>

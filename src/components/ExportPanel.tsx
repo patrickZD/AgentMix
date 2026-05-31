@@ -6,8 +6,8 @@ import {
   FolderIcon,
   ZapIcon,
 } from 'lucide-react';
-import Tooltip from '@mui/material/Tooltip';
-import Switch from '@mui/material/Switch';
+import Tooltip from '@/components/ui/Tooltip';
+import Switch from '@/components/ui/Switch';
 import type { ExportTarget, ComboItem } from '../types';
 
 const TOOL_META: Record<string, { label: string; level: string; color: string }> = {
@@ -117,16 +117,7 @@ export default function ExportPanel({
                 {/* Toggle */}
                 <Switch
                   checked={target.enabled}
-                  onChange={(e) => onToggleTarget(target.id, e.target.checked)}
-                  size="small"
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: 'var(--am-green)',
-                    },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                      backgroundColor: 'var(--am-green)',
-                    },
-                  }}
+                  onCheckedChange={(checked) => onToggleTarget(target.id, checked)}
                 />
 
                 {/* Tool label */}
