@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   HeartPulseIcon,
   BookOpenIcon,
@@ -16,6 +17,7 @@ import MergeWorkbench from '../components/MergeWorkbench';
 import HealthCheckPanel from '../components/HealthCheckPanel';
 import WelcomeScreen from '../components/WelcomeScreen';
 import { displayLabel, categoryLabelKey } from '@/lib/skillView';
+import { pickDirectory } from '@/lib/scan';
 import type { SourceProject, Skill } from '../types';
 import { useProjectStore } from '@/stores/projectStore';
 import { useCompositionStore } from '@/stores/compositionStore';
@@ -174,7 +176,7 @@ function SettingsDialog({
 export default function MainLayout() {
   const { t } = useTranslation();
 
-  const { projects, healthResults, addProject, removeProject } = useProjectStore();
+  const { projects, healthResults, scanAndAdd, removeProject } = useProjectStore();
   const { comboItems, addToCombo, removeItem, moveItem, removeItemsByProject } =
     useCompositionStore();
   const { exportTargets, toggleTarget } = useExportStore();
@@ -203,21 +205,44 @@ export default function MainLayout() {
   const handleMoveComboItem = moveItem;
   const handleToggleExportTarget = toggleTarget;
 
-  // Interim placeholder; the real folder-selection + scan wiring lands in the
-  // next step of T8 (handleAddProject -> pick directory -> scan_project).
-  const handleAddProject = () => {
-    const n = projects.length + 1;
-    addProject({
-      id: `proj-${Date.now()}`,
-      name: `new-project-${n}`,
-      rootPath: `/home/user/projects/new-project-${n}`,
-      isGitRepo: false,
-      detectedAt: Date.now().toString(),
-      lastCheckedAt: null,
-      skills: [],
-    });
-    if (view === 'welcome') setView('main');
+  // Folder-selection entry: pick a directory, then scan it. The drag-drop entry
+  // below is equivalent (both call scanAndAdd); adding the first project flips
+  // the view off the welcome screen automatically (see effectiveView).
+  const handleAddProject = async () => {
+    const dir = await pickDirectory();
+    if (dir) await scanAndAdd(dir);
   };
+
+  const handleScanProject = (projectId: string) => {
+    const project = projects.find((p) => p.id === projectId);
+    if (project) void scanAndAdd(project.rootPath);
+  };
+
+  // Drag-drop entry, equivalent to the folder button. The webview API is only
+  // available in the desktop runtime, so it is imported lazily and guarded.
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { getCurrentWebview } = await import('@tauri-apps/api/webview');
+        const un = await getCurrentWebview().onDragDropEvent((event) => {
+          if (event.payload.type === 'drop') {
+            for (const path of event.payload.paths) void scanAndAdd(path);
+          }
+        });
+        if (cancelled) un();
+        else unlisten = un;
+      } catch {
+        // Not inside a Tauri webview (e.g. plain `vite dev`): drag-drop is a
+        // desktop-only entry; the folder button still works.
+      }
+    })();
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [scanAndAdd]);
 
   const handleRemoveProject = (projectId: string) => {
     removeProject(projectId);
@@ -276,7 +301,7 @@ export default function MainLayout() {
                 onSelectSkill={handleSelectSkill}
                 onAddProject={handleAddProject}
                 onRemoveProject={handleRemoveProject}
-                onScanProject={() => {}}
+                onScanProject={handleScanProject}
                 onAddToCombo={handleAddToCombo}
                 simpleMode={simpleMode}
               />
