@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   HeartPulseIcon,
   BookOpenIcon,
@@ -16,21 +15,11 @@ import ExportPanel from '../components/ExportPanel';
 import MergeWorkbench from '../components/MergeWorkbench';
 import HealthCheckPanel from '../components/HealthCheckPanel';
 import WelcomeScreen from '../components/WelcomeScreen';
-import type {
-  SourceProject,
-  Skill,
-  ComboItem,
-  ExportTarget,
-  AppView,
-  HealthCheckResult,
-} from '../types';
-import {
-  MOCK_PROJECTS,
-  MOCK_EXPORT_TARGETS,
-  MOCK_HEALTH_RESULTS,
-} from '../data/mockData';
-
-let comboIdCounter = 0;
+import type { SourceProject, Skill } from '../types';
+import { useProjectStore } from '@/stores/projectStore';
+import { useCompositionStore } from '@/stores/compositionStore';
+import { useExportStore } from '@/stores/exportStore';
+import { useUiStore } from '@/stores/uiStore';
 
 // Skill detail / preview panel
 function SkillPreviewPanel({
@@ -194,122 +183,63 @@ function SettingsDialog({
 
 export default function MainLayout() {
   const { t } = useTranslation();
-  const [view, setView] = useState<AppView>('main');
-  const [projects, setProjects] = useState<SourceProject[]>(MOCK_PROJECTS);
-  const [comboItems, setComboItems] = useState<ComboItem[]>([]);
-  const [exportTargets, setExportTargets] = useState<ExportTarget[]>(MOCK_EXPORT_TARGETS);
-  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
-  const [selectedProject, setSelectedProject] = useState<SourceProject | null>(null);
-  const [healthResults] = useState<HealthCheckResult[]>(MOCK_HEALTH_RESULTS);
-  const [simpleMode, setSimpleMode] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [leftCollapsed, setLeftCollapsed] = useState(false);
-  const [mergeSkillA, setMergeSkillA] = useState<Skill | null>(null);
-  const [mergeSkillB, setMergeSkillB] = useState<Skill | null>(null);
 
-  // Add fake project on "Add"
+  const { projects, healthResults, addProject, removeProject } = useProjectStore();
+  const { comboItems, addToCombo, removeItem, moveItem, removeItemsByProject } =
+    useCompositionStore();
+  const { exportTargets, toggleTarget } = useExportStore();
+  const {
+    view,
+    selectedSkill,
+    selectedProject,
+    simpleMode,
+    settingsOpen,
+    leftCollapsed,
+    mergeSkillA,
+    mergeSkillB,
+    setView,
+    selectSkill,
+    toggleSimpleMode,
+    setSettingsOpen,
+    toggleLeftCollapsed,
+    setMergeSkills,
+  } = useUiStore();
+
+  // Handler aliases so the JSX below reads naturally; store actions do the work.
+  const handleNavigate = setView;
+  const handleSelectSkill = selectSkill;
+  const handleAddToCombo = addToCombo;
+  const handleRemoveComboItem = removeItem;
+  const handleMoveComboItem = moveItem;
+  const handleToggleExportTarget = toggleTarget;
+
+  // Interim: builds a placeholder project. T8 replaces this with real folder
+  // selection (dialog plugin) + scan_project.
   const handleAddProject = () => {
-    const newProj: SourceProject = {
+    const n = projects.length + 1;
+    addProject({
       id: `proj-${Date.now()}`,
-      name: `new-project-${projects.length + 1}`,
-      path: `/home/user/projects/new-project-${projects.length + 1}`,
+      name: `new-project-${n}`,
+      path: `/home/user/projects/new-project-${n}`,
       skills: [],
       lastScanned: new Date().toISOString(),
-    };
-    setProjects((prev) => [...prev, newProj]);
+    });
     if (view === 'welcome') setView('main');
   };
 
   const handleRemoveProject = (projectId: string) => {
-    setProjects((prev) => prev.filter((p) => p.id !== projectId));
-    setComboItems((prev) => prev.filter((c) => c.project.id !== projectId));
-  };
-
-  const handleSelectSkill = (skill: Skill, project: SourceProject) => {
-    setSelectedSkill(skill);
-    setSelectedProject(project);
-  };
-
-  const handleAddToCombo = (skill: Skill, project: SourceProject) => {
-    const alreadyIn = comboItems.some(
-      (c) => c.skill.id === skill.id && c.project.id === project.id
-    );
-    if (alreadyIn) return;
-
-    // Check for conflict — same skill name but different project
-    const existingWithSameName = comboItems.find(
-      (c) => c.skill.name === skill.name && c.project.id !== project.id
-    );
-
-    const newItem: ComboItem = {
-      id: `combo-${++comboIdCounter}`,
-      skill,
-      project,
-      hasConflict: !!existingWithSameName,
-      conflictWith: existingWithSameName?.id,
-      includeInExport: true,
-    };
-
-    // Also flag the existing item as conflicted
-    if (existingWithSameName) {
-      setComboItems((prev) =>
-        prev.map((c) =>
-          c.id === existingWithSameName.id
-            ? { ...c, hasConflict: true, conflictWith: newItem.id }
-            : c
-        )
-      );
-    }
-
-    setComboItems((prev) => [...prev, newItem]);
-  };
-
-  const handleRemoveComboItem = (itemId: string) => {
-    setComboItems((prev) => {
-      const removing = prev.find((c) => c.id === itemId);
-      return prev
-        .filter((c) => c.id !== itemId)
-        .map((c) =>
-          c.conflictWith === itemId
-            ? { ...c, hasConflict: false, conflictWith: undefined }
-            : c
-        );
-    });
-  };
-
-  const handleMoveComboItem = (itemId: string, direction: 'up' | 'down') => {
-    setComboItems((prev) => {
-      const idx = prev.findIndex((c) => c.id === itemId);
-      if (idx < 0) return prev;
-      const newIdx = direction === 'up' ? idx - 1 : idx + 1;
-      if (newIdx < 0 || newIdx >= prev.length) return prev;
-      const arr = [...prev];
-      [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
-      return arr;
-    });
+    removeProject(projectId);
+    removeItemsByProject(projectId);
   };
 
   const handleOpenMerge = (itemId: string) => {
     const item = comboItems.find((c) => c.id === itemId);
     const conflict = comboItems.find((c) => c.id === item?.conflictWith);
-    if (item) setMergeSkillA(item.skill);
-    if (conflict) setMergeSkillB(conflict.skill);
+    setMergeSkills(item?.skill ?? null, conflict?.skill ?? null);
     setView('merge-workbench');
   };
 
-  const handleToggleExportTarget = (id: string, enabled: boolean) => {
-    setExportTargets((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, enabled } : t))
-    );
-  };
-
-  const handleNavigate = (v: AppView) => {
-    setView(v);
-  };
-
   const isWelcome = projects.length === 0;
-
-  // Decide actual view
   const effectiveView = isWelcome ? 'welcome' : view;
 
   return (
@@ -325,7 +255,7 @@ export default function MainLayout() {
         onNavigate={handleNavigate}
         projectCount={projects.length}
         simpleMode={simpleMode}
-        onSimpleModeToggle={() => setSimpleMode((s) => !s)}
+        onSimpleModeToggle={toggleSimpleMode}
       />
 
       {/* Main content area */}
@@ -364,7 +294,7 @@ export default function MainLayout() {
               <div className="flex justify-center pt-2">
                 <Tooltip title={t('mainLayout.expandPanel')} placement="right">
                   <IconButton
-                    onClick={() => setLeftCollapsed(false)}
+                    onClick={() => toggleLeftCollapsed()}
                     className="h-[24px] w-[24px]"
                   >
                     <ChevronRightIcon size={13} />
@@ -378,7 +308,7 @@ export default function MainLayout() {
           <div
             className="flex flex-col items-center justify-center border-r border-border bg-card cursor-pointer hover:bg-secondary transition-colors flex-shrink-0"
             style={{ width: 12 }}
-            onClick={() => setLeftCollapsed((s) => !s)}
+            onClick={() => toggleLeftCollapsed()}
             title={leftCollapsed ? t('mainLayout.expand') : t('mainLayout.collapse')}
           >
             <PanelLeftIcon size={10} className="text-muted-foreground opacity-40" />
@@ -477,7 +407,7 @@ export default function MainLayout() {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         simpleMode={simpleMode}
-        onSimpleModeToggle={() => setSimpleMode((s) => !s)}
+        onSimpleModeToggle={toggleSimpleMode}
       />
     </div>
   );

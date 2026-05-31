@@ -6,16 +6,16 @@
 - [x] **T1** 重构到根目录 + 迁移 pnpm（删 `bun.lock`，补 `type-check` 脚本；`format` 待选 formatter）— 依赖：无 — M
 - [x] **T2** 清理 Pixso 多余 UI 套件（移除 MUI/Emotion/Arco/antd/tdesign，MUI 组件换 Radix/自建）— 依赖：T1 — M
 - [x] **T3** Tauri 2.0 后端脚手架（`src-tauri/`、dialog/fs 插件、`ping` 命令）— 依赖：T1 — M
-  - cargo build/clippy/fmt + 前端 type-check/lint/build 全绿；**待你跑 `pnpm tauri dev` 确认窗口弹出 + console 出现 `[ipc] ping -> pong`**
+  - cargo build/clippy/fmt + 前端门禁全绿；`pnpm tauri dev` 窗口已人工验证 OK
 - [x] **T4** 数据模型 + 生成 TS 类型 + `lint:asset-purity`（**改用 specta** 而非 tauri-specta：headless 导出，详见 DESIGN.md；仅定义 scan/health 核心模型，export-pipeline 模型留到 T11+）— 依赖：T3 — M
 - [x] **T5** i18n 引导 + 文案外提 + `lint:i18n` / `lint:i18n:keys`（活跃组件已转；MergeWorkbench=v0.1.5 deferred 未转；设置语言开关在 T15）— 依赖：T4 — M
-- [ ] **T6** Zustand store 骨架（project/composition/export/ui）+ store 单测 — 依赖：T4 — M
+- [x] **T6** Zustand store 骨架（project/composition/export/ui）+ store 单测（13 tests；MainLayout 已迁入 store，mock 仅在 store 内做 interim 种子）— 依赖：T4 — M
 
 ### Checkpoint A（T1–T6）
-- [ ] `pnpm tauri dev` 起窗渲染 React，`ping` IPC 通
-- [ ] typecheck / lint / clippy / fmt / vitest 全绿
-- [ ] `lint:asset-purity` / `lint:i18n` / `lint:i18n:keys` 通过
-- [ ] 人工复核
+- [x] `pnpm tauri dev` 起窗渲染 React（人工验证 OK）
+- [x] typecheck / lint / clippy / fmt / vitest（13 store 单测）全绿
+- [x] `lint:asset-purity` / `lint:i18n` / `lint:i18n:keys` 通过
+- [ ] 人工复核（check:all 编排器在 T17 落地）
 
 ## Phase 1：扫描 → 展示
 - [ ] **T7** Rust scanner + parser + 三分类 + `scan_project` 命令 + 单测 — 依赖：T4 — M
