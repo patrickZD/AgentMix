@@ -1,26 +1,23 @@
 import { useTranslation } from 'react-i18next';
-import type { SkillChangeTag } from '../types';
+
+// Status dots track the domain HealthStatus ('ok' | 'warning' | 'error'); the
+// 'conflict' badge marks a same-name export conflict in the combo list. The
+// v0.2 source-tracking tags (NEW/UPDATED/REMOVED) are intentionally not shown
+// in v0.1.
+type BadgeVariant = 'ok' | 'warning' | 'error' | 'conflict';
 
 interface BadgeProps {
-  variant?: SkillChangeTag | 'conflict' | 'healthy' | 'warning' | 'error';
+  variant?: BadgeVariant | null;
   label?: string;
 }
 
-// Word-based badges resolve their label via i18n; status badges stay literal glyphs.
-const badgeI18nKey: Record<string, string> = {
-  NEW: 'badge.new',
-  UPDATED: 'badge.updated',
-  REMOVED: 'badge.removed',
-  conflict: 'badge.conflict',
-};
-
-const variantConfig = {
-  NEW: { cls: 'am-badge-new', text: 'NEW' },
-  UPDATED: { cls: 'am-badge-updated', text: 'UPD' },
-  REMOVED: { cls: 'am-badge-removed', text: 'DEL' },
+const variantConfig: Record<
+  BadgeVariant,
+  { text: string; i18nKey?: string; style: React.CSSProperties }
+> = {
   conflict: {
-    cls: '',
     text: 'CONFLICT',
+    i18nKey: 'badge.conflict',
     style: {
       background: 'var(--am-orange-bg)',
       color: 'var(--am-orange)',
@@ -31,18 +28,15 @@ const variantConfig = {
       letterSpacing: '0.03em',
     },
   },
-  healthy: {
-    cls: '',
+  ok: {
     text: '●',
     style: { color: 'var(--am-green)', fontSize: '11px' },
   },
   warning: {
-    cls: '',
     text: '⚠',
     style: { color: 'var(--am-orange)', fontSize: '11px' },
   },
   error: {
-    cls: '',
     text: '✕',
     style: { color: 'var(--am-red)', fontSize: '11px', fontWeight: 700 },
   },
@@ -51,21 +45,13 @@ const variantConfig = {
 export default function Badge({ variant = null, label }: BadgeProps) {
   const { t } = useTranslation();
   if (!variant) return null;
-  const cfg = variantConfig[variant as keyof typeof variantConfig];
+  const cfg = variantConfig[variant];
   if (!cfg) return null;
 
-  const text = label ?? (badgeI18nKey[variant] ? t(badgeI18nKey[variant]) : cfg.text);
-
-  if ('style' in cfg) {
-    return (
-      <span data-cmp="Badge" style={(cfg as { style: React.CSSProperties }).style}>
-        {text}
-      </span>
-    );
-  }
+  const text = label ?? (cfg.i18nKey ? t(cfg.i18nKey) : cfg.text);
 
   return (
-    <span data-cmp="Badge" className={cfg.cls}>
+    <span data-cmp="Badge" style={cfg.style}>
       {text}
     </span>
   );

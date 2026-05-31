@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { SourceProject, HealthCheckResult } from '@/types';
-import { MOCK_PROJECTS, MOCK_HEALTH_RESULTS } from '@/data/mockData';
 
 // Source projects + their scan/health results.
 interface ProjectState {
@@ -11,10 +10,11 @@ interface ProjectState {
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
-  // Interim: seeded from mock data. T7/T8 replace this with real scan results
-  // (scan_project command), and T9 replaces healthResults with computed health.
-  projects: MOCK_PROJECTS,
-  healthResults: MOCK_HEALTH_RESULTS,
+  // Projects come from the real `scan_project` command (wired in T8); health
+  // results are populated by the deterministic health checks (T9). Both start
+  // empty so the app opens on the welcome screen until a folder is scanned.
+  projects: [],
+  healthResults: [],
   addProject: (project) => set((s) => ({ projects: [...s.projects, project] })),
   removeProject: (projectId) =>
     set((s) => ({ projects: s.projects.filter((p) => p.id !== projectId) })),

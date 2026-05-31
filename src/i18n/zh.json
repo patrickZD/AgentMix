@@ -84,6 +84,11 @@
   "badge": {
     "conflict": "冲突"
   },
+  "category": {
+    "portable": "通用",
+    "toolSpecific": "工具专用",
+    "invalid": "无效"
+  },
   "notFound": {
     "message": "哎呀！页面不存在",
     "returnHome": "返回首页"

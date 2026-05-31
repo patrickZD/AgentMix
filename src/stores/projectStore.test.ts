@@ -1,16 +1,19 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useProjectStore } from './projectStore';
-import { MOCK_PROJECTS } from '@/data/mockData';
-import type { SourceProject } from '@/types';
+import { makeProject } from '@/test/fixtures';
 
-beforeEach(() => useProjectStore.setState({ projects: MOCK_PROJECTS.map((p) => ({ ...p })) }));
+beforeEach(() =>
+  useProjectStore.setState({
+    projects: [makeProject('p1'), makeProject('p2')],
+    healthResults: [],
+  }),
+);
 
 describe('projectStore', () => {
   it('addProject appends the project', () => {
     const before = useProjectStore.getState().projects.length;
-    const project: SourceProject = { id: 'new', name: 'new', path: '/x', skills: [] };
 
-    useProjectStore.getState().addProject(project);
+    useProjectStore.getState().addProject(makeProject('new'));
 
     const projects = useProjectStore.getState().projects;
     expect(projects).toHaveLength(before + 1);
@@ -18,8 +21,7 @@ describe('projectStore', () => {
   });
 
   it('removeProject drops the project with the given id', () => {
-    const id = MOCK_PROJECTS[0].id;
-    useProjectStore.getState().removeProject(id);
-    expect(useProjectStore.getState().projects.some((p) => p.id === id)).toBe(false);
+    useProjectStore.getState().removeProject('p1');
+    expect(useProjectStore.getState().projects.some((p) => p.id === 'p1')).toBe(false);
   });
 });

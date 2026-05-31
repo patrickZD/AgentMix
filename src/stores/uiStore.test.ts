@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useUiStore } from './uiStore';
-import type { Skill, SourceProject } from '@/types';
+import { makeSkill, makeProject } from '@/test/fixtures';
 
 beforeEach(() =>
   useUiStore.setState({
@@ -25,18 +25,8 @@ describe('uiStore', () => {
   });
 
   it('selectSkill records both the skill and its project', () => {
-    const skill: Skill = {
-      id: 's1',
-      name: 'code-review',
-      displayName: 'code-review',
-      status: 'healthy',
-      changeTag: null,
-      description: '',
-      content: '',
-      frontmatter: { name: 'code-review' },
-      projectId: 'p1',
-    };
-    const project: SourceProject = { id: 'p1', name: 'p1', path: '', skills: [] };
+    const skill = makeSkill('s1', 'code-review', { sourceProjectId: 'p1' });
+    const project = makeProject('p1');
 
     useUiStore.getState().selectSkill(skill, project);
 

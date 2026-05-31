@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
+import { displayLabel } from '@/lib/skillView';
 import type { Skill, MergeBlock, AppView } from '../types';
 
 interface MergeWorkbenchProps {
@@ -70,11 +71,11 @@ export default function MergeWorkbench({
     setAiLoading(false);
   };
 
-  const paragraphsA = skillA ? splitToParagraphs(skillA.content) : [];
-  const paragraphsB = skillB ? splitToParagraphs(skillB.content) : [];
+  const paragraphsA = skillA ? splitToParagraphs(skillA.skillMdContent) : [];
+  const paragraphsB = skillB ? splitToParagraphs(skillB.skillMdContent) : [];
 
-  const skillALabel = simpleMode ? skillA?.displayName : skillA?.name;
-  const skillBLabel = simpleMode ? skillB?.displayName : skillB?.name;
+  const skillALabel = skillA ? (simpleMode ? displayLabel(skillA.name) : skillA.name) : undefined;
+  const skillBLabel = skillB ? (simpleMode ? displayLabel(skillB.name) : skillB.name) : undefined;
 
   return (
     <div

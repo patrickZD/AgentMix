@@ -2,47 +2,27 @@
 //  AgentMix – app/UI view-model types
 // ──────────────────────────────────────────────
 //
-// These are the interim UI view-models the Pixso draft components use. The
-// canonical cross-end domain types live in ./generated.ts (generated from the
-// Rust models via tauri-specta). As each component is reworked against real
-// backend data (T7+), it migrates from these shapes to the generated domain
-// types, and this file shrinks toward purely-UI types (e.g. AppView).
+// The canonical cross-end domain types (Skill, SourceProject, AssetCategory,
+// HealthStatus, ...) are generated from the Rust models in ./generated.ts and
+// are the single source of truth. They are re-exported here so components keep
+// importing everything from '@/types'. The types defined below are purely-UI
+// composites that the backend does not model (combo bookkeeping, export-target
+// view rows, merge-draft blocks, the health-report view shape).
 
-export type SkillChangeTag = 'NEW' | 'UPDATED' | 'REMOVED' | null;
-export type SkillStatus = 'healthy' | 'warning' | 'error';
+export type {
+  Skill,
+  SourceProject,
+  AssetKind,
+  AssetCategory,
+  HealthStatus,
+  HealthLevel,
+  HealthIssue,
+} from './generated';
+
+import type { Skill, SourceProject } from './generated';
+
 export type ExportTool = 'claude-code' | 'cursor' | 'codex-cli' | 'opencode';
 export type AppView = 'welcome' | 'main' | 'merge-workbench' | 'health-check';
-
-export interface SkillFrontmatter {
-  name: string;
-  version?: string;
-  description?: string;
-  author?: string;
-  tags?: string[];
-  [key: string]: unknown;
-}
-
-export interface Skill {
-  id: string;
-  name: string;
-  displayName: string;
-  status: SkillStatus;
-  changeTag: SkillChangeTag;
-  description: string;
-  content: string;
-  frontmatter: SkillFrontmatter;
-  projectId: string;
-  filePath?: string;
-}
-
-export interface SourceProject {
-  id: string;
-  name: string;
-  path: string;
-  skills: Skill[];
-  lastScanned?: string;
-  skillsDir?: string;
-}
 
 export interface ComboItem {
   id: string;
@@ -69,13 +49,8 @@ export interface MergeBlock {
   text: string;
 }
 
-export interface MergeWorkbenchState {
-  skillA: Skill | null;
-  skillB: Skill | null;
-  draftBlocks: MergeBlock[];
-  aiPrompt: string;
-}
-
+// Interim view shape for the health report. T9 replaces `checks` with the
+// backend's deterministic HealthIssue[] carried on each Skill.
 export interface HealthCheckResult {
   skill: Skill;
   project: SourceProject;
@@ -87,10 +62,4 @@ export interface HealthCheck {
   label: string;
   passed: boolean;
   message?: string;
-}
-
-export interface AppSettings {
-  simpleMode: boolean;
-  autoDetectTools: boolean;
-  defaultExportPath: string;
 }

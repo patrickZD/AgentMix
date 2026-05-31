@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
+import { displayLabel } from '@/lib/skillView';
 import type { HealthCheckResult, AppView } from '../types';
 
 interface HealthCheckPanelProps {
@@ -38,8 +39,8 @@ export default function HealthCheckPanel({
   );
   const totalChecks = results.reduce((s, r) => s + r.checks.length, 0);
   const healthySkills = results.filter((r) => r.checks.every((c) => c.passed)).length;
-  const errorSkills = results.filter((r) => r.checks.some((c) => !c.passed && r.skill.status === 'error')).length;
-  const warningSkills = results.filter((r) => r.checks.some((c) => !c.passed && r.skill.status === 'warning')).length;
+  const errorSkills = results.filter((r) => r.checks.some((c) => !c.passed && r.skill.healthStatus === 'error')).length;
+  const warningSkills = results.filter((r) => r.checks.some((c) => !c.passed && r.skill.healthStatus === 'warning')).length;
 
   const toggle = (id: string) => {
     setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -117,7 +118,7 @@ export default function HealthCheckPanel({
         {results.map((result) => {
           const isCollapsed = collapsed[result.skill.id];
           const allPassed = result.checks.every((c) => c.passed);
-          const hasError = result.checks.some((c) => !c.passed && result.skill.status === 'error');
+          const hasError = result.checks.some((c) => !c.passed && result.skill.healthStatus === 'error');
           const hasWarning = !hasError && result.checks.some((c) => !c.passed);
 
           const statusColor = hasError
@@ -132,7 +133,7 @@ export default function HealthCheckPanel({
             ? AlertTriangleIcon
             : CheckCircleIcon;
 
-          const skillLabel = simpleMode ? result.skill.displayName : result.skill.name;
+          const skillLabel = simpleMode ? displayLabel(result.skill.name) : result.skill.name;
 
           return (
             <div

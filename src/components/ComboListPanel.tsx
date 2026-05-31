@@ -9,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
+import { displayLabel } from '@/lib/skillView';
 import Badge from './Badge';
 import type { ComboItem, AppView } from '../types';
 
@@ -99,7 +100,7 @@ export default function ComboListPanel({
         )}
 
         {comboItems.map((item, idx) => {
-          const nameLabel = simpleMode ? item.skill.displayName : item.skill.name;
+          const nameLabel = simpleMode ? displayLabel(item.skill.name) : item.skill.name;
           const isFirst = idx === 0;
           const isLast = idx === comboItems.length - 1;
 
@@ -115,7 +116,7 @@ export default function ComboListPanel({
                 {item.hasConflict ? (
                   <AlertTriangleIcon size={11} style={{ color: 'var(--am-orange)' }} />
                 ) : (
-                  <Badge variant={item.skill.status} />
+                  <Badge variant={item.skill.healthStatus} />
                 )}
               </span>
 
@@ -128,9 +129,6 @@ export default function ComboListPanel({
                   >
                     {nameLabel}
                   </span>
-                  {item.skill.changeTag && (
-                    <Badge variant={item.skill.changeTag} />
-                  )}
                   {item.hasConflict && (
                     <Badge variant="conflict" />
                   )}

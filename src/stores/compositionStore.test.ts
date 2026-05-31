@@ -1,19 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useCompositionStore } from './compositionStore';
-import type { Skill, SourceProject } from '@/types';
-
-const makeSkill = (id: string, name: string): Skill => ({
-  id,
-  name,
-  displayName: name,
-  status: 'healthy',
-  changeTag: null,
-  description: '',
-  content: '',
-  frontmatter: { name },
-  projectId: '',
-});
-const makeProject = (id: string): SourceProject => ({ id, name: id, path: '', skills: [] });
+import { makeSkill, makeProject } from '@/test/fixtures';
 
 const store = () => useCompositionStore.getState();
 

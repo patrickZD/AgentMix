@@ -1,6 +1,7 @@
 import { PlusCircleIcon, CheckCircleIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
+import { displayLabel } from '@/lib/skillView';
 import Badge from './Badge';
 import type { Skill, SourceProject, ComboItem } from '../types';
 
@@ -35,8 +36,7 @@ export default function SkillItem({
     if (!isInCombo) onAddToCombo(skill, project);
   };
 
-  const nameLabel = simpleMode ? skill.displayName : skill.name;
-  const isRemoved = skill.changeTag === 'REMOVED';
+  const nameLabel = simpleMode ? displayLabel(skill.name) : skill.name;
 
   return (
     <div
@@ -46,23 +46,17 @@ export default function SkillItem({
     >
       {/* Status dot */}
       <span className="flex-shrink-0" style={{ width: 8 }}>
-        <Badge variant={skill.status} />
+        <Badge variant={skill.healthStatus} />
       </span>
 
-      {/* Name + change tag */}
+      {/* Name */}
       <span className="flex-1 min-w-0 flex items-center gap-1.5">
         <span
-          className={`text-foreground truncate`}
-          style={{
-            fontSize: '12.5px',
-            fontWeight: 500,
-            textDecoration: isRemoved ? 'line-through' : 'none',
-            opacity: isRemoved ? 0.55 : 1,
-          }}
+          className="text-foreground truncate"
+          style={{ fontSize: '12.5px', fontWeight: 500 }}
         >
           {nameLabel}
         </span>
-        {skill.changeTag && <Badge variant={skill.changeTag} />}
       </span>
 
       {/* Add to combo button */}

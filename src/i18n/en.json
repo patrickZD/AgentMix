@@ -100,10 +100,12 @@
     "close": "Close"
   },
   "badge": {
-    "new": "NEW",
-    "updated": "UPD",
-    "removed": "DEL",
     "conflict": "CONFLICT"
+  },
+  "category": {
+    "portable": "Portable",
+    "toolSpecific": "Tool-specific",
+    "invalid": "Invalid"
   },
   "notFound": {
     "message": "Oops! Page not found",

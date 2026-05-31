@@ -15,6 +15,7 @@ import ExportPanel from '../components/ExportPanel';
 import MergeWorkbench from '../components/MergeWorkbench';
 import HealthCheckPanel from '../components/HealthCheckPanel';
 import WelcomeScreen from '../components/WelcomeScreen';
+import { displayLabel, categoryLabelKey } from '@/lib/skillView';
 import type { SourceProject, Skill } from '../types';
 import { useProjectStore } from '@/stores/projectStore';
 import { useCompositionStore } from '@/stores/compositionStore';
@@ -43,7 +44,7 @@ function SkillPreviewPanel({
     );
   }
 
-  const nameLabel = simpleMode ? skill.displayName : skill.name;
+  const nameLabel = simpleMode ? displayLabel(skill.name) : skill.name;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -59,8 +60,8 @@ function SkillPreviewPanel({
             </h2>
             <p className="text-muted-foreground mt-0.5" style={{ fontSize: '11px' }}>
               {project.name}
-              {!simpleMode && skill.filePath && (
-                <span className="ml-1 opacity-60">· {skill.filePath}</span>
+              {!simpleMode && skill.relativePathInProject && (
+                <span className="ml-1 opacity-60">· {skill.relativePathInProject}</span>
               )}
             </p>
           </div>
@@ -71,28 +72,17 @@ function SkillPreviewPanel({
           </p>
         )}
 
-        {/* Frontmatter tags */}
-        {!simpleMode && skill.frontmatter.tags && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {skill.frontmatter.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded px-1.5 py-0.5 bg-secondary text-secondary-foreground"
-                style={{ fontSize: '10px', fontWeight: 500 }}
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-
+        {/* Category + compatibility (real v0.1 domain fields) */}
         {!simpleMode && (
-          <div className="flex items-center gap-3 mt-2" style={{ fontSize: '10.5px', color: '#94A3B8' }}>
-            {skill.frontmatter.version && (
-              <span>v{String(skill.frontmatter.version)}</span>
-            )}
-            {skill.frontmatter.author && (
-              <span>{String(skill.frontmatter.author)}</span>
+          <div className="flex flex-wrap items-center gap-2 mt-2" style={{ fontSize: '10.5px' }}>
+            <span
+              className="rounded px-1.5 py-0.5 bg-secondary text-secondary-foreground"
+              style={{ fontWeight: 500 }}
+            >
+              {t(categoryLabelKey(skill.category))}
+            </span>
+            {skill.compatibility && (
+              <span style={{ color: '#94A3B8' }}>{skill.compatibility}</span>
             )}
           </div>
         )}
@@ -100,7 +90,7 @@ function SkillPreviewPanel({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto scrollbar-thin p-4">
-        <div className="am-code-block">{skill.content}</div>
+        <div className="am-code-block">{skill.skillMdContent}</div>
       </div>
     </div>
   );
@@ -213,16 +203,18 @@ export default function MainLayout() {
   const handleMoveComboItem = moveItem;
   const handleToggleExportTarget = toggleTarget;
 
-  // Interim: builds a placeholder project. T8 replaces this with real folder
-  // selection (dialog plugin) + scan_project.
+  // Interim placeholder; the real folder-selection + scan wiring lands in the
+  // next step of T8 (handleAddProject -> pick directory -> scan_project).
   const handleAddProject = () => {
     const n = projects.length + 1;
     addProject({
       id: `proj-${Date.now()}`,
       name: `new-project-${n}`,
-      path: `/home/user/projects/new-project-${n}`,
+      rootPath: `/home/user/projects/new-project-${n}`,
+      isGitRepo: false,
+      detectedAt: Date.now().toString(),
+      lastCheckedAt: null,
       skills: [],
-      lastScanned: new Date().toISOString(),
     });
     if (view === 'welcome') setView('main');
   };
@@ -331,7 +323,7 @@ export default function MainLayout() {
                   <>
                     <ChevronRightIcon size={11} className="text-muted-foreground" />
                     <span className="text-muted-foreground truncate" style={{ fontSize: '11px' }}>
-                      {simpleMode ? selectedSkill.displayName : selectedSkill.name}
+                      {simpleMode ? displayLabel(selectedSkill.name) : selectedSkill.name}
                     </span>
                   </>
                 )}
