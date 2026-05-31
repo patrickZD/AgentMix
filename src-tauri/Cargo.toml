@@ -1,0 +1,21 @@
+[package]
+name = "agentmix"
+version = "0.1.0"
+description = "AgentMix — scan, mix and export Agent Skills to AI coding tools"
+authors = ["AgentMix"]
+edition = "2021"
+
+# The library is what main.rs (and a future mobile entry point) call into.
+[lib]
+name = "agentmix_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"

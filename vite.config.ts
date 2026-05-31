@@ -40,4 +40,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Tauri integration: keep the dev server on a fixed port so tauri.conf.json
+  // devUrl matches, and don't clear Vite logs (Tauri prints its own above).
+  clearScreen: false,
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
 });
