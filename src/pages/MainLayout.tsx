@@ -177,8 +177,17 @@ export default function MainLayout() {
   const { t } = useTranslation();
 
   const { projects, scanning, scanAndAdd, removeProject } = useProjectStore();
-  const { comboItems, addToCombo, removeItem, moveItem, removeItemsByProject } =
-    useCompositionStore();
+  const {
+    comboItems,
+    conflicts,
+    addToCombo,
+    removeItem,
+    moveItem,
+    removeItemsByProject,
+    renameItem,
+    keepOne,
+    refreshConflicts,
+  } = useCompositionStore();
   const { exportTargets, toggleTarget } = useExportStore();
   const {
     view,
@@ -196,7 +205,6 @@ export default function MainLayout() {
     toggleShowInvalid,
     setSettingsOpen,
     toggleLeftCollapsed,
-    setMergeSkills,
   } = useUiStore();
 
   // Handler aliases so the JSX below reads naturally; store actions do the work.
@@ -257,12 +265,11 @@ export default function MainLayout() {
     removeItemsByProject(projectId);
   };
 
-  const handleOpenMerge = (itemId: string) => {
-    const item = comboItems.find((c) => c.id === itemId);
-    const conflict = comboItems.find((c) => c.id === item?.conflictWith);
-    setMergeSkills(item?.skill ?? null, conflict?.skill ?? null);
-    setView('merge-workbench');
-  };
+  // Whenever the selection changes, re-detect conflicts via the Rust composer
+  // (the authoritative single source). Conflicts block export until resolved.
+  useEffect(() => {
+    void refreshConflicts();
+  }, [comboItems, refreshConflicts]);
 
   const isWelcome = projects.length === 0;
   const effectiveView = isWelcome ? 'welcome' : view;
@@ -387,16 +394,18 @@ export default function MainLayout() {
               <div className="flex-1 overflow-y-auto scrollbar-thin flex flex-col" style={{ minHeight: 0 }}>
                 <ComboListPanel
                   comboItems={comboItems}
+                  conflicts={conflicts}
                   onRemoveItem={handleRemoveComboItem}
                   onMoveItem={handleMoveComboItem}
-                  onOpenMerge={handleOpenMerge}
-                  onNavigate={handleNavigate}
+                  onRenameItem={renameItem}
+                  onKeepOne={keepOne}
                   simpleMode={simpleMode}
                 />
                 <div className="flex-1" style={{ minHeight: 0 }}>
                   <ExportPanel
                     exportTargets={exportTargets}
                     comboItems={comboItems}
+                    conflicts={conflicts}
                     onToggleTarget={handleToggleExportTarget}
                     onExport={() => {}}
                     onEditPath={() => {}}

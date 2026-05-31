@@ -1,17 +1,24 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCompositionStore } from './compositionStore';
 import { makeSkill, makeProject } from '@/test/fixtures';
+import { detectConflicts } from '@/lib/composer';
+
+vi.mock('@/lib/composer', () => ({ detectConflicts: vi.fn() }));
+const mockDetect = vi.mocked(detectConflicts);
 
 const store = () => useCompositionStore.getState();
 
-beforeEach(() => useCompositionStore.setState({ comboItems: [] }));
+beforeEach(() => {
+  mockDetect.mockReset();
+  useCompositionStore.setState({ comboItems: [], conflicts: [] });
+});
 
-describe('compositionStore.addToCombo', () => {
-  it('adds a selected skill to the combo', () => {
+describe('compositionStore selection', () => {
+  it('adds a selected skill with exportedName defaulting to its name', () => {
     store().addToCombo(makeSkill('s1', 'code-review'), makeProject('p1'));
     expect(store().comboItems).toHaveLength(1);
     expect(store().comboItems[0].skill.id).toBe('s1');
-    expect(store().comboItems[0].hasConflict).toBe(false);
+    expect(store().comboItems[0].exportedName).toBe('code-review');
   });
 
   it('ignores the same skill added from the same project twice', () => {
@@ -22,63 +29,76 @@ describe('compositionStore.addToCombo', () => {
     expect(store().comboItems).toHaveLength(1);
   });
 
-  it('flags both items when the same skill name comes from different projects', () => {
+  it('removeItem drops the item', () => {
     store().addToCombo(makeSkill('s1', 'code-review'), makeProject('p1'));
-    store().addToCombo(makeSkill('s2', 'code-review'), makeProject('p2'));
-    const items = store().comboItems;
-    expect(items).toHaveLength(2);
-    expect(items[0].hasConflict).toBe(true);
-    expect(items[1].hasConflict).toBe(true);
-    expect(items[0].conflictWith).toBe(items[1].id);
-    expect(items[1].conflictWith).toBe(items[0].id);
+    const [item] = store().comboItems;
+    store().removeItem(item.id);
+    expect(store().comboItems).toHaveLength(0);
   });
 
-  it('does not flag a conflict for different skill names', () => {
-    store().addToCombo(makeSkill('s1', 'code-review'), makeProject('p1'));
-    store().addToCombo(makeSkill('s2', 'test-writer'), makeProject('p2'));
-    expect(store().comboItems.every((c) => !c.hasConflict)).toBe(true);
-  });
-});
-
-describe('compositionStore.removeItem', () => {
-  it('removes the item and clears the conflict flag on its counterpart', () => {
-    store().addToCombo(makeSkill('s1', 'code-review'), makeProject('p1'));
-    store().addToCombo(makeSkill('s2', 'code-review'), makeProject('p2'));
-    const [first, second] = store().comboItems;
-
-    store().removeItem(second.id);
-
-    const remaining = store().comboItems;
-    expect(remaining).toHaveLength(1);
-    expect(remaining[0].id).toBe(first.id);
-    expect(remaining[0].hasConflict).toBe(false);
-    expect(remaining[0].conflictWith).toBeUndefined();
-  });
-});
-
-describe('compositionStore.moveItem', () => {
-  it('reorders adjacent items and is a no-op at the boundary', () => {
+  it('moveItem reorders adjacent items and is a no-op at the boundary', () => {
     store().addToCombo(makeSkill('s1', 'alpha'), makeProject('p1'));
     store().addToCombo(makeSkill('s2', 'beta'), makeProject('p1'));
     const [a, b] = store().comboItems;
 
     store().moveItem(b.id, 'up');
     expect(store().comboItems.map((c) => c.id)).toEqual([b.id, a.id]);
-
-    // b is now first; moving it up again must not change anything.
     store().moveItem(b.id, 'up');
     expect(store().comboItems.map((c) => c.id)).toEqual([b.id, a.id]);
   });
-});
 
-describe('compositionStore.removeItemsByProject', () => {
-  it('removes every combo item belonging to the project', () => {
+  it('removeItemsByProject removes every item of the project', () => {
     store().addToCombo(makeSkill('s1', 'alpha'), makeProject('p1'));
     store().addToCombo(makeSkill('s2', 'beta'), makeProject('p2'));
-
     store().removeItemsByProject('p1');
-
     expect(store().comboItems).toHaveLength(1);
     expect(store().comboItems[0].project.id).toBe('p2');
+  });
+});
+
+describe('compositionStore conflict resolution', () => {
+  it('renameItem changes only that item exportedName', () => {
+    store().addToCombo(makeSkill('s1', 'code-review'), makeProject('p1'));
+    store().addToCombo(makeSkill('s2', 'code-review'), makeProject('p2'));
+    const [, second] = store().comboItems;
+
+    store().renameItem(second.id, 'code-review-vercel');
+
+    const items = store().comboItems;
+    expect(items[0].exportedName).toBe('code-review');
+    expect(items[1].exportedName).toBe('code-review-vercel');
+  });
+
+  it('keepOne drops the other items sharing the kept exported name (case-insensitive)', () => {
+    store().addToCombo(makeSkill('s1', 'Code-Review'), makeProject('p1'));
+    store().addToCombo(makeSkill('s2', 'code-review'), makeProject('p2'));
+    store().addToCombo(makeSkill('s3', 'test-writer'), makeProject('p3'));
+    const kept = store().comboItems[0];
+
+    store().keepOne(kept.id);
+
+    const ids = store().comboItems.map((c) => c.id);
+    expect(ids).toContain(kept.id);
+    expect(store().comboItems.find((c) => c.skill.id === 's2')).toBeUndefined();
+    // An unrelated skill is untouched.
+    expect(store().comboItems.find((c) => c.skill.id === 's3')).toBeDefined();
+  });
+});
+
+describe('compositionStore.refreshConflicts', () => {
+  it('sends the current candidates to the composer and stores the result', async () => {
+    store().addToCombo(makeSkill('s1', 'code-review'), makeProject('p1'));
+    store().addToCombo(makeSkill('s2', 'code-review'), makeProject('p2'));
+    const ids = store().comboItems.map((c) => c.id);
+    mockDetect.mockResolvedValue([{ exportedName: 'code-review', assetIds: ids }]);
+
+    await store().refreshConflicts();
+
+    expect(mockDetect).toHaveBeenCalledWith([
+      { id: ids[0], exportedName: 'code-review' },
+      { id: ids[1], exportedName: 'code-review' },
+    ]);
+    expect(store().conflicts).toHaveLength(1);
+    expect(store().conflicts[0].assetIds).toEqual(ids);
   });
 });

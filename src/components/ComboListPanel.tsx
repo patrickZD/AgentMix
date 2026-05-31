@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   ListChecksIcon,
   Trash2Icon,
@@ -5,33 +6,52 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   AlertTriangleIcon,
+  PencilIcon,
+  CheckIcon,
+  XIcon,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
 import { displayLabel } from '@/lib/skillView';
 import Badge from './Badge';
-import type { ComboItem, AppView } from '../types';
+import type { ComboItem, ExportConflict } from '../types';
 
 interface ComboListPanelProps {
   comboItems?: ComboItem[];
+  conflicts?: ExportConflict[];
   onRemoveItem?: (itemId: string) => void;
   onMoveItem?: (itemId: string, direction: 'up' | 'down') => void;
-  onOpenMerge?: (itemId: string) => void;
-  onNavigate?: (view: AppView) => void;
+  onRenameItem?: (itemId: string, exportedName: string) => void;
+  onKeepOne?: (itemId: string) => void;
   simpleMode?: boolean;
 }
 
 export default function ComboListPanel({
   comboItems = [],
+  conflicts = [],
   onRemoveItem = () => {},
   onMoveItem = () => {},
-  onOpenMerge = () => {},
-  onNavigate = () => {},
+  onRenameItem = () => {},
+  onKeepOne = () => {},
   simpleMode = false,
 }: ComboListPanelProps) {
   const { t } = useTranslation();
-  const conflictCount = comboItems.filter((c) => c.hasConflict).length;
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState('');
+
+  // Which combo items collide, per the authoritative composer result.
+  const conflictingIds = new Set(conflicts.flatMap((c) => c.assetIds));
+
+  const startRename = (itemId: string, current: string) => {
+    setEditingId(itemId);
+    setDraftName(current);
+  };
+
+  const commitRename = () => {
+    if (editingId && draftName.trim()) onRenameItem(editingId, draftName.trim());
+    setEditingId(null);
+  };
 
   return (
     <div
@@ -57,7 +77,7 @@ export default function ComboListPanel({
               {comboItems.length}
             </span>
           )}
-          {conflictCount > 0 && (
+          {conflicts.length > 0 && (
             <span
               className="flex items-center gap-0.5 rounded px-1.5"
               style={{
@@ -68,24 +88,19 @@ export default function ComboListPanel({
               }}
             >
               <AlertTriangleIcon size={9} />
-              {t('comboPanel.conflicts', { count: conflictCount })}
+              {t('comboPanel.conflicts', { count: conflicts.length })}
             </span>
           )}
         </div>
 
-        <div className="flex items-center">
-          <Tooltip title={t('comboPanel.openMergeWorkbench')} placement="bottom">
-            <span>
-              <IconButton
-                onClick={() => onNavigate('merge-workbench')}
-                disabled={comboItems.length < 2}
-                className="h-[26px] w-[26px]"
-              >
-                <MergeIcon size={13} />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </div>
+        {/* Merge Workbench is deferred to v0.1.5. */}
+        <Tooltip title={t('comboPanel.mergeDeferred')} placement="bottom">
+          <span>
+            <IconButton disabled className="h-[26px] w-[26px]">
+              <MergeIcon size={13} />
+            </IconButton>
+          </span>
+        </Tooltip>
       </div>
 
       {/* List */}
@@ -100,90 +115,138 @@ export default function ComboListPanel({
         )}
 
         {comboItems.map((item, idx) => {
-          const nameLabel = simpleMode ? displayLabel(item.skill.name) : item.skill.name;
+          const isConflicting = conflictingIds.has(item.id);
+          const isEditing = editingId === item.id;
+          const nameLabel = simpleMode ? displayLabel(item.exportedName) : item.exportedName;
           const isFirst = idx === 0;
           const isLast = idx === comboItems.length - 1;
 
           return (
             <div
               key={item.id}
-              className={`flex items-center gap-1.5 px-2 py-1 group hover:bg-secondary rounded mx-1 ${
-                item.hasConflict ? 'bg-orange-50' : ''
+              className={`flex flex-col gap-1 px-2 py-1 group hover:bg-secondary rounded mx-1 ${
+                isConflicting ? 'bg-orange-50' : ''
               }`}
             >
-              {/* Conflict badge or status */}
-              <span className="flex-shrink-0" style={{ width: 14 }}>
-                {item.hasConflict ? (
-                  <AlertTriangleIcon size={11} style={{ color: 'var(--am-orange)' }} />
-                ) : (
-                  <Badge variant={item.skill.healthStatus} />
-                )}
-              </span>
+              <div className="flex items-center gap-1.5">
+                {/* Conflict marker or health status */}
+                <span className="flex-shrink-0" style={{ width: 14 }}>
+                  {isConflicting ? (
+                    <AlertTriangleIcon size={11} style={{ color: 'var(--am-orange)' }} />
+                  ) : (
+                    <Badge variant={item.skill.healthStatus} />
+                  )}
+                </span>
 
-              {/* Skill name + project */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <span
-                    className="text-foreground truncate"
-                    style={{ fontSize: '12px', fontWeight: 500 }}
-                  >
-                    {nameLabel}
-                  </span>
-                  {item.hasConflict && (
-                    <Badge variant="conflict" />
+                {/* Name (or rename input) + project */}
+                <div className="flex-1 min-w-0">
+                  {isEditing ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        autoFocus
+                        type="text"
+                        value={draftName}
+                        onChange={(e) => setDraftName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') commitRename();
+                          if (e.key === 'Escape') setEditingId(null);
+                        }}
+                        className="flex-1 bg-card border border-border rounded px-1 outline-none text-foreground"
+                        style={{ fontSize: '12px', minWidth: 0 }}
+                      />
+                      <IconButton onClick={commitRename} className="h-[18px] w-[18px]">
+                        <CheckIcon size={11} />
+                      </IconButton>
+                      <IconButton onClick={() => setEditingId(null)} className="h-[18px] w-[18px]">
+                        <XIcon size={11} />
+                      </IconButton>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-1">
+                        <span
+                          className="text-foreground truncate"
+                          style={{ fontSize: '12px', fontWeight: 500 }}
+                        >
+                          {nameLabel}
+                        </span>
+                        {isConflicting && <Badge variant="conflict" />}
+                      </div>
+                      <div
+                        className="text-muted-foreground truncate"
+                        style={{ fontSize: '10.5px' }}
+                      >
+                        {simpleMode ? item.project.name : `${item.project.name} · ${item.skill.name}`}
+                      </div>
+                    </>
                   )}
                 </div>
-                <div
-                  className="text-muted-foreground truncate"
-                  style={{ fontSize: '10.5px' }}
-                >
-                  {simpleMode ? item.project.name : `${item.project.name} · ${item.skill.name}`}
-                </div>
+
+                {/* Reorder / remove — shown on hover */}
+                {!isEditing && (
+                  <div className="flex items-center gap-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                    <Tooltip title={t('comboPanel.moveUp')} placement="left">
+                      <span>
+                        <IconButton
+                          disabled={isFirst}
+                          onClick={() => onMoveItem(item.id, 'up')}
+                          className="h-[20px] w-[20px]"
+                        >
+                          <ArrowUpIcon size={11} />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title={t('comboPanel.moveDown')} placement="left">
+                      <span>
+                        <IconButton
+                          disabled={isLast}
+                          onClick={() => onMoveItem(item.id, 'down')}
+                          className="h-[20px] w-[20px]"
+                        >
+                          <ArrowDownIcon size={11} />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title={t('comboPanel.removeFromCombo')} placement="left">
+                      <IconButton onClick={() => onRemoveItem(item.id)} className="h-[20px] w-[20px]">
+                        <Trash2Icon size={11} />
+                      </IconButton>
+                    </Tooltip>
+                  </div>
+                )}
               </div>
 
-              {/* Actions - shown on hover */}
-              <div className="flex items-center gap-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                {item.hasConflict && (
-                  <Tooltip title={t('comboPanel.openInMergeWorkbench')} placement="left">
-                    <IconButton
-                      onClick={() => onOpenMerge(item.id)}
-                      className="h-[20px] w-[20px]"
-                    >
-                      <MergeIcon size={11} />
-                    </IconButton>
-                  </Tooltip>
-                )}
-                <Tooltip title={t('comboPanel.moveUp')} placement="left">
-                  <span>
-                    <IconButton
-                      disabled={isFirst}
-                      onClick={() => onMoveItem(item.id, 'up')}
-                      className="h-[20px] w-[20px]"
-                    >
-                      <ArrowUpIcon size={11} />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title={t('comboPanel.moveDown')} placement="left">
-                  <span>
-                    <IconButton
-                      disabled={isLast}
-                      onClick={() => onMoveItem(item.id, 'down')}
-                      className="h-[20px] w-[20px]"
-                    >
-                      <ArrowDownIcon size={11} />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title={t('comboPanel.removeFromCombo')} placement="left">
-                  <IconButton
-                    onClick={() => onRemoveItem(item.id)}
-                    className="h-[20px] w-[20px]"
+              {/* Inline conflict resolution */}
+              {isConflicting && !isEditing && (
+                <div className="flex items-center gap-1.5 pl-5">
+                  <button
+                    onClick={() => startRename(item.id, item.exportedName)}
+                    className="flex items-center gap-0.5 rounded px-1.5 py-0.5 hover:bg-card transition-colors"
+                    style={{ fontSize: '10px', fontWeight: 600, color: 'var(--am-blue)' }}
                   >
-                    <Trash2Icon size={11} />
-                  </IconButton>
-                </Tooltip>
-              </div>
+                    <PencilIcon size={9} />
+                    {t('comboPanel.rename')}
+                  </button>
+                  <button
+                    onClick={() => onKeepOne(item.id)}
+                    className="flex items-center gap-0.5 rounded px-1.5 py-0.5 hover:bg-card transition-colors"
+                    style={{ fontSize: '10px', fontWeight: 600, color: 'var(--am-blue)' }}
+                  >
+                    <CheckIcon size={9} />
+                    {t('comboPanel.keepOne')}
+                  </button>
+                  <Tooltip title={t('comboPanel.mergeDeferred')} placement="top">
+                    <button
+                      disabled
+                      className="flex items-center gap-0.5 rounded px-1.5 py-0.5 opacity-40 cursor-not-allowed"
+                      style={{ fontSize: '10px', fontWeight: 600 }}
+                    >
+                      <MergeIcon size={9} />
+                      {t('comboPanel.merge')}
+                    </button>
+                  </Tooltip>
+                </div>
+              )}
             </div>
           );
         })}

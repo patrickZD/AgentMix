@@ -50,10 +50,15 @@
     "titleSimple": "我的组合",
     "titleFull": "组合清单",
     "conflicts_other": "{{count}} 个冲突",
-    "openMergeWorkbench": "打开合并工作台",
     "emptySimple": "从左侧面板添加 Skill",
     "emptyFull": "组合为空，请从来源项目添加。",
-    "removeFromCombo": "从组合移除"
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "removeFromCombo": "从组合移除",
+    "rename": "重命名",
+    "keepOne": "保留一个",
+    "merge": "合并",
+    "mergeDeferred": "合并工作台 —— v0.1.5 提供"
   },
   "exportPanel": {
     "titleSimple": "导出到",
@@ -63,7 +68,8 @@
     "export": "导出",
     "exportWithCount": "导出 {{count}} 个 Skill",
     "emptyComboSimple": "请先把 Skill 加入组合",
-    "emptyComboFull": "组合清单为空。"
+    "emptyComboFull": "组合清单为空。",
+    "resolveConflicts_other": "导出前请先解决 {{count}} 个名称冲突"
   },
   "healthPanel": {
     "titleSimple": "Skill 健康",

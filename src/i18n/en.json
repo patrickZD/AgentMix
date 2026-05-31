@@ -52,13 +52,15 @@
     "titleFull": "Combo List",
     "conflicts_one": "{{count}} conflict",
     "conflicts_other": "{{count}} conflicts",
-    "openMergeWorkbench": "Open Merge Workbench",
     "emptySimple": "Add skills from the left panel",
     "emptyFull": "No skills in combo. Add from Source Projects.",
-    "openInMergeWorkbench": "Open in Merge Workbench",
     "moveUp": "Move Up",
     "moveDown": "Move Down",
-    "removeFromCombo": "Remove from Combo"
+    "removeFromCombo": "Remove from Combo",
+    "rename": "Rename",
+    "keepOne": "Keep one",
+    "merge": "Merge",
+    "mergeDeferred": "Merge Workbench — available in v0.1.5"
   },
   "exportPanel": {
     "titleSimple": "Export To",
@@ -74,7 +76,9 @@
     "exportWithCount": "Export {{count}} Skills",
     "exportedAt": "Exported at {{time}}",
     "emptyComboSimple": "Add skills to your combo first",
-    "emptyComboFull": "No skills in Combo List."
+    "emptyComboFull": "No skills in Combo List.",
+    "resolveConflicts_one": "Resolve {{count}} name conflict before exporting",
+    "resolveConflicts_other": "Resolve {{count}} name conflicts before exporting"
   },
   "healthPanel": {
     "titleSimple": "Skill Health",

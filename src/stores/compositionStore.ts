@@ -1,23 +1,33 @@
 import { create } from 'zustand';
-import type { ComboItem, Skill, SourceProject } from '@/types';
+import type { ComboItem, ExportConflict, Skill, SourceProject } from '@/types';
+import { detectConflicts } from '@/lib/composer';
 
 let comboIdCounter = 0;
 
-// The user's current combination: which skills are selected, ordering, and the
-// interim same-name conflict flag. NOTE: this is UI-side combo bookkeeping; the
-// authoritative ExportConflict detection (case-insensitive, against the export
-// target) lands in Rust at T10. Conflict matching here preserves the Pixso
-// draft's exact-name behavior until then.
+// The user's current combination: which skills are selected, their export
+// names, and the detected conflicts. Selection mutations are synchronous and
+// local; conflict detection is delegated to the Rust composer via
+// refreshConflicts (single source of truth — the UI never re-implements the
+// rule). The UI calls refreshConflicts whenever comboItems changes.
 interface CompositionState {
   comboItems: ComboItem[];
+  conflicts: ExportConflict[];
   addToCombo: (skill: Skill, project: SourceProject) => void;
   removeItem: (itemId: string) => void;
   moveItem: (itemId: string, direction: 'up' | 'down') => void;
   removeItemsByProject: (projectId: string) => void;
+  // Conflict resolution: rename one item's exported name.
+  renameItem: (itemId: string, exportedName: string) => void;
+  // Conflict resolution: keep this item, drop the others sharing its exported
+  // name (compared case-insensitively, matching the Rust rule).
+  keepOne: (itemId: string) => void;
+  // Re-detect conflicts from the current selection via the Rust composer.
+  refreshConflicts: () => Promise<void>;
 }
 
-export const useCompositionStore = create<CompositionState>((set) => ({
+export const useCompositionStore = create<CompositionState>((set, get) => ({
   comboItems: [],
+  conflicts: [],
 
   addToCombo: (skill, project) =>
     set((state) => {
@@ -26,36 +36,18 @@ export const useCompositionStore = create<CompositionState>((set) => ({
       );
       if (alreadyIn) return state;
 
-      // Same skill name from a different project => flag both as conflicting.
-      const existing = state.comboItems.find(
-        (c) => c.skill.name === skill.name && c.project.id !== project.id,
-      );
-
       const newItem: ComboItem = {
         id: `combo-${++comboIdCounter}`,
         skill,
         project,
-        hasConflict: !!existing,
-        conflictWith: existing?.id,
-        includeInExport: true,
+        exportedName: skill.name,
       };
-
-      const items = existing
-        ? state.comboItems.map((c) =>
-            c.id === existing.id ? { ...c, hasConflict: true, conflictWith: newItem.id } : c,
-          )
-        : state.comboItems;
-
-      return { comboItems: [...items, newItem] };
+      return { comboItems: [...state.comboItems, newItem] };
     }),
 
   removeItem: (itemId) =>
     set((state) => ({
-      comboItems: state.comboItems
-        .filter((c) => c.id !== itemId)
-        .map((c) =>
-          c.conflictWith === itemId ? { ...c, hasConflict: false, conflictWith: undefined } : c,
-        ),
+      comboItems: state.comboItems.filter((c) => c.id !== itemId),
     })),
 
   moveItem: (itemId, direction) =>
@@ -70,5 +62,35 @@ export const useCompositionStore = create<CompositionState>((set) => ({
     }),
 
   removeItemsByProject: (projectId) =>
-    set((state) => ({ comboItems: state.comboItems.filter((c) => c.project.id !== projectId) })),
+    set((state) => ({
+      comboItems: state.comboItems.filter((c) => c.project.id !== projectId),
+    })),
+
+  renameItem: (itemId, exportedName) =>
+    set((state) => ({
+      comboItems: state.comboItems.map((c) =>
+        c.id === itemId ? { ...c, exportedName } : c,
+      ),
+    })),
+
+  keepOne: (itemId) =>
+    set((state) => {
+      const kept = state.comboItems.find((c) => c.id === itemId);
+      if (!kept) return state;
+      const keptName = kept.exportedName.toLowerCase();
+      return {
+        comboItems: state.comboItems.filter(
+          (c) => c.id === itemId || c.exportedName.toLowerCase() !== keptName,
+        ),
+      };
+    }),
+
+  refreshConflicts: async () => {
+    const candidates = get().comboItems.map((c) => ({
+      id: c.id,
+      exportedName: c.exportedName,
+    }));
+    const conflicts = await detectConflicts(candidates);
+    set({ conflicts });
+  },
 }));

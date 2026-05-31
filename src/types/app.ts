@@ -17,6 +17,8 @@ export type {
   HealthStatus,
   HealthLevel,
   HealthIssue,
+  ConflictCandidate,
+  ExportConflict,
 } from './generated';
 
 import type { Skill, SourceProject } from './generated';
@@ -28,9 +30,10 @@ export interface ComboItem {
   id: string;
   skill: Skill;
   project: SourceProject;
-  hasConflict: boolean;
-  conflictWith?: string; // ComboItem id
-  includeInExport: boolean;
+  // The name this skill will be written as on export; defaults to skill.name,
+  // changed by conflict resolution (rename). Conflicts are detected from these
+  // by the Rust composer, not flagged per-item here.
+  exportedName: string;
 }
 
 export interface ExportTarget {

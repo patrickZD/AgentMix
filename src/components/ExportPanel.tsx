@@ -9,7 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import Switch from '@/components/ui/Switch';
-import type { ExportTarget, ComboItem } from '../types';
+import type { ExportTarget, ComboItem, ExportConflict } from '../types';
 
 const TOOL_META: Record<string, { label: string; level: string; color: string }> = {
   'claude-code': { label: `Claude Code`, level: `project`, color: `#D97706` },
@@ -21,6 +21,7 @@ const TOOL_META: Record<string, { label: string; level: string; color: string }>
 interface ExportPanelProps {
   exportTargets?: ExportTarget[];
   comboItems?: ComboItem[];
+  conflicts?: ExportConflict[];
   onToggleTarget?: (id: string, enabled: boolean) => void;
   onExport?: (targetIds: string[]) => void;
   onEditPath?: (id: string) => void;
@@ -30,6 +31,7 @@ interface ExportPanelProps {
 export default function ExportPanel({
   exportTargets = [],
   comboItems = [],
+  conflicts = [],
   onToggleTarget = () => {},
   onExport = () => {},
   onEditPath = () => {},
@@ -40,7 +42,9 @@ export default function ExportPanel({
   const [lastExported, setLastExported] = useState<string | null>(null);
 
   const enabledTargets = exportTargets.filter((t) => t.enabled);
-  const canExport = comboItems.length > 0 && enabledTargets.length > 0;
+  // Unresolved ExportConflicts block export until resolved (DESIGN.md §6.2).
+  const hasConflicts = conflicts.length > 0;
+  const canExport = comboItems.length > 0 && enabledTargets.length > 0 && !hasConflicts;
 
   const handleExport = async () => {
     if (!canExport) return;
@@ -208,9 +212,15 @@ export default function ExportPanel({
           </p>
         )}
 
-        {!canExport && comboItems.length === 0 && (
+        {comboItems.length === 0 && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10.5px' }}>
             {t(simpleMode ? 'exportPanel.emptyComboSimple' : 'exportPanel.emptyComboFull')}
+          </p>
+        )}
+
+        {hasConflicts && (
+          <p className="text-center" style={{ fontSize: '10.5px', color: 'var(--am-orange)' }}>
+            {t('exportPanel.resolveConflicts', { count: conflicts.length })}
           </p>
         )}
       </div>
