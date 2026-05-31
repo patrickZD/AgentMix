@@ -1,4 +1,4 @@
-use agentmix_types::SourceProject;
+use agentmix_types::{ConflictCandidate, ExportConflict, SourceProject};
 use tauri_plugin_dialog::DialogExt;
 
 // IPC smoke-test command.
@@ -31,12 +31,25 @@ fn scan_project(path: String) -> Result<SourceProject, String> {
     Ok(agentmix_core::scanner::scan_project(root))
 }
 
+/// Detect v0.1 export conflicts among the selected assets. Thin wrapper over the
+/// tauri-free composer; the same function builds the ExportPlan's conflict list
+/// (T11), so the live UI warning and the export-time check never diverge.
+#[tauri::command]
+fn detect_conflicts(candidates: Vec<ConflictCandidate>) -> Vec<ExportConflict> {
+    agentmix_core::composer::detect_export_conflicts(&candidates)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .invoke_handler(tauri::generate_handler![ping, scan_project, pick_directory])
+        .invoke_handler(tauri::generate_handler![
+            ping,
+            scan_project,
+            pick_directory,
+            detect_conflicts
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

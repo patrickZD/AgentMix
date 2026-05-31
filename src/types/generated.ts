@@ -14,6 +14,32 @@ export type AssetCategory =
 /**  Kinds of composable asset. v0.1 ships only `Skill`; new members extend later. */
 export type AssetKind = "skill";
 
+/**
+ *  One asset competing for a name in the export target, fed to conflict
+ *  detection. Kept asset-kind-agnostic: only the id and the name it would be
+ *  written as matter, so the pipeline never branches on a concrete asset type.
+ */
+export type ConflictCandidate = {
+	id: string,
+	/**
+	 *  The name this asset would be written as in the target directory
+	 *  (a Skill's `name`, or its renamed value after conflict resolution).
+	 */
+	exportedName: string,
+};
+
+/**
+ *  A v0.1 export conflict: two or more selected assets would be written to the
+ *  same target directory under the same name (compared case-insensitively).
+ *  Must be resolved before export (DESIGN.md §6.2).
+ */
+export type ExportConflict = {
+	/**  The colliding exported name, as first encountered among the candidates. */
+	exportedName: string,
+	/**  Ids of the candidates that collide on this name (length >= 2). */
+	assetIds: string[],
+};
+
 /**  A single deterministic health finding (no AI involved). */
 export type HealthIssue = {
 	level: HealthLevel,

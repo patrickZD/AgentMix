@@ -82,6 +82,30 @@ pub struct Skill {
     pub skill_md_content: String,
 }
 
+/// One asset competing for a name in the export target, fed to conflict
+/// detection. Kept asset-kind-agnostic: only the id and the name it would be
+/// written as matter, so the pipeline never branches on a concrete asset type.
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ConflictCandidate {
+    pub id: String,
+    /// The name this asset would be written as in the target directory
+    /// (a Skill's `name`, or its renamed value after conflict resolution).
+    pub exported_name: String,
+}
+
+/// A v0.1 export conflict: two or more selected assets would be written to the
+/// same target directory under the same name (compared case-insensitively).
+/// Must be resolved before export (DESIGN.md §6.2).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportConflict {
+    /// The colliding exported name, as first encountered among the candidates.
+    pub exported_name: String,
+    /// Ids of the candidates that collide on this name (length >= 2).
+    pub asset_ids: Vec<String>,
+}
+
 /// A source project (folder) that was scanned for assets.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]

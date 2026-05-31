@@ -11,8 +11,12 @@ use specta::Types;
 use specta_typescript::Typescript;
 
 fn main() {
-    // Registering SourceProject pulls in Skill and the health/category enums.
-    let types = Types::default().register::<agentmix_types::SourceProject>();
+    // Registering SourceProject pulls in Skill and the health/category enums;
+    // the conflict types are registered explicitly (no struct references them).
+    let types = Types::default()
+        .register::<agentmix_types::SourceProject>()
+        .register::<agentmix_types::ConflictCandidate>()
+        .register::<agentmix_types::ExportConflict>();
 
     let rendered = Typescript::default()
         .header(
