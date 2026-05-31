@@ -1,4 +1,5 @@
-// IPC smoke-test command. Real commands (scan, health, export) land in later tasks.
+// IPC smoke-test command. Real commands (scan, health, export) land in later tasks
+// and will return types from the `agentmix-types` crate.
 #[tauri::command]
 fn ping() -> String {
     "pong".to_string()

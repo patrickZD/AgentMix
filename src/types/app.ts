@@ -1,6 +1,12 @@
 // ──────────────────────────────────────────────
-//  AgentMix – shared TypeScript types
+//  AgentMix – app/UI view-model types
 // ──────────────────────────────────────────────
+//
+// These are the interim UI view-models the Pixso draft components use. The
+// canonical cross-end domain types live in ./generated.ts (generated from the
+// Rust models via tauri-specta). As each component is reworked against real
+// backend data (T7+), it migrates from these shapes to the generated domain
+// types, and this file shrinks toward purely-UI types (e.g. AppView).
 
 export type SkillChangeTag = 'NEW' | 'UPDATED' | 'REMOVED' | null;
 export type SkillStatus = 'healthy' | 'warning' | 'error';

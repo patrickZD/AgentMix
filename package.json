@@ -10,8 +10,10 @@
     "dev": "vite",
     "tauri": "tauri",
     "lint": "eslint .",
+    "lint:asset-purity": "node scripts/lint-asset-purity.mjs",
     "lint:i18n": "node scripts/lint-i18n.mjs",
     "lint:i18n:keys": "node scripts/lint-i18n-keys.mjs",
+    "gen:types": "cargo run --manifest-path src-tauri/Cargo.toml -p agentmix-types --features export --bin export-bindings",
     "type-check": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "preview": "vite preview"
   },

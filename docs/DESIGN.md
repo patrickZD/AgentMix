@@ -713,7 +713,9 @@ AgentMix 启动时根据来源项目列表是否为空，呈现两种界面：
 
 **后端（Rust）核心依赖**：`serde_yaml`（YAML frontmatter 解析）、`walkdir`（递归目录扫描）、`tauri-plugin-fs`（文件系统操作）、`tauri-plugin-dialog`（文件/文件夹选择对话框）、`reqwest`（调用大模型 API）、`git2`（Git 仓库状态检查，用于来源更新检测）、`keyring`（跨平台 OS keychain 抽象，AI 合并密钥统一存储）。
 
-**Rust↔TypeScript 类型同步**：v0.1 即引入 `tauri-specta`，Rust 侧的 struct 与 enum 作为单一来源，TS 类型在构建时自动生成。手工对齐两侧类型在条目超过 15 个后必出 schema 漂移事故，提前自动化是更便宜的选择。
+**Rust↔TypeScript 类型同步**：v0.1 用 `specta` + `specta-typescript`，Rust 侧的 struct 与 enum 作为单一来源，TS 类型 (`src/types/generated.ts`) 由 headless 导出 bin 生成 (`pnpm gen:types`)。模型放在 tauri-free 的 `agentmix-types` crate，导出不链接 wry/WebView2，因此能在 CI 与 `cargo` 下生成。手工对齐两侧类型在条目超过 15 个后必出 schema 漂移事故，提前自动化是更便宜的选择。
+
+> 实现注记（偏离原方案）：原计划用 `tauri-specta`，但它的绑定导出必须在链接了 wry 的 Tauri 二进制内运行，该二进制在本机非 GUI 环境（裸 `cargo test`/`cargo run`）启动即 `STATUS_ENTRYPOINT_NOT_FOUND` 崩溃，导致 headless / CI 无法生成类型。改用 `tauri-specta` 的底层引擎 `specta` 直接导出，保留“Rust struct/enum 是跨端单一来源、TS 自动生成”的设计意图；代价是不自动生成命令 invoke wrapper，命令走一层轻量 typed invoke 封装。
 
 **dialog plugin 测试预留**：`tauri-plugin-dialog` 弹出的原生选择器无法被 e2e（WebDriver）操作。在测试构建产物中，dialog 调用改为读取测试预置路径——通过构建期 feature flag（如 `cfg(feature = "test-mode")`）控制，不在运行时检测，避免生产构建留有可探测的旁路。这是 v0.1 e2e 可测性的工程前置条件。
 

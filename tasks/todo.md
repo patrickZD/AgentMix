@@ -5,8 +5,9 @@
 ## Phase 0：地基与工具链
 - [x] **T1** 重构到根目录 + 迁移 pnpm（删 `bun.lock`，补 `type-check` 脚本；`format` 待选 formatter）— 依赖：无 — M
 - [x] **T2** 清理 Pixso 多余 UI 套件（移除 MUI/Emotion/Arco/antd/tdesign，MUI 组件换 Radix/自建）— 依赖：T1 — M
-- [ ] **T3** Tauri 2.0 后端脚手架（`src-tauri/`、dialog/fs 插件、`ping` 命令）— 依赖：T1 — M
-- [ ] **T4** tauri-specta 数据模型 + 生成 TS 类型 + `lint:asset-purity`— 依赖：T3 — M
+- [x] **T3** Tauri 2.0 后端脚手架（`src-tauri/`、dialog/fs 插件、`ping` 命令）— 依赖：T1 — M
+  - cargo build/clippy/fmt + 前端 type-check/lint/build 全绿；**待你跑 `pnpm tauri dev` 确认窗口弹出 + console 出现 `[ipc] ping -> pong`**
+- [x] **T4** 数据模型 + 生成 TS 类型 + `lint:asset-purity`（**改用 specta** 而非 tauri-specta：headless 导出，详见 DESIGN.md；仅定义 scan/health 核心模型，export-pipeline 模型留到 T11+）— 依赖：T3 — M
 - [x] **T5** i18n 引导 + 文案外提 + `lint:i18n` / `lint:i18n:keys`（活跃组件已转；MergeWorkbench=v0.1.5 deferred 未转；设置语言开关在 T15）— 依赖：T4 — M
 - [ ] **T6** Zustand store 骨架（project/composition/export/ui）+ store 单测 — 依赖：T4 — M
 
