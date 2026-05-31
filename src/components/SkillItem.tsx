@@ -41,7 +41,7 @@ export default function SkillItem({
   return (
     <div
       data-cmp="SkillItem"
-      className={`am-skill-row ${selected ? 'selected' : ''}`}
+      className={`am-skill-row group ${selected ? 'selected' : ''}`}
       onClick={() => onClick(skill)}
     >
       {/* Status dot */}

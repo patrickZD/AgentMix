@@ -113,6 +113,10 @@
     @apply bg-background text-foreground font-sans;
     font-size: 13px;
   }
+  /* Clickable controls show the hand cursor; disabled ones do not. */
+  button:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 @layer utilities {
