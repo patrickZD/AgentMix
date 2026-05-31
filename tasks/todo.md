@@ -7,7 +7,7 @@
 - [x] **T2** 清理 Pixso 多余 UI 套件（移除 MUI/Emotion/Arco/antd/tdesign，MUI 组件换 Radix/自建）— 依赖：T1 — M
 - [ ] **T3** Tauri 2.0 后端脚手架（`src-tauri/`、dialog/fs 插件、`ping` 命令）— 依赖：T1 — M
 - [ ] **T4** tauri-specta 数据模型 + 生成 TS 类型 + `lint:asset-purity`— 依赖：T3 — M
-- [ ] **T5** i18n 引导 + 文案外提 + `lint:i18n` / `lint:i18n:keys`— 依赖：T4 — M
+- [x] **T5** i18n 引导 + 文案外提 + `lint:i18n` / `lint:i18n:keys`（活跃组件已转；MergeWorkbench=v0.1.5 deferred 未转；设置语言开关在 T15）— 依赖：T4 — M
 - [ ] **T6** Zustand store 骨架（project/composition/export/ui）+ store 单测 — 依赖：T4 — M
 
 ### Checkpoint A（T1–T6）
