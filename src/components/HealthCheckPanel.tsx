@@ -124,7 +124,10 @@ export default function HealthCheckPanel({
           const skillLabel = simpleMode ? displayLabel(skill.name) : skill.name;
 
           return (
-            <div key={skill.id} className="border border-border rounded-lg overflow-hidden">
+            <div
+              key={skill.id}
+              className="flex-shrink-0 border border-border rounded-lg overflow-hidden"
+            >
               {/* Skill header row */}
               <div
                 className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-secondary transition-colors"
