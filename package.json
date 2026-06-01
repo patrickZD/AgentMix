@@ -19,6 +19,8 @@
     "lint:i18n:keys": "node scripts/lint-i18n-keys.mjs",
     "gen:types": "cargo run --manifest-path src-tauri/Cargo.toml -p agentmix-types --features export --bin export-bindings",
     "type-check": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
+    "check:all": "node scripts/check-all.mjs",
+    "perf": "cargo test --release --manifest-path src-tauri/Cargo.toml -p agentmix-core --test perf_scan -- --ignored --nocapture",
     "preview": "vite preview"
   },
   "dependencies": {
