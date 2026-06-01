@@ -7,7 +7,24 @@ Two WebDriver specs over the real packaged app on Windows:
 
 The deterministic pipeline assertions also run headless (no GUI) in `src-tauri/crates/agentmix-core/tests/e2e_pipeline.rs` (`cargo test`); this suite adds the real UI click-through.
 
-> Status: this suite is wired but has **not** been executed by the author (the dev sandbox has no GUI / WebView2 WebDriver session). Run it locally and adjust selectors/versions if your environment differs.
+> Status (2026-06-01): **headless suite is green**; the WebDriver UI suite is wired and gets a session, but is **blocked** in the environment tested — see "Known limitation" below. The golden + conflict assertions themselves are verified by the headless suite, which is the CI gate for v0.1.
+
+## Known limitation (WebDriver content load)
+
+When driven by `tauri-driver` + `msedgedriver`, the app window and WebDriver
+session start (`hasTauriInternals` is true), but the webview navigates to
+`chrome-error://chromewebdata/` instead of the app — the embedded frontend does
+not load under automation, so `#root` stays empty and the test hook never
+installs. This reproduced on both debug and release binaries (Edge/WebView2
+148.0.3967.96, tauri-driver latest, WDIO 9.27). The same binary loads normally
+outside automation (`pnpm tauri dev` / double-click).
+
+This is a `tauri-driver` + WebView2 automation/custom-protocol interaction, not
+an AgentMix or spec defect. Until it is resolved (e.g. a `tauri-driver` version
+bump or WebView2 automation flag), **the headless suite in
+`agentmix-core/tests/e2e_pipeline.rs` is the authoritative golden/conflict
+gate**. If you get the UI suite loading the app locally, the specs below should
+drive it as written.
 
 ## Prerequisites (Windows)
 

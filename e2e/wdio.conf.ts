@@ -8,13 +8,18 @@ import os from 'node:os';
 // `e2e`-feature `e2e_set_next_pick` command) instead of clicking the OS dialog.
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
-const application = path.resolve(projectRoot, 'src-tauri', 'target', 'debug', 'agentmix.exe');
+// Release binary: a debug build loads devUrl (localhost:5173), but the e2e app
+// is served from the embedded frontendDist, which only a non-dev build uses.
+const application = path.resolve(projectRoot, 'src-tauri', 'target', 'release', 'agentmix.exe');
 const tauriDriverBin = path.resolve(os.homedir(), '.cargo', 'bin', 'tauri-driver.exe');
 
 let tauriDriver: ChildProcess | undefined;
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
+  // Connect to tauri-driver (it proxies to msedgedriver), not a local browser.
+  hostname: '127.0.0.1',
+  port: 4444,
   specs: ['./*.spec.ts'],
   maxInstances: 1,
   capabilities: [
@@ -35,11 +40,16 @@ export const config: WebdriverIO.Config = {
       stdio: 'inherit',
       shell: true,
     });
-    spawnSync('cargo', ['build', '--features', 'e2e', '--manifest-path', 'src-tauri/Cargo.toml'], {
-      cwd: projectRoot,
-      stdio: 'inherit',
-      shell: true,
-    });
+    // Release (not debug) so the binary loads the embedded frontendDist rather
+    // than the dev-server URL. NOTE: Tauri embeds the frontend at compile time;
+    // after changing the frontend, force a re-embed with
+    //   cargo clean -p agentmix --release
+    // (a dist-only change does not reliably retrigger the build).
+    spawnSync(
+      'cargo',
+      ['build', '--release', '--features', 'e2e', '--manifest-path', 'src-tauri/Cargo.toml'],
+      { cwd: projectRoot, stdio: 'inherit', shell: true },
+    );
   },
 
   // tauri-driver proxies to the platform WebDriver (msedgedriver on Windows).
