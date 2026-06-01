@@ -87,7 +87,10 @@
   - 人工复核：`pnpm tauri dev` 走 welcome → 选文件夹 → main；设置里切语言即时生效、重启仍保留；deferred 入口置灰
 
 ## Phase 6：核验、e2e、打包、发布
-- [ ] **T16** e2e：golden path + conflict path（tauri-driver，按钮入口）— 依赖：T13, T14 — M
+- [x] **T16** e2e：golden path + conflict path — 依赖：T13, T14 — M
+  - Part 1（headless，作者已验证绿）：`agentmix-core/tests/e2e_pipeline.rs` 两条集成测试跑通全管线，断言 `.claude/skills` 子目录 + frontmatter name 同步 + 拒绝未解决冲突
+  - Part 2（WebdriverIO UI，作者未运行，需本机 tauri-driver/msedgedriver）：`e2e/` 两条 spec + 生产安全 dialog seam（cargo `e2e` feature + `VITE_E2E` 双重 gating，生产无旁路）；e2e specs 已对 @wdio 类型通过 `e2e/tsconfig` type-check
+  - 人工：`pnpm install` 后 `pnpm test:e2e`（见 `e2e/README.md`）
 - [ ] **T17** `check:all` 编排 + DoD 性能核验（扫描<5s / 冷启动<2s / golden<60s）— 依赖：T16 — S
 - [ ] **T18** 打包 `.msi`/`.exe` + SHA-256 + README + CHANGELOG + CONTRIBUTING + Release — 依赖：T17 — S
 
