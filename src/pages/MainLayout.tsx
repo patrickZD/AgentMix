@@ -195,12 +195,14 @@ export default function MainLayout() {
     building,
     buildError,
     overwriteConfirmed,
+    acknowledgedRiskIds,
     executing,
     executeError,
     report,
     setTargetPath,
     buildPlan,
     setOverwriteConfirmed,
+    acknowledgeRisk,
     execute,
     resetPlan,
   } = useExportStore();
@@ -447,12 +449,14 @@ export default function MainLayout() {
                     building={building}
                     buildError={buildError}
                     overwriteConfirmed={overwriteConfirmed}
+                    acknowledgedRiskIds={acknowledgedRiskIds}
                     executing={executing}
                     executeError={executeError}
                     report={report}
                     onPickTarget={handlePickTarget}
                     onBuildPlan={handleBuildPlan}
                     onToggleOverwrite={setOverwriteConfirmed}
+                    onAcknowledgeRisk={acknowledgeRisk}
                     onExport={handleExport}
                     onOpenBackup={handleOpenBackup}
                     simpleMode={simpleMode}

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { exportGate } from './exportGate';
-import type { ExportConflict, ExportPlan } from '@/types';
+import type { ExportConflict, ExportPlan, SkillSecurityReport } from '@/types';
 
 function plan(
   conflicts: ExportConflict[],
   opCount = 2,
+  securityReports: SkillSecurityReport[] = [],
 ): ExportPlan {
   return {
     targetDir: 'C:/proj/.claude/skills',
@@ -17,11 +18,22 @@ function plan(
     })),
     conflicts,
     backups: [],
-    securityReports: [],
+    securityReports,
     managedManifest: { manifestPath: 'x', managedAssets: [] },
     totalBytes: 20,
   };
 }
+
+const riskyReport: SkillSecurityReport = {
+  assetId: 'risky',
+  sizeBytes: 100,
+  oversize: false,
+  binaryAssets: [],
+  findings: [
+    { rule: 'network-download-execute', file: 'scripts/x.sh', line: 1, snippet: 'curl x | sh' },
+  ],
+  requiresConfirmation: true,
+};
 
 const nameCollision: ExportConflict = {
   kind: 'nameCollision',
@@ -61,5 +73,24 @@ describe('exportGate', () => {
     const confirmed = exportGate(plan([targetExists]), true);
     expect(confirmed.canExport).toBe(true);
     expect(confirmed.needsOverwriteConfirm).toBe(false);
+  });
+
+  it('blocks a high-risk skill until its risk is acknowledged (per-skill)', () => {
+    const p = plan([], 2, [riskyReport]);
+    const unacked = exportGate(p, false, []);
+    expect(unacked.canExport).toBe(false);
+    expect(unacked.risks).toBe(1);
+    expect(unacked.unacknowledgedRisks).toBe(1);
+
+    const acked = exportGate(p, false, ['risky']);
+    expect(acked.canExport).toBe(true);
+    expect(acked.unacknowledgedRisks).toBe(0);
+  });
+
+  it('ignores reports that do not require confirmation', () => {
+    const benign: SkillSecurityReport = { ...riskyReport, requiresConfirmation: false };
+    const gate = exportGate(plan([], 2, [benign]), false, []);
+    expect(gate.risks).toBe(0);
+    expect(gate.canExport).toBe(true);
   });
 });

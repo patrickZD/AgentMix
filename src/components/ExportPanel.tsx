@@ -5,6 +5,7 @@ import {
   FolderIcon,
   FolderOpenIcon,
   AlertTriangleIcon,
+  ShieldAlertIcon,
   FileEditIcon,
   FilePlusIcon,
   CheckCircleIcon,
@@ -29,12 +30,14 @@ interface ExportPanelProps {
   building?: boolean;
   buildError?: string | null;
   overwriteConfirmed?: boolean;
+  acknowledgedRiskIds?: string[];
   executing?: boolean;
   executeError?: string | null;
   report?: ExecutionReport | null;
   onPickTarget?: () => void;
   onBuildPlan?: () => void;
   onToggleOverwrite?: (confirmed: boolean) => void;
+  onAcknowledgeRisk?: (assetId: string, accepted: boolean) => void;
   onExport?: () => void;
   onOpenBackup?: () => void;
   simpleMode?: boolean;
@@ -53,12 +56,14 @@ export default function ExportPanel({
   building = false,
   buildError = null,
   overwriteConfirmed = false,
+  acknowledgedRiskIds = [],
   executing = false,
   executeError = null,
   report = null,
   onPickTarget = () => {},
   onBuildPlan = () => {},
   onToggleOverwrite = () => {},
+  onAcknowledgeRisk = () => {},
   onExport = () => {},
   onOpenBackup = () => {},
   simpleMode = false,
@@ -66,7 +71,11 @@ export default function ExportPanel({
   const { t } = useTranslation();
 
   const canPreview = !!targetPath && comboItems.length > 0 && !building;
-  const gate = exportGate(plan, overwriteConfirmed);
+  const gate = exportGate(plan, overwriteConfirmed, acknowledgedRiskIds);
+  // Resolve an asset id to the name it exports as, for risk-card headings.
+  const skillName = (assetId: string) =>
+    comboItems.find((c) => c.skill.id === assetId)?.exportedName ?? assetId;
+  const riskReports = plan?.securityReports.filter((r) => r.requiresConfirmation) ?? [];
   const createCount = plan?.operations.filter((o) => o.kind === 'create').length ?? 0;
   const overwriteCount = plan?.operations.filter((o) => o.kind === 'overwrite').length ?? 0;
   const affectedSkills = plan ? new Set(plan.operations.map((o) => o.sourceAsset)).size : 0;
@@ -228,6 +237,62 @@ export default function ExportPanel({
                 </span>
               </label>
             )}
+
+            {/* Security pre-check — per-skill risk, acknowledged individually
+                (DESIGN.md §6.11, no bulk bypass). */}
+            {riskReports.map((r) => (
+              <div
+                key={r.assetId}
+                className="flex flex-col gap-1.5 rounded-md border p-2"
+                style={{ borderColor: 'var(--am-red)', background: 'rgba(220,38,38,0.05)' }}
+              >
+                <div
+                  className="flex items-center gap-1"
+                  style={{ fontSize: '10.5px', color: 'var(--am-red)', fontWeight: 600 }}
+                >
+                  <ShieldAlertIcon size={11} style={{ flexShrink: 0 }} />
+                  {t('security.riskTitle', { name: skillName(r.assetId) })}
+                </div>
+                {r.oversize && (
+                  <p style={{ fontSize: '10px', color: 'var(--am-red)' }}>
+                    {t('security.oversize', { size: formatBytes(r.sizeBytes) })}
+                  </p>
+                )}
+                {r.findings.map((f, i) => (
+                  <div key={`${f.file}:${f.line}:${i}`} className="flex flex-col gap-0.5">
+                    <span style={{ fontSize: '9.5px', color: 'var(--am-red)', fontWeight: 600 }}>
+                      {t(`security.rule.${f.rule}`)} · {f.file}:{f.line}
+                    </span>
+                    <code
+                      className="block rounded px-1 py-0.5 overflow-x-auto scrollbar-thin"
+                      style={{
+                        fontSize: '10px',
+                        fontFamily: 'monospace',
+                        whiteSpace: 'pre',
+                        background: 'rgba(0,0,0,0.05)',
+                        color: 'var(--am-text-muted, #475569)',
+                      }}
+                    >
+                      {f.snippet}
+                    </code>
+                  </div>
+                ))}
+                <label className="flex items-start gap-1.5 cursor-pointer" style={{ fontSize: '10.5px' }}>
+                  <input
+                    type="checkbox"
+                    checked={acknowledgedRiskIds.includes(r.assetId)}
+                    onChange={(e) => onAcknowledgeRisk(r.assetId, e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span style={{ color: 'var(--am-red)' }}>{t('security.acknowledge')}</span>
+                </label>
+              </div>
+            ))}
+            {gate.risks > 0 && (
+              <p className="text-muted-foreground" style={{ fontSize: '9.5px' }}>
+                {t('security.contract')}
+              </p>
+            )}
           </div>
         )}
 
@@ -297,6 +362,11 @@ export default function ExportPanel({
         {comboItems.length > 0 && !targetPath && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10.5px' }}>
             {t('exportPanel.noTarget')}
+          </p>
+        )}
+        {gate.unacknowledgedRisks > 0 && (
+          <p className="text-center" style={{ fontSize: '10.5px', color: 'var(--am-red)' }}>
+            {t('security.unresolvedRisks', { count: gate.unacknowledgedRisks })}
           </p>
         )}
       </div>

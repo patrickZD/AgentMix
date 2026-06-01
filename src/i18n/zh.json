@@ -142,6 +142,20 @@
     "scriptsNoCompatibility": "包含脚本但未声明 compatibility",
     "scriptsNoCompatibilityFix": "补一个 compatibility 字段说明运行环境"
   },
+  "security": {
+    "title": "安全预检",
+    "riskTitle": "{{name}} 命中高危项",
+    "oversize": "体积超过单 Skill 2MB 上限（{{size}}）",
+    "acknowledge": "我已审查并接受该 Skill 的风险",
+    "contract": "AgentMix 只让风险可见，不替你判断是否安全。",
+    "unresolvedRisks": "请先逐个确认 {{count}} 个高危 Skill",
+    "rule": {
+      "network-download-execute": "下载并执行远程脚本",
+      "sensitive-path-access": "访问敏感路径或凭据",
+      "dynamic-eval": "动态执行字符串",
+      "reverse-shell-or-miner": "反弹 shell / 挖矿特征"
+    }
+  },
   "notFound": {
     "message": "哎呀！页面不存在",
     "returnHome": "返回首页"
