@@ -208,6 +208,10 @@ pub struct ExportPlan {
     /// Must be empty before execute is allowed (DESIGN.md §8.2).
     pub conflicts: Vec<ExportConflict>,
     pub backups: Vec<BackupPlan>,
+    /// Per-asset security pre-check (DESIGN.md §6.11). A report with
+    /// `requiresConfirmation` must be acknowledged before execute will write
+    /// that asset; the preview renders these and the user accepts per-skill.
+    pub security_reports: Vec<SkillSecurityReport>,
     pub managed_manifest: ManagedManifest,
     /// Sum of all operation sizes — the total bytes the export will write.
     #[specta(type = u32)]
@@ -224,6 +228,69 @@ pub struct ExecutionReport {
     pub files_created: u32,
     pub files_overwritten: u32,
     pub backup_archive: Option<String>,
+}
+
+/// Static-scan rule categories for suspicious script operations (DESIGN.md
+/// §6.11). Serialized as the canonical rule id shown in the UI, e.g.
+/// "network-download-execute". AgentMix surfaces these; it does not certify safety.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "kebab-case")]
+pub enum SecurityRule {
+    /// Download-and-execute: `curl | sh`, `wget -O- | bash`, `iwr | iex`.
+    NetworkDownloadExecute,
+    /// Access to sensitive paths/credentials: ~/.ssh, ~/.aws, .env, /etc/, cred APIs.
+    SensitivePathAccess,
+    /// Dynamic execution of strings: eval / exec(...) / Invoke-Expression.
+    DynamicEval,
+    /// Reverse-shell or crypto-miner signatures.
+    ReverseShellOrMiner,
+}
+
+/// One high-risk line found in a script (DESIGN.md §6.11). Carries the rule, the
+/// script path relative to the skill directory, the 1-based line number, and the
+/// line text so the UI can highlight exactly what matched.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct SecurityFinding {
+    pub rule: SecurityRule,
+    /// Script path relative to the skill directory, forward-slashed.
+    pub file: String,
+    /// 1-based line number of the matched line.
+    pub line: u32,
+    /// The matched line (trimmed) for display.
+    pub snippet: String,
+}
+
+/// A non-text asset carried by a skill, listed so the user knows what is inside
+/// (DESIGN.md §6.11). Shown but not judged — AgentMix cannot rule on a binary's
+/// behavior without executing it, so binaries never gate export by themselves.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct BinaryAsset {
+    /// Path relative to the skill directory, forward-slashed.
+    pub file: String,
+    #[specta(type = u32)]
+    pub size_bytes: u64,
+}
+
+/// Deterministic security pre-check result for one skill (DESIGN.md §6.11).
+/// AgentMix promises "risk visible", not "safe": findings / oversize / binaries
+/// are surfaced. `requiresConfirmation` means the skill is denied import/export
+/// until the user explicitly accepts its risk (no bulk bypass).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct SkillSecurityReport {
+    pub asset_id: String,
+    /// Total size of the skill directory in bytes.
+    #[specta(type = u32)]
+    pub size_bytes: u64,
+    /// True when the skill exceeds the 2MB per-skill cap (red flag).
+    pub oversize: bool,
+    pub binary_assets: Vec<BinaryAsset>,
+    pub findings: Vec<SecurityFinding>,
+    /// True when there is any high-risk finding or the skill is oversize; the
+    /// user must confirm this skill before it may be imported/exported.
+    pub requires_confirmation: bool,
 }
 
 /// A source project (folder) that was scanned for assets.

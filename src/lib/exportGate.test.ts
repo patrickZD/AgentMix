@@ -17,6 +17,7 @@ function plan(
     })),
     conflicts,
     backups: [],
+    securityReports: [],
     managedManifest: { manifestPath: 'x', managedAssets: [] },
     totalBytes: 20,
   };

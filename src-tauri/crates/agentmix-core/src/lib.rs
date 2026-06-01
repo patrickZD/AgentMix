@@ -7,3 +7,4 @@ pub mod exporter;
 pub mod health;
 pub mod parser;
 pub mod scanner;
+pub mod security;

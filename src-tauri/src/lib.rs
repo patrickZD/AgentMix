@@ -75,12 +75,15 @@ fn build_export_plan(
 /// Execute the plan: back up, write the selected skills to `.claude/skills/`,
 /// then the manifest. The only command allowed to modify user files; it
 /// delegates to the single writer in agentmix-core (DESIGN.md §8.2).
+/// `acknowledged_asset_ids` are the assets whose security risk the user
+/// explicitly accepted in the preview (per-skill, no bulk bypass, §6.11).
 #[tauri::command]
 fn execute_export(
     plan: ExportPlan,
     items: Vec<ExportRequestItem>,
+    acknowledged_asset_ids: Vec<String>,
 ) -> Result<ExecutionReport, String> {
-    agentmix_core::exporter::execute(&plan, &items)
+    agentmix_core::exporter::execute(&plan, &items, &acknowledged_asset_ids)
 }
 
 /// Reveal a path in the OS file manager (Windows Explorer); used by the

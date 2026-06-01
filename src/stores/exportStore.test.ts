@@ -12,6 +12,7 @@ const emptyPlan: ExportPlan = {
   operations: [{ kind: 'create', path: 'x', sourcePath: 'src/x', size: 1, sourceAsset: 'a' }],
   conflicts: [],
   backups: [],
+  securityReports: [],
   managedManifest: { manifestPath: 'm', managedAssets: [] },
   totalBytes: 1,
 };
@@ -33,6 +34,7 @@ beforeEach(() => {
     building: false,
     buildError: null,
     overwriteConfirmed: false,
+    acknowledgedRiskIds: [],
     executing: false,
     executeError: null,
     report: null,
@@ -100,11 +102,27 @@ describe('exportStore.execute', () => {
 
     await useExportStore.getState().execute(items);
 
-    expect(mockExecute).toHaveBeenCalledWith(emptyPlan, items);
+    expect(mockExecute).toHaveBeenCalledWith(emptyPlan, items, []);
     const s = useExportStore.getState();
     expect(s.report).toEqual(report);
     expect(s.plan).toBeNull();
     expect(s.executing).toBe(false);
+  });
+
+  it('passes only acknowledged risk ids to execute (per-skill, no bulk bypass)', async () => {
+    mockExecute.mockResolvedValue(report);
+    useExportStore.setState({ plan: emptyPlan });
+    const items = [
+      { assetId: 'a', sourceDir: 'C:/src/a', exportedName: 'a', sourceRef: 'p:a' },
+    ];
+
+    const store = useExportStore.getState();
+    store.acknowledgeRisk('a', true);
+    store.acknowledgeRisk('b', true);
+    store.acknowledgeRisk('b', false); // toggled back off
+    await useExportStore.getState().execute(items);
+
+    expect(mockExecute).toHaveBeenCalledWith(emptyPlan, items, ['a']);
   });
 
   it('surfaces an execution failure in executeError and keeps the plan', async () => {

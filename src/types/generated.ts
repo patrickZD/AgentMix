@@ -27,6 +27,17 @@ export type BackupPlan = {
 };
 
 /**
+ *  A non-text asset carried by a skill, listed so the user knows what is inside
+ *  (DESIGN.md §6.11). Shown but not judged — AgentMix cannot rule on a binary's
+ *  behavior without executing it, so binaries never gate export by themselves.
+ */
+export type BinaryAsset = {
+	/**  Path relative to the skill directory, forward-slashed. */
+	file: string,
+	sizeBytes: number,
+};
+
+/**
  *  One asset competing for a name in the export target, fed to conflict
  *  detection. Kept asset-kind-agnostic: only the id and the name it would be
  *  written as matter, so the pipeline never branches on a concrete asset type.
@@ -87,6 +98,12 @@ export type ExportPlan = {
 	/**  Must be empty before execute is allowed (DESIGN.md §8.2). */
 	conflicts: ExportConflict[],
 	backups: BackupPlan[],
+	/**
+	 *  Per-asset security pre-check (DESIGN.md §6.11). A report with
+	 *  `requiresConfirmation` must be acknowledged before execute will write
+	 *  that asset; the preview renders these and the user accepts per-skill.
+	 */
+	securityReports: SkillSecurityReport[],
 	managedManifest: ManagedManifest,
 	/**  Sum of all operation sizes — the total bytes the export will write. */
 	totalBytes: number,
@@ -167,6 +184,36 @@ export type ManagedManifest = {
 };
 
 /**
+ *  One high-risk line found in a script (DESIGN.md §6.11). Carries the rule, the
+ *  script path relative to the skill directory, the 1-based line number, and the
+ *  line text so the UI can highlight exactly what matched.
+ */
+export type SecurityFinding = {
+	rule: SecurityRule,
+	/**  Script path relative to the skill directory, forward-slashed. */
+	file: string,
+	/**  1-based line number of the matched line. */
+	line: number,
+	/**  The matched line (trimmed) for display. */
+	snippet: string,
+};
+
+/**
+ *  Static-scan rule categories for suspicious script operations (DESIGN.md
+ *  §6.11). Serialized as the canonical rule id shown in the UI, e.g.
+ *  "network-download-execute". AgentMix surfaces these; it does not certify safety.
+ */
+export type SecurityRule = 
+/**  Download-and-execute: `curl | sh`, `wget -O- | bash`, `iwr | iex`. */
+"network-download-execute" | 
+/**  Access to sensitive paths/credentials: ~/.ssh, ~/.aws, .env, /etc/, cred APIs. */
+"sensitive-path-access" | 
+/**  Dynamic execution of strings: eval / exec(...) / Invoke-Expression. */
+"dynamic-eval" | 
+/**  Reverse-shell or crypto-miner signatures. */
+"reverse-shell-or-miner";
+
+/**
  *  A Skill asset discovered by scanning — the concrete v0.1 provider of the
  *  Asset abstraction. The Asset-level fields (id, kind, identityKey,
  *  sourceProjectId, healthStatus, healthIssues) are flattened in here.
@@ -188,6 +235,27 @@ export type Skill = {
 	relativePathInProject: string,
 	hasScripts: boolean,
 	skillMdContent: string,
+};
+
+/**
+ *  Deterministic security pre-check result for one skill (DESIGN.md §6.11).
+ *  AgentMix promises "risk visible", not "safe": findings / oversize / binaries
+ *  are surfaced. `requiresConfirmation` means the skill is denied import/export
+ *  until the user explicitly accepts its risk (no bulk bypass).
+ */
+export type SkillSecurityReport = {
+	assetId: string,
+	/**  Total size of the skill directory in bytes. */
+	sizeBytes: number,
+	/**  True when the skill exceeds the 2MB per-skill cap (red flag). */
+	oversize: boolean,
+	binaryAssets: BinaryAsset[],
+	findings: SecurityFinding[],
+	/**
+	 *  True when there is any high-risk finding or the skill is oversize; the
+	 *  user must confirm this skill before it may be imported/exported.
+	 */
+	requiresConfirmation: boolean,
 };
 
 /**  A source project (folder) that was scanned for assets. */

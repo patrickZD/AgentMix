@@ -28,6 +28,10 @@ export type {
   BackupPlan,
   ManagedManifest,
   ManagedAsset,
+  SecurityRule,
+  SecurityFinding,
+  BinaryAsset,
+  SkillSecurityReport,
 } from './generated';
 
 import type { Skill, SourceProject } from './generated';
