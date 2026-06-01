@@ -44,7 +44,7 @@ Rust struct/enum 是跨端数据模型的唯一来源（`src-tauri/crates/agentm
 
 - 业务逻辑放在 tauri-free 的 `agentmix-core`，用 `tempfile` 写真实样本做单测 / 集成测试（headless）。
 - golden / conflict 的端到端断言在 `src-tauri/crates/agentmix-core/tests/e2e_pipeline.rs`（`cargo test` 自动跑）。
-- WebDriver UI e2e 在 `e2e/`，是独立手动 gate，当前存在 WebView2 自动化加载的已知限制（见 `e2e/README.md`），不进 `check:all`。
+- WebDriver UI e2e 在 `e2e/`（`pnpm test:e2e`），实跑通过；需真实显示 + tauri-driver/msedgedriver，是独立手动 gate，不进 `check:all`（见 `e2e/README.md`）。
 - 断言绑定业务行为（分类结果、冲突判定、导出后的文件与 frontmatter），不只校验数据结构。
 
 ## 提交

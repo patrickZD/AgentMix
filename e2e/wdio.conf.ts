@@ -8,9 +8,9 @@ import os from 'node:os';
 // `e2e`-feature `e2e_set_next_pick` command) instead of clicking the OS dialog.
 
 const projectRoot = path.resolve(import.meta.dirname, '..');
-// Release binary: a debug build loads devUrl (localhost:5173), but the e2e app
-// is served from the embedded frontendDist, which only a non-dev build uses.
-const application = path.resolve(projectRoot, 'src-tauri', 'target', 'release', 'agentmix.exe');
+// Built via `tauri build --debug` (see onPrepare): a debug-profile binary that
+// still loads the embedded frontendDist in production mode, output in target/debug.
+const application = path.resolve(projectRoot, 'src-tauri', 'target', 'debug', 'agentmix.exe');
 const tauriDriverBin = path.resolve(os.homedir(), '.cargo', 'bin', 'tauri-driver.exe');
 
 let tauriDriver: ChildProcess | undefined;
@@ -34,22 +34,17 @@ export const config: WebdriverIO.Config = {
   // Build the e2e binary once: the frontend with the test hook embedded
   // (VITE_E2E), then the Rust binary with the `e2e` cargo feature.
   onPrepare: () => {
-    spawnSync('pnpm', ['build'], {
+    // Build via the Tauri CLI (not raw cargo): it runs beforeBuildCommand
+    // (pnpm build) so the embedded frontendDist is fresh, and the binary loads
+    // it in production mode instead of the dev-server URL. --debug keeps it a
+    // fast debug-profile build; --no-bundle skips installers; --features e2e
+    // enables the test command; VITE_E2E embeds the folder-pick test hook.
+    spawnSync('pnpm', ['tauri', 'build', '--debug', '--no-bundle', '--features', 'e2e'], {
       cwd: projectRoot,
       env: { ...process.env, VITE_E2E: '1' },
       stdio: 'inherit',
       shell: true,
     });
-    // Release (not debug) so the binary loads the embedded frontendDist rather
-    // than the dev-server URL. NOTE: Tauri embeds the frontend at compile time;
-    // after changing the frontend, force a re-embed with
-    //   cargo clean -p agentmix --release
-    // (a dist-only change does not reliably retrigger the build).
-    spawnSync(
-      'cargo',
-      ['build', '--release', '--features', 'e2e', '--manifest-path', 'src-tauri/Cargo.toml'],
-      { cwd: projectRoot, stdio: 'inherit', shell: true },
-    );
   },
 
   // tauri-driver proxies to the platform WebDriver (msedgedriver on Windows).

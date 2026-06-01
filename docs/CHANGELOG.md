@@ -20,7 +20,10 @@
 - 仅 Windows x64、仅 Claude Code 项目级导出；无自动更新（手动升级）。
 - 多目标导出、全局路径、Git URL 导入、Skill 脚手架、合并工作台、Skill 编辑器、AI 辅助合并、来源更新检测均在 v0.1.5 ~ v0.2。
 - 安全预检只承诺「风险可见」，不判定自然语言恶意指令、外部 URL、混淆脚本。
-- WebDriver UI e2e 在新版 WebView2 自动化下加载内嵌前端失败（`chrome-error`），暂列已知限制；golden / conflict 行为由 headless 集成测试覆盖（见 `e2e/README.md`）。
+
+### 测试
+
+- headless 集成测试（`cargo test` 的 `e2e_pipeline`）与 WebDriver UI e2e（`pnpm test:e2e`）均通过；UI e2e 需真实显示 + tauri-driver/msedgedriver，作独立手动 gate，不进 `check:all`（见 `e2e/README.md`）。
 
 ### 安装包与校验
 

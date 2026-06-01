@@ -46,7 +46,6 @@ v0.1 Alpha 聚焦 Windows + Claude Code 项目级 `.claude/skills/` 导出。
 - 手动合并工作台（v0.1.5）、Skill 编辑器（v0.2）
 - AI 辅助合并、来源仓库更新检测、`.agentmix.lock`（v0.2+）
 - 安全预检只承诺「风险可见」，不承诺绝对安全：不判定 SKILL.md 正文里的自然语言恶意指令、脚本引用的外部 URL、混淆脚本（契约边界见 `docs/DESIGN.md` §6.11）
-- WebDriver UI e2e（`pnpm test:e2e`）在新版 WebView2 下加载内嵌前端失败，暂列为已知限制；golden / conflict 行为由 headless 集成测试覆盖（见 `e2e/README.md`）
 
 ## 从源码构建（开发者）
 

@@ -89,7 +89,7 @@
 ## Phase 6：核验、e2e、打包、发布
 - [x] **T16** e2e：golden path + conflict path — 依赖：T13, T14 — M
   - Part 1（headless，作者已验证绿）：`agentmix-core/tests/e2e_pipeline.rs` 两条集成测试跑通全管线，断言 `.claude/skills` 子目录 + frontmatter name 同步 + 拒绝未解决冲突
-  - Part 2（WebdriverIO UI）：`e2e/` 两条 spec + 生产安全 dialog seam（cargo `e2e` feature + `VITE_E2E` 双重 gating，生产无旁路）；transport 已接通（tauri-driver 起 session、release 二进制）。**已知阻塞**：WebView2 自动化下 webview 导航到 `chrome-error://chromewebdata/`，内嵌前端加载不出（debug/release 均复现，非自动化时正常）——tauri-driver/WebView2 与新版 Edge 148 的兼容坑，非 app/spec 缺陷。详见 `e2e/README.md`。headless 套件为 v0.1 权威 golden/conflict 闸门。
+  - Part 2（WebdriverIO UI，**实跑通过**）：`e2e/` 两条 spec + 生产安全 dialog seam（cargo `e2e` feature + `VITE_E2E` 双重 gating，生产无旁路）。`2 passed`（Edge/WebView2 148、tauri-driver 2.0.6、WDIO 9.27）。关键修复：onPrepare 用官方配方 `tauri build --debug --no-bundle --features e2e`（裸 `cargo build` debug 会去连 devUrl→chrome-error）。需真实显示 + driver，作独立手动 gate，不进 `check:all`，详见 `e2e/README.md`。
 - [x] **T17** `check:all` 编排 + DoD 性能核验（扫描<5s / 冷启动<2s / golden<60s）— 依赖：T16 — S
   - `scripts/check-all.mjs`：10 步全绿（typecheck/eslint/4×架构 i18n lint/vitest/cargo fmt/clippy/test；两条 e2e 由 cargo test 的 headless e2e_pipeline 覆盖）
   - DoD-5 实测 **0.105s**（<5s，`pnpm perf` + `perf_scan` release 基准）；DoD-6 冷启动 / DoD-1 golden<60s 为 GUI/人机指标，`docs/CHANGELOG.md` 记为待 T18 安装包上人工实测（不充推测值）
@@ -100,7 +100,7 @@
 
 ### Checkpoint Complete（T16–T18）
 - [x] `pnpm check:all` 全绿（含 headless 2×e2e + 4×架构红线 lint）
-- [~] DoD：DoD-5 实测达标（0.105s）；DoD-6 冷启动 / DoD-1 golden<60s 待安装包上人工计时；e2e DoD（WDIO UI）受 WebView2 兼容坑阻塞，由 headless e2e 覆盖行为 —— 均显式记录，未充推测值
+- [~] DoD：DoD-5 实测达标（0.105s）；e2e golden/conflict 由 headless `e2e_pipeline` + WDIO UI（`pnpm test:e2e`，2 passed）双重覆盖；DoD-6 冷启动 / DoD-1 golden<60s 待安装包上人工计时 —— 均显式记录，未充推测值
 - [x] 安装包 + README 就绪，可发 v0.1 Alpha（待人工核验 DoD-6/DoD-1 + 决定是否发布）
 
 ## Backlog（alpha 测试反馈，不在 v0.1 范围）

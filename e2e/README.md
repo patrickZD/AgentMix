@@ -7,24 +7,34 @@ Two WebDriver specs over the real packaged app on Windows:
 
 The deterministic pipeline assertions also run headless (no GUI) in `src-tauri/crates/agentmix-core/tests/e2e_pipeline.rs` (`cargo test`); this suite adds the real UI click-through.
 
-> Status (2026-06-01): **headless suite is green**; the WebDriver UI suite is wired and gets a session, but is **blocked** in the environment tested — see "Known limitation" below. The golden + conflict assertions themselves are verified by the headless suite, which is the CI gate for v0.1.
+> Status (2026-06-01): both suites pass — the headless `e2e_pipeline` suite
+> (`cargo test`) and these two WebDriver UI specs (`pnpm test:e2e`), verified on
+> Edge/WebView2 148.0.3967.96, tauri-driver 2.0.6, WDIO 9.27.
 
-## Known limitation (WebDriver content load)
+## How the e2e binary is built (important)
 
-When driven by `tauri-driver` + `msedgedriver`, the app window and WebDriver
-session start (`hasTauriInternals` is true), but the webview navigates to
-`chrome-error://chromewebdata/` instead of the app — the embedded frontend does
-not load under automation, so `#root` stays empty and the test hook never
-installs. This reproduced on both debug and release binaries (Edge/WebView2
-148.0.3967.96, tauri-driver latest, WDIO 9.27). The same binary loads normally
-outside automation (`pnpm tauri dev` / double-click).
+`onPrepare` builds with the **Tauri CLI**, not raw `cargo`:
 
-This is a `tauri-driver` + WebView2 automation/custom-protocol interaction, not
-an AgentMix or spec defect. Until it is resolved (e.g. a `tauri-driver` version
-bump or WebView2 automation flag), **the headless suite in
-`agentmix-core/tests/e2e_pipeline.rs` is the authoritative golden/conflict
-gate**. If you get the UI suite loading the app locally, the specs below should
-drive it as written.
+```
+tauri build --debug --no-bundle --features e2e   # with VITE_E2E=1
+```
+
+This matters. A plain `cargo build` (debug) produces a binary that loads the
+dev-server URL (`devUrl`, localhost:5173); with no Vite dev server running under
+automation the webview lands on `chrome-error://chromewebdata/` and `#root`
+stays empty. `tauri build` runs `beforeBuildCommand` (`pnpm build`), embeds the
+fresh `frontendDist`, and builds in production mode so the binary loads the
+embedded frontend. `--debug` keeps it a fast debug-profile build, `--no-bundle`
+skips installers, `--features e2e` enables the test command, and `VITE_E2E`
+embeds the folder-pick hook.
+
+## CI
+
+This suite needs a real display plus `tauri-driver` + `msedgedriver`, so it is
+**not** part of `pnpm check:all` (that gate stays headless/unattended). Run it on
+a machine with a desktop session, or a CI runner configured for WebView2
+WebDriver. The headless `e2e_pipeline` suite covers the same golden/conflict
+filesystem assertions in `check:all`.
 
 ## Prerequisites (Windows)
 
@@ -38,7 +48,7 @@ drive it as written.
 pnpm test:e2e
 ```
 
-`onPrepare` builds the e2e binary for you: `VITE_E2E=1 pnpm build` (frontend with the test hook embedded) then `cargo build --features e2e` (Rust binary with the test command). The spec drives `src-tauri/target/debug/agentmix.exe`.
+`onPrepare` builds the e2e binary for you via `tauri build --debug --no-bundle --features e2e` (see "How the e2e binary is built" above). The specs drive `src-tauri/target/debug/agentmix.exe`.
 
 ## The native-dialog seam (why a test command exists)
 
