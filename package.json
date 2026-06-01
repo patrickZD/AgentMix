@@ -2,6 +2,8 @@
   "name": "agentmix",
   "private": true,
   "version": "0.1.0",
+  "description": "从任意项目扫描、挑选、组合 Agent Skills，导出到 AI 编程工具的本地开源桌面工具。",
+  "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@9.15.9",
   "scripts": {
