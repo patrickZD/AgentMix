@@ -152,7 +152,6 @@
     "riskTitle": "{{name}} has high-risk findings",
     "oversize": "Exceeds the 2MB per-skill cap ({{size}})",
     "acknowledge": "I have reviewed and accept this skill's risk",
-    "contract": "AgentMix makes risk visible; it does not decide whether it is safe.",
     "unresolvedRisks": "Confirm {{count}} high-risk skill(s) individually first",
     "rule": {
       "network-download-execute": "Downloads and executes a remote script",

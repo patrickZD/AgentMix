@@ -10,8 +10,7 @@ export interface ExportGate {
   nameCollisions: number;
   targetExists: number;
   needsOverwriteConfirm: boolean;
-  // Reports that require confirmation, and how many are still unacknowledged.
-  risks: number;
+  // High-risk reports still awaiting their per-skill acknowledgment.
   unacknowledgedRisks: number;
 }
 
@@ -26,7 +25,6 @@ export function exportGate(
       nameCollisions: 0,
       targetExists: 0,
       needsOverwriteConfirm: false,
-      risks: 0,
       unacknowledgedRisks: 0,
     };
   }
@@ -48,7 +46,6 @@ export function exportGate(
     nameCollisions,
     targetExists,
     needsOverwriteConfirm,
-    risks: riskReports.length,
     unacknowledgedRisks,
   };
 }

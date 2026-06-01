@@ -147,7 +147,6 @@
     "riskTitle": "{{name}} 命中高危项",
     "oversize": "体积超过单 Skill 2MB 上限（{{size}}）",
     "acknowledge": "我已审查并接受该 Skill 的风险",
-    "contract": "AgentMix 只让风险可见，不替你判断是否安全。",
     "unresolvedRisks": "请先逐个确认 {{count}} 个高危 Skill",
     "rule": {
       "network-download-execute": "下载并执行远程脚本",

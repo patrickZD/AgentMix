@@ -288,11 +288,6 @@ export default function ExportPanel({
                 </label>
               </div>
             ))}
-            {gate.risks > 0 && (
-              <p className="text-muted-foreground" style={{ fontSize: '9.5px' }}>
-                {t('security.contract')}
-              </p>
-            )}
           </div>
         )}
 

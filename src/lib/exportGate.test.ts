@@ -79,7 +79,6 @@ describe('exportGate', () => {
     const p = plan([], 2, [riskyReport]);
     const unacked = exportGate(p, false, []);
     expect(unacked.canExport).toBe(false);
-    expect(unacked.risks).toBe(1);
     expect(unacked.unacknowledgedRisks).toBe(1);
 
     const acked = exportGate(p, false, ['risky']);
@@ -90,7 +89,7 @@ describe('exportGate', () => {
   it('ignores reports that do not require confirmation', () => {
     const benign: SkillSecurityReport = { ...riskyReport, requiresConfirmation: false };
     const gate = exportGate(plan([], 2, [benign]), false, []);
-    expect(gate.risks).toBe(0);
+    expect(gate.unacknowledgedRisks).toBe(0);
     expect(gate.canExport).toBe(true);
   });
 });
