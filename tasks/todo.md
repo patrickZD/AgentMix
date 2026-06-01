@@ -89,8 +89,7 @@
 ## Phase 6：核验、e2e、打包、发布
 - [x] **T16** e2e：golden path + conflict path — 依赖：T13, T14 — M
   - Part 1（headless，作者已验证绿）：`agentmix-core/tests/e2e_pipeline.rs` 两条集成测试跑通全管线，断言 `.claude/skills` 子目录 + frontmatter name 同步 + 拒绝未解决冲突
-  - Part 2（WebdriverIO UI，作者未运行，需本机 tauri-driver/msedgedriver）：`e2e/` 两条 spec + 生产安全 dialog seam（cargo `e2e` feature + `VITE_E2E` 双重 gating，生产无旁路）；e2e specs 已对 @wdio 类型通过 `e2e/tsconfig` type-check
-  - 人工：`pnpm install` 后 `pnpm test:e2e`（见 `e2e/README.md`）
+  - Part 2（WebdriverIO UI）：`e2e/` 两条 spec + 生产安全 dialog seam（cargo `e2e` feature + `VITE_E2E` 双重 gating，生产无旁路）；transport 已接通（tauri-driver 起 session、release 二进制）。**已知阻塞**：WebView2 自动化下 webview 导航到 `chrome-error://chromewebdata/`，内嵌前端加载不出（debug/release 均复现，非自动化时正常）——tauri-driver/WebView2 与新版 Edge 148 的兼容坑，非 app/spec 缺陷。详见 `e2e/README.md`。headless 套件为 v0.1 权威 golden/conflict 闸门。
 - [ ] **T17** `check:all` 编排 + DoD 性能核验（扫描<5s / 冷启动<2s / golden<60s）— 依赖：T16 — S
 - [ ] **T18** 打包 `.msi`/`.exe` + SHA-256 + README + CHANGELOG + CONTRIBUTING + Release — 依赖：T17 — S
 
