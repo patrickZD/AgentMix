@@ -61,12 +61,18 @@
   - exportStore 重构为 `{ targetPath, plan, building, buildError, overwriteConfirmed }`；选择或目标变化即清除过期预览。删除 v0.2 多目标 toggle/mock/`ExportTarget`/`ExportTool`
   - 偏差：组件渲染无 jsdom 单测（node env，未引入 testing-library），渲染靠 `exportGate`/store 纯逻辑单测 + `pnpm tauri dev` 人工 + T16 e2e
   - 9 个新单测（exportGate 5 + exportStore build/branch/error/reset）；39 前端测试 + 全门禁绿
-- [ ] **T13** `ExportCoordinator.execute` + 备份 + 重命名/frontmatter 同步 + `lint:no-direct-write`— 依赖：T12 — M
+- [x] **T13** `ExportCoordinator.execute` + 备份 + 重命名/frontmatter 同步 + `lint:no-direct-write`— 依赖：T12 — M
+  - `agentmix-core/exporter.rs::execute` 是唯一文件写入口：消费同一个 ExportPlan，先写 `.zip` 备份再按 operations 逐条复制，最后写 manifest；重命名 Skill 在写入时同步改 `SKILL.md` 的 `name:`（plan 用重写后大小，二者一致 = DoD-3）
+  - 备份用 `zip` crate（用户确认新增，deflate only），只落 `~/.agentmix/backups/<hash>/`，不进目标项目（DoD-8）
+  - 新增命令 `execute_export` / `open_path`（Explorer 打开备份目录，Windows v0.1）；前端 execute 接线 + ExecutionReport 成功摘要 + 「打开备份目录」按钮 + 失败提示
+  - `scripts/lint-no-direct-write.mjs`：除 exporter.rs 外（含剥离测试模块、豁免 codegen bin）无任何文件写 API
+  - 偏差：`FileOperation` 加 `sourcePath`（DESIGN 未建模，plan-driven execute 必需）；`FileOperationKind::Delete` v0.1 不产出
+  - 43 Rust 测试（含 DoD-3 字节一致、重命名 SKILL.md 同步、备份隔离、拒绝 NameCollision、rewrite_skill_name）+ 9 前端 export 测试；全门禁绿 + 类型无漂移
 
 ### Checkpoint D（T11–T13）— 核心里程碑
-- [ ] golden path 手动跑通：扫描→选择→冲突解决→预览→导出→`.claude/skills/` 出现完整目录
-- [ ] ExportPlan 一致性测试（DoD-3）+ 备份隔离测试（DoD-8）+ `lint:no-direct-write` 通过
-- [ ] 人工复核
+- [x] ExportPlan 一致性测试（DoD-3）+ 备份隔离测试（DoD-8）+ `lint:no-direct-write` 通过
+- [ ] golden path 手动跑通：扫描→选择→冲突解决→预览→导出→`.claude/skills/` 出现完整目录（需 `pnpm tauri dev` 人工验证）
+- [ ] 人工复核（核心里程碑）
 
 ## Phase 4：安全预检门禁
 - [ ] **T14** 安全策略（2MB 上限/symlink 不跟随/二进制列出）+ `scripts/` 高危规则 + 逐项确认门禁 — 依赖：T7, T13 — M
