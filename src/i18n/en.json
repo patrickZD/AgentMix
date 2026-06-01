@@ -79,6 +79,10 @@
     "confirmOverwrite": "Confirm overwriting {{count}} existing skill(s)",
     "export": "Export",
     "exportWithCount": "Export {{count}} Skills",
+    "exporting": "Exporting…",
+    "exportDone": "Exported {{skills}} skill(s) — {{created}} created, {{overwritten}} overwritten",
+    "openBackup": "Open backup folder",
+    "executeFailed": "Export failed: {{error}}",
     "emptyComboSimple": "Add skills to your combo first",
     "emptyComboFull": "No skills in Combo List.",
     "noTarget": "Choose a target project first"

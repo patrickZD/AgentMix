@@ -3,14 +3,16 @@ import {
   CheckIcon,
   XIcon,
   FolderIcon,
+  FolderOpenIcon,
   AlertTriangleIcon,
   FileEditIcon,
   FilePlusIcon,
+  CheckCircleIcon,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import { exportGate } from '@/lib/exportGate';
-import type { ComboItem, ExportPlan } from '../types';
+import type { ComboItem, ExecutionReport, ExportPlan } from '../types';
 
 // v0.1 ships a single export target. The other tools are shown but deferred.
 const TARGET_TOOLS: ReadonlyArray<{ label: string; level: string; color: string; active: boolean }> = [
@@ -27,10 +29,14 @@ interface ExportPanelProps {
   building?: boolean;
   buildError?: string | null;
   overwriteConfirmed?: boolean;
+  executing?: boolean;
+  executeError?: string | null;
+  report?: ExecutionReport | null;
   onPickTarget?: () => void;
   onBuildPlan?: () => void;
   onToggleOverwrite?: (confirmed: boolean) => void;
   onExport?: () => void;
+  onOpenBackup?: () => void;
   simpleMode?: boolean;
 }
 
@@ -47,10 +53,14 @@ export default function ExportPanel({
   building = false,
   buildError = null,
   overwriteConfirmed = false,
+  executing = false,
+  executeError = null,
+  report = null,
   onPickTarget = () => {},
   onBuildPlan = () => {},
   onToggleOverwrite = () => {},
   onExport = () => {},
+  onOpenBackup = () => {},
   simpleMode = false,
 }: ExportPanelProps) {
   const { t } = useTranslation();
@@ -220,25 +230,63 @@ export default function ExportPanel({
             )}
           </div>
         )}
+
+        {/* Execution report (shown after a successful export) */}
+        {report && (
+          <div
+            className="flex flex-col gap-1.5 rounded-lg border p-2.5"
+            style={{ borderColor: 'var(--am-green)', background: 'var(--am-green-bg)' }}
+          >
+            <div
+              className="flex items-center gap-1.5"
+              style={{ fontSize: '11.5px', color: 'var(--am-green)', fontWeight: 600 }}
+            >
+              <CheckCircleIcon size={12} />
+              {t('exportPanel.exportDone', {
+                skills: report.skillsExported,
+                created: report.filesCreated,
+                overwritten: report.filesOverwritten,
+              })}
+            </div>
+            {report.backupArchive && (
+              <button
+                onClick={onOpenBackup}
+                className="flex items-center gap-1 self-start rounded px-1.5 py-0.5 hover:bg-card transition-colors"
+                style={{ fontSize: '10.5px', color: 'var(--am-blue)' }}
+              >
+                <FolderOpenIcon size={11} />
+                {t('exportPanel.openBackup')}
+              </button>
+            )}
+          </div>
+        )}
+
+        {executeError && (
+          <p style={{ fontSize: '10.5px', color: 'var(--am-red)' }}>
+            {t('exportPanel.executeFailed', { error: executeError })}
+          </p>
+        )}
       </div>
 
       {/* Execute footer */}
       <div className="px-3 pb-3 pt-2 border-t border-border flex flex-col gap-2">
         <button
           onClick={onExport}
-          disabled={!gate.canExport}
+          disabled={!gate.canExport || executing}
           className="w-full flex items-center justify-center gap-2 py-2 rounded-lg font-semibold transition-all text-primary-foreground"
           style={{
             background: 'var(--am-blue)',
             fontSize: '12.5px',
-            opacity: gate.canExport ? 1 : 0.4,
-            cursor: gate.canExport ? 'pointer' : 'not-allowed',
+            opacity: !gate.canExport || executing ? 0.4 : 1,
+            cursor: !gate.canExport || executing ? 'not-allowed' : 'pointer',
           }}
         >
           {gate.canExport ? <CheckIcon size={13} /> : <XIcon size={13} />}
-          {comboItems.length > 0
-            ? t('exportPanel.exportWithCount', { count: comboItems.length })
-            : t('exportPanel.export')}
+          {executing
+            ? t('exportPanel.exporting')
+            : comboItems.length > 0
+              ? t('exportPanel.exportWithCount', { count: comboItems.length })
+              : t('exportPanel.export')}
         </button>
 
         {comboItems.length === 0 && (

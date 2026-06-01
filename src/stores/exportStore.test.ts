@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useExportStore } from './exportStore';
-import { buildExportPlan } from '@/lib/exporter';
-import type { ExportPlan } from '@/types';
+import { buildExportPlan, executeExport } from '@/lib/exporter';
+import type { ExecutionReport, ExportPlan } from '@/types';
 
-vi.mock('@/lib/exporter', () => ({ buildExportPlan: vi.fn() }));
+vi.mock('@/lib/exporter', () => ({ buildExportPlan: vi.fn(), executeExport: vi.fn() }));
 const mockBuild = vi.mocked(buildExportPlan);
+const mockExecute = vi.mocked(executeExport);
 
 const emptyPlan: ExportPlan = {
   targetDir: 'C:/proj/.claude/skills',
@@ -15,14 +16,26 @@ const emptyPlan: ExportPlan = {
   totalBytes: 1,
 };
 
+const report: ExecutionReport = {
+  targetDir: 'C:/proj/.claude/skills',
+  skillsExported: 1,
+  filesCreated: 1,
+  filesOverwritten: 0,
+  backupArchive: null,
+};
+
 beforeEach(() => {
   mockBuild.mockReset();
+  mockExecute.mockReset();
   useExportStore.setState({
     targetPath: null,
     plan: null,
     building: false,
     buildError: null,
     overwriteConfirmed: false,
+    executing: false,
+    executeError: null,
+    report: null,
   });
 });
 
@@ -69,6 +82,41 @@ describe('exportStore.buildPlan', () => {
     expect(s.buildError).toBe('not a directory: C:/missing');
     expect(s.plan).toBeNull();
     expect(s.building).toBe(false);
+  });
+});
+
+describe('exportStore.execute', () => {
+  it('does nothing without a plan', async () => {
+    await useExportStore.getState().execute([]);
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
+  it('runs the plan, stores the report and spends the plan', async () => {
+    mockExecute.mockResolvedValue(report);
+    useExportStore.setState({ plan: emptyPlan });
+    const items = [
+      { assetId: 'a', sourceDir: 'C:/src/a', exportedName: 'a', sourceRef: 'p:a' },
+    ];
+
+    await useExportStore.getState().execute(items);
+
+    expect(mockExecute).toHaveBeenCalledWith(emptyPlan, items);
+    const s = useExportStore.getState();
+    expect(s.report).toEqual(report);
+    expect(s.plan).toBeNull();
+    expect(s.executing).toBe(false);
+  });
+
+  it('surfaces an execution failure in executeError and keeps the plan', async () => {
+    mockExecute.mockRejectedValue(new Error('disk full'));
+    useExportStore.setState({ plan: emptyPlan });
+
+    await useExportStore.getState().execute([]);
+
+    const s = useExportStore.getState();
+    expect(s.executeError).toBe('disk full');
+    expect(s.report).toBeNull();
+    expect(s.plan).toEqual(emptyPlan);
   });
 });
 

@@ -18,6 +18,7 @@ import HealthCheckPanel from '../components/HealthCheckPanel';
 import WelcomeScreen from '../components/WelcomeScreen';
 import { displayLabel, categoryLabelKey } from '@/lib/skillView';
 import { pickDirectory } from '@/lib/scan';
+import { openPath } from '@/lib/exporter';
 import type { SourceProject, Skill } from '../types';
 import { useProjectStore } from '@/stores/projectStore';
 import { useCompositionStore } from '@/stores/compositionStore';
@@ -194,9 +195,13 @@ export default function MainLayout() {
     building,
     buildError,
     overwriteConfirmed,
+    executing,
+    executeError,
+    report,
     setTargetPath,
     buildPlan,
     setOverwriteConfirmed,
+    execute,
     resetPlan,
   } = useExportStore();
   const {
@@ -224,21 +229,27 @@ export default function MainLayout() {
   const handleRemoveComboItem = removeItem;
   const handleMoveComboItem = moveItem;
 
-  // Export target selection + Dry-run preview. Execute (writing files) lands in
-  // T13; onExport is wired then.
+  // Export target selection, Dry-run preview, and execution.
   const handlePickTarget = async () => {
     const dir = await pickDirectory();
     if (dir) setTargetPath(dir);
   };
 
-  const handleBuildPlan = () => {
-    const items = comboItems.map((c) => ({
+  const exportItems = () =>
+    comboItems.map((c) => ({
       assetId: c.skill.id,
       sourceDir: c.skill.skillDirPath,
       exportedName: c.exportedName,
       sourceRef: `${c.skill.sourceProjectId}:${c.skill.relativePathInProject}`,
     }));
-    void buildPlan(items);
+
+  const handleBuildPlan = () => void buildPlan(exportItems());
+  const handleExport = () => void execute(exportItems());
+
+  const handleOpenBackup = () => {
+    const archive = report?.backupArchive;
+    if (!archive) return;
+    void openPath(archive.slice(0, archive.lastIndexOf('/')));
   };
 
   // Folder-selection entry: pick a directory, then scan it. The drag-drop entry
@@ -436,10 +447,14 @@ export default function MainLayout() {
                     building={building}
                     buildError={buildError}
                     overwriteConfirmed={overwriteConfirmed}
+                    executing={executing}
+                    executeError={executeError}
+                    report={report}
                     onPickTarget={handlePickTarget}
                     onBuildPlan={handleBuildPlan}
                     onToggleOverwrite={setOverwriteConfirmed}
-                    onExport={() => {}}
+                    onExport={handleExport}
+                    onOpenBackup={handleOpenBackup}
                     simpleMode={simpleMode}
                   />
                 </div>

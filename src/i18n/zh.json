@@ -77,6 +77,10 @@
     "confirmOverwrite": "确认覆盖目标中 {{count}} 个同名 Skill",
     "export": "导出",
     "exportWithCount": "导出 {{count}} 个 Skill",
+    "exporting": "正在导出…",
+    "exportDone": "已导出 {{skills}} 个 Skill —— 新建 {{created}}，覆盖 {{overwritten}}",
+    "openBackup": "打开备份目录",
+    "executeFailed": "导出失败：{{error}}",
     "emptyComboSimple": "请先把 Skill 加入组合",
     "emptyComboFull": "组合清单为空。",
     "noTarget": "请先选择目标项目"

@@ -22,6 +22,7 @@ export type {
   ExportConflict,
   ExportPlan,
   ExportRequestItem,
+  ExecutionReport,
   FileOperation,
   FileOperationKind,
   BackupPlan,
