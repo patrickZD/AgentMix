@@ -48,6 +48,18 @@ export type ConflictKind =
 "targetExists";
 
 /**
+ *  What execute actually did. Returned by ExportCoordinator.execute (T13) and
+ *  shown in the UI; backupArchive (if any) backs the "open backup folder" action.
+ */
+export type ExecutionReport = {
+	targetDir: string,
+	skillsExported: number,
+	filesCreated: number,
+	filesOverwritten: number,
+	backupArchive: string | null,
+};
+
+/**
  *  A v0.1 export conflict: assets that would collide on a name in the target
  *  directory (compared case-insensitively). Must be resolved before export.
  */
@@ -94,14 +106,22 @@ export type ExportRequestItem = {
 	sourceRef: string,
 };
 
-/**  One planned file write (DESIGN.md §8.2 FileOperation). */
+/**
+ *  One planned file write (DESIGN.md §8.2 FileOperation). Carries the source
+ *  file path so execute copies exactly what the plan listed — preview and
+ *  execution can't diverge (DoD-3). `sourcePath` extends the design model,
+ *  which named only the asset; the path is needed for plan-driven execution.
+ */
 export type FileOperation = {
 	kind: FileOperationKind,
 	/**  Absolute destination path. */
 	path: string,
+	/**  Absolute source file path to copy from. */
+	sourcePath: string,
 	/**
-	 *  Bytes that will be written (from the source file). Exported to TS as
-	 *  `number` (byte counts stay well within JS's safe-integer range).
+	 *  Bytes that will be written. Equals the source size for verbatim files;
+	 *  for the skill's SKILL.md it is the size after the `name:` rewrite.
+	 *  Exported to TS as `number` (byte counts stay in JS's safe-integer range).
 	 */
 	size: number,
 	/**  Id of the asset this operation belongs to. */

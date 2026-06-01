@@ -128,15 +128,21 @@ pub enum FileOperationKind {
     Overwrite,
 }
 
-/// One planned file write (DESIGN.md §8.2 FileOperation).
+/// One planned file write (DESIGN.md §8.2 FileOperation). Carries the source
+/// file path so execute copies exactly what the plan listed — preview and
+/// execution can't diverge (DoD-3). `sourcePath` extends the design model,
+/// which named only the asset; the path is needed for plan-driven execution.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FileOperation {
     pub kind: FileOperationKind,
     /// Absolute destination path.
     pub path: String,
-    /// Bytes that will be written (from the source file). Exported to TS as
-    /// `number` (byte counts stay well within JS's safe-integer range).
+    /// Absolute source file path to copy from.
+    pub source_path: String,
+    /// Bytes that will be written. Equals the source size for verbatim files;
+    /// for the skill's SKILL.md it is the size after the `name:` rewrite.
+    /// Exported to TS as `number` (byte counts stay in JS's safe-integer range).
     #[specta(type = u32)]
     pub size: u64,
     /// Id of the asset this operation belongs to.
@@ -206,6 +212,18 @@ pub struct ExportPlan {
     /// Sum of all operation sizes — the total bytes the export will write.
     #[specta(type = u32)]
     pub total_bytes: u64,
+}
+
+/// What execute actually did. Returned by ExportCoordinator.execute (T13) and
+/// shown in the UI; backupArchive (if any) backs the "open backup folder" action.
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ExecutionReport {
+    pub target_dir: String,
+    pub skills_exported: u32,
+    pub files_created: u32,
+    pub files_overwritten: u32,
+    pub backup_archive: Option<String>,
 }
 
 /// A source project (folder) that was scanned for assets.

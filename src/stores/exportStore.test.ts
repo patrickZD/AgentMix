@@ -8,7 +8,7 @@ const mockBuild = vi.mocked(buildExportPlan);
 
 const emptyPlan: ExportPlan = {
   targetDir: 'C:/proj/.claude/skills',
-  operations: [{ kind: 'create', path: 'x', size: 1, sourceAsset: 'a' }],
+  operations: [{ kind: 'create', path: 'x', sourcePath: 'src/x', size: 1, sourceAsset: 'a' }],
   conflicts: [],
   backups: [],
   managedManifest: { manifestPath: 'm', managedAssets: [] },

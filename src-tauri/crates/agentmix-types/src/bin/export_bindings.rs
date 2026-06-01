@@ -18,7 +18,8 @@ fn main() {
         .register::<agentmix_types::ConflictCandidate>()
         .register::<agentmix_types::ExportConflict>()
         .register::<agentmix_types::ExportPlan>()
-        .register::<agentmix_types::ExportRequestItem>();
+        .register::<agentmix_types::ExportRequestItem>()
+        .register::<agentmix_types::ExecutionReport>();
 
     let rendered = Typescript::default()
         .header(

@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use agentmix_types::{
-    ConflictCandidate, ExportConflict, ExportPlan, ExportRequestItem, SourceProject,
+    ConflictCandidate, ExecutionReport, ExportConflict, ExportPlan, ExportRequestItem,
+    SourceProject,
 };
 use tauri_plugin_dialog::DialogExt;
 
@@ -71,6 +72,29 @@ fn build_export_plan(
     ))
 }
 
+/// Execute the plan: back up, write the selected skills to `.claude/skills/`,
+/// then the manifest. The only command allowed to modify user files; it
+/// delegates to the single writer in agentmix-core (DESIGN.md §8.2).
+#[tauri::command]
+fn execute_export(
+    plan: ExportPlan,
+    items: Vec<ExportRequestItem>,
+) -> Result<ExecutionReport, String> {
+    agentmix_core::exporter::execute(&plan, &items)
+}
+
+/// Reveal a path in the OS file manager (Windows Explorer); used by the
+/// "open backup folder" action. v0.1 is Windows-only.
+#[tauri::command]
+fn open_path(path: String) -> Result<(), String> {
+    let native = path.replace('/', "\\");
+    std::process::Command::new("explorer")
+        .arg(&native)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -81,7 +105,9 @@ pub fn run() {
             scan_project,
             pick_directory,
             detect_conflicts,
-            build_export_plan
+            build_export_plan,
+            execute_export,
+            open_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
