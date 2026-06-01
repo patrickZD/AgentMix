@@ -91,6 +91,17 @@ agentmix/
 - Windows 路径比较前必须规范化；名称冲突按大小写不敏感处理。
 - 导入顺序：标准库 / 平台 API -> 第三方 -> 本地模块。
 
+### README 编写规范（standard-readme）
+
+编写或修改 README 时遵循 standard-readme 规范：
+
+- 章节顺序：Title → Short Description → TOC → Install → Usage → API → Contributing → License
+- Short Description 必须 <120 字符，且与 package.json `description` 一致
+- Install 和 Usage 必须包含代码块
+- License 末尾写 SPDX 标识符 + 版权人
+- TOC 只在文件超过 100 行时加
+- 不加 "Why" 章节，不加营销语气
+
 ## 6. 架构约束
 
 - v0.1 只做 Windows + Claude Code 项目级 `.claude/skills/` 导出。
