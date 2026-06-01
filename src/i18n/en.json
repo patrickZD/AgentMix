@@ -26,7 +26,10 @@
     "featureMergeTitle": "Merge Conflicts",
     "featureMergeDesc": "Use the visual Merge Workbench to resolve skill conflicts.",
     "featureHealthTitle": "Health Checks",
-    "featureHealthDesc": "Validate frontmatter, detect stale or broken skills instantly."
+    "featureHealthDesc": "Validate frontmatter, detect stale or broken skills instantly.",
+    "importGitUrl": "Import from Git URL",
+    "newSkill": "New Skill",
+    "deferred": "v0.2"
   },
   "sourcePanel": {
     "title": "Source Projects",
@@ -109,8 +112,13 @@
   },
   "settings": {
     "title": "Settings",
+    "language": "Language",
+    "langZh": "中文",
+    "langEn": "English",
     "simpleMode": "Simple Mode",
     "simpleModeDesc": "Hides technical field names",
+    "showInvalid": "Show invalid candidates",
+    "showInvalidDesc": "List skills that fail validation in the source panel",
     "footer": "AgentMix v0.1.0 — Local open-source tool.",
     "close": "Close"
   },

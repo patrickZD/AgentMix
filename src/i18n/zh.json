@@ -26,7 +26,10 @@
     "featureMergeTitle": "解决冲突",
     "featureMergeDesc": "用可视化合并工作台解决 Skill 冲突。",
     "featureHealthTitle": "健康检查",
-    "featureHealthDesc": "校验 frontmatter，即时发现失效或损坏的 Skill。"
+    "featureHealthDesc": "校验 frontmatter，即时发现失效或损坏的 Skill。",
+    "importGitUrl": "从 Git URL 导入",
+    "newSkill": "新建 Skill",
+    "deferred": "v0.2"
   },
   "sourcePanel": {
     "title": "来源项目",
@@ -104,8 +107,13 @@
   },
   "settings": {
     "title": "设置",
+    "language": "语言",
+    "langZh": "中文",
+    "langEn": "English",
     "simpleMode": "简洁模式",
     "simpleModeDesc": "隐藏技术字段名",
+    "showInvalid": "显示无效候选",
+    "showInvalidDesc": "在来源面板中列出未通过校验的 Skill",
     "footer": "AgentMix v0.1.0 —— 本地开源工具。",
     "close": "关闭"
   },

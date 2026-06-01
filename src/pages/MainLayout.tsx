@@ -17,8 +17,10 @@ import MergeWorkbench from '../components/MergeWorkbench';
 import HealthCheckPanel from '../components/HealthCheckPanel';
 import WelcomeScreen from '../components/WelcomeScreen';
 import { displayLabel, categoryLabelKey } from '@/lib/skillView';
+import { resolveView } from '@/lib/viewRouting';
 import { pickDirectory } from '@/lib/scan';
 import { openPath } from '@/lib/exporter';
+import { changeLanguage } from '@/i18n';
 import type { SourceProject, Skill } from '../types';
 import { useProjectStore } from '@/stores/projectStore';
 import { useCompositionStore } from '@/stores/compositionStore';
@@ -105,13 +107,18 @@ function SettingsDialog({
   onClose,
   simpleMode,
   onSimpleModeToggle,
+  showInvalid,
+  onShowInvalidToggle,
 }: {
   open: boolean;
   onClose: () => void;
   simpleMode: boolean;
   onSimpleModeToggle: () => void;
+  showInvalid: boolean;
+  onShowInvalidToggle: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const activeLang: 'en' | 'zh' = i18n.language.startsWith('zh') ? 'zh' : 'en';
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center ${open ? '' : 'hidden'}`}
@@ -129,6 +136,29 @@ function SettingsDialog({
           {t('settings.title')}
         </h3>
         <div className="flex flex-col gap-3">
+          {/* Language — switches immediately and is persisted (DESIGN.md §7). */}
+          <div className="flex items-center justify-between">
+            <p className="text-foreground font-medium" style={{ fontSize: '12.5px' }}>
+              {t('settings.language')}
+            </p>
+            <div className="flex rounded-md border border-border overflow-hidden">
+              {(['zh', 'en'] as const).map((lng) => (
+                <button
+                  key={lng}
+                  onClick={() => changeLanguage(lng)}
+                  className="px-2.5 py-1 transition-colors"
+                  style={{
+                    fontSize: '11.5px',
+                    background: activeLang === lng ? 'var(--am-blue)' : 'transparent',
+                    color: activeLang === lng ? '#fff' : 'var(--am-text-muted, #64748B)',
+                  }}
+                >
+                  {t(lng === 'zh' ? 'settings.langZh' : 'settings.langEn')}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex items-center justify-between">
             <div>
               <p className="text-foreground font-medium" style={{ fontSize: '12.5px' }}>
@@ -149,6 +179,33 @@ function SettingsDialog({
                   width: 16,
                   height: 16,
                   left: simpleMode ? '18px' : '2px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }}
+              />
+            </button>
+          </div>
+
+          {/* Show invalid candidates — bound to the same flag the source panel uses. */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-foreground font-medium" style={{ fontSize: '12.5px' }}>
+                {t('settings.showInvalid')}
+              </p>
+              <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
+                {t('settings.showInvalidDesc')}
+              </p>
+            </div>
+            <button
+              onClick={onShowInvalidToggle}
+              className={`w-10 h-5 rounded-full transition-colors flex-shrink-0 relative`}
+              style={{ background: showInvalid ? 'var(--am-blue)' : '#CBD5E1' }}
+            >
+              <span
+                className="absolute top-0.5 transition-all rounded-full bg-white"
+                style={{
+                  width: 16,
+                  height: 16,
+                  left: showInvalid ? '18px' : '2px',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                 }}
               />
@@ -311,8 +368,7 @@ export default function MainLayout() {
     resetPlan();
   }, [comboItems, refreshConflicts, resetPlan]);
 
-  const isWelcome = projects.length === 0;
-  const effectiveView = isWelcome ? 'welcome' : view;
+  const effectiveView = resolveView(projects.length, view);
 
   return (
     <div
@@ -495,6 +551,8 @@ export default function MainLayout() {
         onClose={() => setSettingsOpen(false)}
         simpleMode={simpleMode}
         onSimpleModeToggle={toggleSimpleMode}
+        showInvalid={showInvalid}
+        onShowInvalidToggle={toggleShowInvalid}
       />
     </div>
   );

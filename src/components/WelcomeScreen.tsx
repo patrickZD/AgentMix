@@ -1,6 +1,8 @@
 import {
   LayersIcon,
   FolderPlusIcon,
+  GlobeIcon,
+  Wand2Icon,
   BookOpenIcon,
   GithubIcon,
   ZapIcon,
@@ -19,6 +21,13 @@ const features = [
   { icon: `⚡`, titleKey: `welcome.featureExportTitle`, descKey: `welcome.featureExportDesc` },
   { icon: `🔀`, titleKey: `welcome.featureMergeTitle`, descKey: `welcome.featureMergeDesc` },
   { icon: `❤️`, titleKey: `welcome.featureHealthTitle`, descKey: `welcome.featureHealthDesc` },
+];
+
+// The two non-folder entry points from the design (DESIGN.md §7): both are
+// deferred to v0.2, shown disabled so the entry exists but cannot be used yet.
+const deferredEntries = [
+  { icon: GlobeIcon, labelKey: `welcome.importGitUrl` },
+  { icon: Wand2Icon, labelKey: `welcome.newSkill` },
 ];
 
 export default function WelcomeScreen({
@@ -78,6 +87,29 @@ export default function WelcomeScreen({
           <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
             {t(simpleMode ? 'welcome.hintSimple' : 'welcome.hintFull')}
           </p>
+
+          {/* Deferred entry points (v0.2) — disabled, present for discoverability. */}
+          <div className="flex gap-2 w-full">
+            {deferredEntries.map((e) => (
+              <div
+                key={e.labelKey}
+                aria-disabled
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-muted opacity-60 cursor-not-allowed"
+                style={{ padding: '8px 12px' }}
+              >
+                <e.icon size={14} className="text-muted-foreground" />
+                <span className="text-muted-foreground" style={{ fontSize: '12px' }}>
+                  {t(e.labelKey)}
+                </span>
+                <span
+                  className="rounded px-1 text-muted-foreground bg-secondary"
+                  style={{ fontSize: '9px', fontWeight: 600 }}
+                >
+                  {t('welcome.deferred')}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Feature grid */}
