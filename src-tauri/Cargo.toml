@@ -16,6 +16,12 @@ resolver = "2"
 name = "agentmix_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+[features]
+# Exposes a test-only command so the WebDriver e2e suite can feed folder paths
+# past the native picker (which WebDriver cannot drive). Off by default, so it is
+# never compiled into a production build (DESIGN.md §8 / no production bypass).
+e2e = []
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 

@@ -72,6 +72,7 @@ export default function WelcomeScreen({
         <div className="flex flex-col items-center gap-3 w-full">
           <button
             onClick={onAddProject}
+            data-testid="welcome-add-project"
             className="flex items-center justify-center gap-2 w-full rounded-lg font-semibold transition-all hover:opacity-90 active:scale-99"
             style={{
               background: 'var(--am-blue)',

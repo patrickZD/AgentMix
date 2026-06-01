@@ -12,12 +12,38 @@ fn ping() -> String {
     "pong".to_string()
 }
 
+/// Test-only seam, compiled ONLY with `--features e2e` (never in production).
+/// The WebDriver suite cannot drive the native folder dialog, so it queues the
+/// path the next `pick_directory` should return.
+#[cfg(feature = "e2e")]
+mod e2e_hook {
+    use std::sync::Mutex;
+    static NEXT_PICK: Mutex<Option<String>> = Mutex::new(None);
+    pub fn set_next_pick(path: String) {
+        *NEXT_PICK.lock().unwrap() = Some(path);
+    }
+    pub fn take_next_pick() -> Option<String> {
+        NEXT_PICK.lock().unwrap().take()
+    }
+}
+
+#[cfg(feature = "e2e")]
+#[tauri::command]
+fn e2e_set_next_pick(path: String) {
+    e2e_hook::set_next_pick(path);
+}
+
 /// Open the native folder picker and return the chosen directory, or None if
 /// the user cancelled. Async so it runs off the main thread, where the dialog
 /// crate's blocking helper is safe to call. Verified via `pnpm tauri dev`; it
 /// is a thin platform wrapper and is not headless-testable.
 #[tauri::command]
 async fn pick_directory(app: tauri::AppHandle) -> Option<String> {
+    // Under the e2e feature a queued path stands in for the (un-drivable) dialog.
+    #[cfg(feature = "e2e")]
+    if let Some(path) = e2e_hook::take_next_pick() {
+        return Some(path);
+    }
     app.dialog()
         .file()
         .blocking_pick_folder()
@@ -100,18 +126,34 @@ fn open_path(path: String) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
-        .invoke_handler(tauri::generate_handler![
-            ping,
-            scan_project,
-            pick_directory,
-            detect_conflicts,
-            build_export_plan,
-            execute_export,
-            open_path
-        ])
+        .plugin(tauri_plugin_fs::init());
+
+    // The e2e build registers one extra test-only command; production does not.
+    #[cfg(not(feature = "e2e"))]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        ping,
+        scan_project,
+        pick_directory,
+        detect_conflicts,
+        build_export_plan,
+        execute_export,
+        open_path
+    ]);
+    #[cfg(feature = "e2e")]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        ping,
+        scan_project,
+        pick_directory,
+        detect_conflicts,
+        build_export_plan,
+        execute_export,
+        open_path,
+        e2e_set_next_pick
+    ]);
+
+    builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

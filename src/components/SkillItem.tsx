@@ -65,6 +65,7 @@ export default function SkillItem({
         placement="left"
       >
         <span
+          data-testid="skill-add"
           className={`flex-shrink-0 flex items-center cursor-pointer transition-opacity ${
             isInCombo ? 'opacity-40' : 'opacity-0 group-hover:opacity-70 hover:!opacity-100'
           }`}

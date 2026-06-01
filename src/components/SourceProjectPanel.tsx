@@ -133,7 +133,7 @@ export default function SourceProjectPanel({
 
         <div className="flex items-center gap-0">
           <Tooltip title={t('sourcePanel.addProject')} placement="bottom">
-            <IconButton onClick={onAddProject} className="h-[26px] w-[26px]">
+            <IconButton onClick={onAddProject} data-testid="add-project" className="h-[26px] w-[26px]">
               <PlusIcon size={13} />
             </IconButton>
           </Tooltip>
@@ -212,7 +212,7 @@ export default function SourceProjectPanel({
           const groups = groupByCategory(visible);
 
           return (
-            <div key={project.id} className="mb-1">
+            <div key={project.id} data-project={project.name} className="mb-1">
               {/* Project row */}
               <div
                 className="flex items-center gap-1 px-2 py-1 group hover:bg-secondary cursor-pointer select-none"

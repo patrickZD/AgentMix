@@ -126,6 +126,7 @@ export default function ExportPanel({
               <Tooltip title={targetPath ?? t('exportPanel.selectTarget')} placement="top">
                 <button
                   onClick={onPickTarget}
+                  data-testid="export-target"
                   className="flex items-center gap-1 mt-1.5 w-full text-left group/path"
                 >
                   <FolderIcon size={11} className="text-muted-foreground flex-shrink-0" />
@@ -150,6 +151,7 @@ export default function ExportPanel({
         <button
           onClick={onBuildPlan}
           disabled={!canPreview}
+          data-testid="export-preview"
           className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border font-medium transition-colors ${
             canPreview ? 'border-border hover:bg-secondary text-foreground' : 'border-border opacity-40 cursor-not-allowed text-muted-foreground'
           }`}
@@ -333,6 +335,7 @@ export default function ExportPanel({
         <button
           onClick={onExport}
           disabled={!gate.canExport || executing}
+          data-testid="export-run"
           className="w-full flex items-center justify-center gap-2 py-2 rounded-lg font-semibold transition-all text-primary-foreground"
           style={{
             background: 'var(--am-blue)',

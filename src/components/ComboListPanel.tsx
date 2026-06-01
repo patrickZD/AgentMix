@@ -151,10 +151,11 @@ export default function ComboListPanel({
                           if (e.key === 'Enter') commitRename();
                           if (e.key === 'Escape') setEditingId(null);
                         }}
+                        data-testid="combo-rename-input"
                         className="flex-1 bg-card border border-border rounded px-1 outline-none text-foreground"
                         style={{ fontSize: '12px', minWidth: 0 }}
                       />
-                      <IconButton onClick={commitRename} className="h-[18px] w-[18px]">
+                      <IconButton onClick={commitRename} data-testid="combo-rename-confirm" className="h-[18px] w-[18px]">
                         <CheckIcon size={11} />
                       </IconButton>
                       <IconButton onClick={() => setEditingId(null)} className="h-[18px] w-[18px]">
@@ -221,6 +222,7 @@ export default function ComboListPanel({
                 <div className="flex items-center gap-1.5 pl-5">
                   <button
                     onClick={() => startRename(item.id, item.exportedName)}
+                    data-testid="combo-rename"
                     className="flex items-center gap-0.5 rounded px-1.5 py-0.5 hover:bg-card transition-colors"
                     style={{ fontSize: '10px', fontWeight: 600, color: 'var(--am-blue)' }}
                   >

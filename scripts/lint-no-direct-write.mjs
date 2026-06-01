@@ -4,8 +4,10 @@
 // user files. Every other module must read only. This greps Rust production
 // code for filesystem write APIs and fails if any appear outside the exporter.
 //
-// Test modules legitimately write to tempdirs, so each file is scanned only up
-// to its first `#[cfg(test)]` (the inline test module always sits at the end).
+// Test code legitimately writes to tempdirs, so it is excluded two ways: each
+// file is scanned only up to its first `#[cfg(test)]` (the inline test module
+// always sits at the end), and Cargo integration-test directories (`tests/`,
+// which are entirely test code) are skipped during the walk.
 // The frontend never writes files directly; we also flag tauri-plugin-fs write
 // calls in TS so that stays true.
 
@@ -35,7 +37,8 @@ function walk(dir, exts, files = []) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
     if (statSync(full).isDirectory()) {
-      if (entry === "node_modules" || entry === "target") continue;
+      // Skip deps/build output and Cargo integration-test dirs (test-only code).
+      if (entry === "node_modules" || entry === "target" || entry === "tests") continue;
       walk(full, exts, files);
     } else if (exts.some((e) => entry.endsWith(e))) {
       files.push(full);
