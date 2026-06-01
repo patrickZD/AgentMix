@@ -82,7 +82,9 @@
 - [ ] 人工复核（`pnpm tauri dev`：含高危 `scripts/` 的 Skill → 预览出风险卡 + 逐项复选框，未逐个确认前导出按钮置灰）
 
 ## Phase 5：欢迎屏 + 设置
-- [ ] **T15** WelcomeScreen 入口 + 语言检测 + 设置（语言切换/显示无效候选）+ view 路由 — 依赖：T8 — M
+- [x] **T15** WelcomeScreen 入口 + 语言检测 + 设置（语言切换/显示无效候选）+ view 路由 — 依赖：T8 — M
+  - deferred 入口（Git URL 导入 / 新建 Skill）禁用 + v0.2 标注；语言切换即时生效且持久化（localStorage，DESIGN §7）；showInvalid 联动来源面板同一 flag；`resolveView` 纯函数 + Vitest 覆盖 welcome↔main 分支
+  - 人工复核：`pnpm tauri dev` 走 welcome → 选文件夹 → main；设置里切语言即时生效、重启仍保留；deferred 入口置灰
 
 ## Phase 6：核验、e2e、打包、发布
 - [ ] **T16** e2e：golden path + conflict path（tauri-driver，按钮入口）— 依赖：T13, T14 — M
