@@ -93,12 +93,15 @@
 - [x] **T17** `check:all` 编排 + DoD 性能核验（扫描<5s / 冷启动<2s / golden<60s）— 依赖：T16 — S
   - `scripts/check-all.mjs`：10 步全绿（typecheck/eslint/4×架构 i18n lint/vitest/cargo fmt/clippy/test；两条 e2e 由 cargo test 的 headless e2e_pipeline 覆盖）
   - DoD-5 实测 **0.105s**（<5s，`pnpm perf` + `perf_scan` release 基准）；DoD-6 冷启动 / DoD-1 golden<60s 为 GUI/人机指标，`docs/CHANGELOG.md` 记为待 T18 安装包上人工实测（不充推测值）
-- [ ] **T18** 打包 `.msi`/`.exe` + SHA-256 + README + CHANGELOG + CONTRIBUTING + Release — 依赖：T17 — S
+- [x] **T18** 打包 `.msi`/`.exe` + SHA-256 + README + CHANGELOG + CONTRIBUTING + Release — 依赖：T17 — S
+  - `pnpm tauri build` 产出 `AgentMix_0.1.0_x64_en-US.msi`（3.57 MB）+ `AgentMix_0.1.0_x64-setup.exe`（2.37 MB），SHA-256 记入 `docs/CHANGELOG.md`（未签名，alpha）
+  - README 四部分（30s 上手 / 安装 / v0.1 边界 / 已知不支持）齐全；新增 `docs/CONTRIBUTING.md`；CHANGELOG 补 v0.1 发布说明
+  - GitHub Release 留作草稿由维护者发布（CHANGELOG 的 [0.1.0] 段即 release body）；演示 GIF 待补
 
 ### Checkpoint Complete（T16–T18）
-- [ ] `pnpm check:all` 全绿（含 2×e2e + 4×架构红线 lint）
-- [ ] DoD-1~DoD-11 全部满足或显式列出未达项
-- [ ] 安装包 + README 就绪，可发 v0.1 Alpha
+- [x] `pnpm check:all` 全绿（含 headless 2×e2e + 4×架构红线 lint）
+- [~] DoD：DoD-5 实测达标（0.105s）；DoD-6 冷启动 / DoD-1 golden<60s 待安装包上人工计时；e2e DoD（WDIO UI）受 WebView2 兼容坑阻塞，由 headless e2e 覆盖行为 —— 均显式记录，未充推测值
+- [x] 安装包 + README 就绪，可发 v0.1 Alpha（待人工核验 DoD-6/DoD-1 + 决定是否发布）
 
 ## Backlog（alpha 测试反馈，不在 v0.1 范围）
 v0.1 手动测试发现/提出的优化点，按路线图在后续版本实现，权威规划见 `docs/DESIGN.md §12`：
