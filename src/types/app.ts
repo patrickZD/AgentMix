@@ -32,6 +32,8 @@ export type {
   SecurityFinding,
   BinaryAsset,
   SkillSecurityReport,
+  UpdateCheckResult,
+  UpdateDownloadProgress,
 } from './generated';
 
 import type { Skill, SourceProject } from './generated';
