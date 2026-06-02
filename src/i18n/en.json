@@ -7,7 +7,8 @@
     "healthCheck": "Health Check",
     "simple": "Simple",
     "settings": "Settings",
-    "about": "About AgentMix"
+    "about": "About AgentMix",
+    "updateAvailable": "New version available"
   },
   "welcome": {
     "subtitleSimple": "Mix and export AI coding skills from your projects",
@@ -119,6 +120,13 @@
     "simpleModeDesc": "Hides technical field names",
     "showInvalid": "Show invalid candidates",
     "showInvalidDesc": "List skills that fail validation in the source panel",
+    "autoCheckUpdates": "Check for updates automatically",
+    "autoCheckUpdatesDesc": "Checks GitHub Releases at launch, at most once a day",
+    "checkUpdates": "Check for updates",
+    "checkingUpdates": "Checking…",
+    "upToDate": "You're on the latest version",
+    "updateFound": "Version {{version}} is available",
+    "viewUpdate": "View update",
     "footer": "AgentMix v0.1.0 — Local open-source tool.",
     "close": "Close"
   },
@@ -166,6 +174,16 @@
       "dynamic-eval": "Dynamically executes a string",
       "reverse-shell-or-miner": "Reverse-shell / crypto-miner signature"
     }
+  },
+  "update": {
+    "title": "Update to AgentMix {{version}}",
+    "notesEmpty": "No release notes for this version.",
+    "installNow": "Update now",
+    "later": "Later",
+    "skipVersion": "Skip this version",
+    "downloading": "Downloading update…",
+    "restartHint": "AgentMix will restart automatically to finish the update.",
+    "installFailed": "Update failed: {{error}}"
   },
   "notFound": {
     "message": "Oops! Page not found",

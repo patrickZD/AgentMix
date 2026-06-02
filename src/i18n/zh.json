@@ -7,7 +7,8 @@
     "healthCheck": "健康检查",
     "simple": "简洁",
     "settings": "设置",
-    "about": "关于 AgentMix"
+    "about": "关于 AgentMix",
+    "updateAvailable": "有新版本"
   },
   "welcome": {
     "subtitleSimple": "把项目里的 AI 编程 Skill 组合并导出",
@@ -114,6 +115,13 @@
     "simpleModeDesc": "隐藏技术字段名",
     "showInvalid": "显示无效候选",
     "showInvalidDesc": "在来源面板中列出未通过校验的 Skill",
+    "autoCheckUpdates": "自动检查更新",
+    "autoCheckUpdatesDesc": "启动时检查 GitHub Releases，每天至多一次",
+    "checkUpdates": "检查更新",
+    "checkingUpdates": "正在检查…",
+    "upToDate": "已是最新版本",
+    "updateFound": "可更新到 {{version}}",
+    "viewUpdate": "查看更新",
     "footer": "AgentMix v0.1.0 —— 本地开源工具。",
     "close": "关闭"
   },
@@ -161,6 +169,16 @@
       "dynamic-eval": "动态执行字符串",
       "reverse-shell-or-miner": "反弹 shell / 挖矿特征"
     }
+  },
+  "update": {
+    "title": "更新到 AgentMix {{version}}",
+    "notesEmpty": "该版本没有更新说明。",
+    "installNow": "立即更新",
+    "later": "稍后",
+    "skipVersion": "跳过此版本",
+    "downloading": "正在下载更新…",
+    "restartHint": "更新完成后 AgentMix 会自动重启。",
+    "installFailed": "更新失败：{{error}}"
   },
   "notFound": {
     "message": "哎呀！页面不存在",

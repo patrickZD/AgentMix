@@ -110,7 +110,7 @@ describe('update badge visibility', () => {
   });
 });
 
-describe('updateStore.skipThisVersion (跳过此版本)', () => {
+describe('updateStore.skipThisVersion', () => {
   it('persists the skipped version and closes the modal', () => {
     useUpdateStore.setState({ availableVersion: '0.1.5', modalOpen: true });
     useUpdateStore.getState().skipThisVersion();
@@ -122,7 +122,7 @@ describe('updateStore.skipThisVersion (跳过此版本)', () => {
   });
 });
 
-describe('updateStore.deferUpdate (稍后)', () => {
+describe('updateStore.deferUpdate ("later")', () => {
   it('closes the modal but keeps the badge and persists nothing', () => {
     useUpdateStore.setState({ availableVersion: '0.1.5', modalOpen: true });
     useUpdateStore.getState().deferUpdate();

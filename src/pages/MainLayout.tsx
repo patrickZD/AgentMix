@@ -15,6 +15,7 @@ import ComboListPanel from '../components/ComboListPanel';
 import ExportPanel from '../components/ExportPanel';
 import HealthCheckPanel from '../components/HealthCheckPanel';
 import WelcomeScreen from '../components/WelcomeScreen';
+import UpdateModal from '../components/UpdateModal';
 import { displayLabel, categoryLabelKey } from '@/lib/skillView';
 import { resolveView } from '@/lib/viewRouting';
 import { pickDirectory } from '@/lib/scan';
@@ -25,6 +26,8 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useCompositionStore } from '@/stores/compositionStore';
 import { useExportStore } from '@/stores/exportStore';
 import { useUiStore } from '@/stores/uiStore';
+import { isBadgeVisible, useUpdateStore } from '@/stores/updateStore';
+import { onUpdateDownloadProgress } from '@/lib/updater';
 
 // Skill detail / preview panel
 function SkillPreviewPanel({
@@ -108,6 +111,13 @@ function SettingsDialog({
   onSimpleModeToggle,
   showInvalid,
   onShowInvalidToggle,
+  autoCheckUpdates,
+  onAutoCheckUpdatesToggle,
+  updateChecking,
+  updateUpToDate,
+  updateVersion,
+  onCheckUpdates,
+  onViewUpdate,
 }: {
   open: boolean;
   onClose: () => void;
@@ -115,6 +125,14 @@ function SettingsDialog({
   onSimpleModeToggle: () => void;
   showInvalid: boolean;
   onShowInvalidToggle: () => void;
+  autoCheckUpdates: boolean;
+  onAutoCheckUpdatesToggle: () => void;
+  updateChecking: boolean;
+  updateUpToDate: boolean;
+  // Badge-visible newer version, or null (none / skipped).
+  updateVersion: string | null;
+  onCheckUpdates: () => void;
+  onViewUpdate: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const activeLang: 'en' | 'zh' = i18n.language.startsWith('zh') ? 'zh' : 'en';
@@ -213,6 +231,56 @@ function SettingsDialog({
 
           <hr className="border-border" />
 
+          {/* Software update (T21): the auto-check switch plus a manual check.
+              With a pending update the action becomes "view update". */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-foreground font-medium" style={{ fontSize: '12.5px' }}>
+                {t('settings.autoCheckUpdates')}
+              </p>
+              <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
+                {t('settings.autoCheckUpdatesDesc')}
+              </p>
+            </div>
+            <button
+              onClick={onAutoCheckUpdatesToggle}
+              className={`w-10 h-5 rounded-full transition-colors flex-shrink-0 relative`}
+              style={{ background: autoCheckUpdates ? 'var(--am-blue)' : '#CBD5E1' }}
+            >
+              <span
+                className="absolute top-0.5 transition-all rounded-full bg-white"
+                style={{
+                  width: 16,
+                  height: 16,
+                  left: autoCheckUpdates ? '18px' : '2px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
+              {updateChecking
+                ? t('settings.checkingUpdates')
+                : updateVersion
+                  ? t('settings.updateFound', { version: updateVersion })
+                  : updateUpToDate
+                    ? t('settings.upToDate')
+                    : ''}
+            </p>
+            <button
+              onClick={updateVersion ? onViewUpdate : onCheckUpdates}
+              disabled={updateChecking}
+              className="px-2.5 py-1 rounded-md border border-border text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+              style={{ fontSize: '11.5px' }}
+            >
+              {updateVersion ? t('settings.viewUpdate') : t('settings.checkUpdates')}
+            </button>
+          </div>
+
+          <hr className="border-border" />
+
           <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
             {t('settings.footer')}
           </p>
@@ -277,6 +345,29 @@ export default function MainLayout() {
     setSettingsOpen,
     toggleLeftCollapsed,
   } = useUiStore();
+  const {
+    availableVersion,
+    notes: updateNotes,
+    checking: updateChecking,
+    upToDate: updateUpToDate,
+    modalOpen: updateModalOpen,
+    skippedVersion,
+    autoCheckEnabled,
+    installing: updateInstalling,
+    progress: updateProgress,
+    installError: updateInstallError,
+    check: checkUpdate,
+    startupCheck,
+    openModal: openUpdateModal,
+    deferUpdate,
+    skipThisVersion,
+    setAutoCheck,
+    install: installUpdateNow,
+    setProgress: setUpdateProgress,
+  } = useUpdateStore();
+
+  // The red badge shows for a non-skipped newer release (T21).
+  const updateBadge = isBadgeVisible(availableVersion, skippedVersion);
 
   // Handler aliases so the JSX below reads naturally; store actions do the work.
   const handleNavigate = setView;
@@ -358,6 +449,22 @@ export default function MainLayout() {
     removeItemsByProject(projectId);
   };
 
+  // Launch-time update check (no-op while the auto-check switch is off) plus
+  // the download-progress subscription for the modal's progress bar (T21).
+  useEffect(() => {
+    void startupCheck();
+    let unlisten: (() => void) | undefined;
+    let cancelled = false;
+    void onUpdateDownloadProgress(setUpdateProgress).then((un) => {
+      if (cancelled) un();
+      else unlisten = un;
+    });
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [startupCheck, setUpdateProgress]);
+
   // Whenever the selection changes, re-detect conflicts via the Rust composer
   // (the authoritative single source) and drop any now-stale Dry-run preview.
   useEffect(() => {
@@ -381,6 +488,8 @@ export default function MainLayout() {
         projectCount={projects.length}
         simpleMode={simpleMode}
         onSimpleModeToggle={toggleSimpleMode}
+        updateAvailable={updateBadge}
+        onUpdateClick={openUpdateModal}
       />
 
       {/* Main content area */}
@@ -540,6 +649,29 @@ export default function MainLayout() {
         onSimpleModeToggle={toggleSimpleMode}
         showInvalid={showInvalid}
         onShowInvalidToggle={toggleShowInvalid}
+        autoCheckUpdates={autoCheckEnabled}
+        onAutoCheckUpdatesToggle={() => setAutoCheck(!autoCheckEnabled)}
+        updateChecking={updateChecking}
+        updateUpToDate={updateUpToDate}
+        updateVersion={updateBadge ? availableVersion : null}
+        onCheckUpdates={() => void checkUpdate(true)}
+        onViewUpdate={() => {
+          setSettingsOpen(false);
+          openUpdateModal();
+        }}
+      />
+
+      {/* Update prompt overlay (T21) */}
+      <UpdateModal
+        open={updateModalOpen}
+        version={availableVersion}
+        notes={updateNotes}
+        installing={updateInstalling}
+        progress={updateProgress}
+        installError={updateInstallError}
+        onInstall={() => void installUpdateNow()}
+        onDefer={deferUpdate}
+        onSkip={skipThisVersion}
       />
     </div>
   );

@@ -46,9 +46,9 @@ interface UpdateState {
   /** Launch-time check; no-op while the auto-check switch is off. */
   startupCheck: () => Promise<void>;
   openModal: () => void;
-  /** "稍后": close the modal, keep the badge, prompt again next launch. */
+  /** "Later": close the modal, keep the badge, prompt again next launch. */
   deferUpdate: () => void;
-  /** "跳过此版本": persist the version so it never prompts again. */
+  /** "Skip this version": persist the version so it never prompts again. */
   skipThisVersion: () => void;
   setAutoCheck: (enabled: boolean) => void;
   install: () => Promise<void>;
