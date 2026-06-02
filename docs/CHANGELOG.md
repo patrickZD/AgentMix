@@ -38,11 +38,12 @@
 ### 安装包与校验
 
 > 由 `pnpm tauri build` 产出于 `src-tauri/target/release/bundle/`（未签名，Windows SmartScreen 会提示未知发布者）。
+> 2026-06-02 替换应用图标后重新打包并更新 Release 资产，以下为当前资产的校验值。
 
 | 文件 | 大小 | SHA-256 |
 |---|---|---|
-| `AgentMix_0.1.0_x64_en-US.msi` | 3.37 MB | `4a434b3465b3af8cdfb406079cd28b537142603fad2b9396e473a0291ceb59e5` |
-| `AgentMix_0.1.0_x64-setup.exe` | 2.24 MB | `aab8f827a427898646e5048806ca0099e827dc30771345e1edc8f0c3f44d0cee` |
+| `AgentMix_0.1.0_x64_en-US.msi` | 3.39 MB | `0dc964cda2bb06d9a725520f3505ad731bef022bc7d672b585b51b8736a84d20` |
+| `AgentMix_0.1.0_x64-setup.exe` | 2.25 MB | `42aba454aa06161245ea75bb7bb9ec485051b5d2b4799aafe522ca375ee35753` |
 
 ### 性能核验（DESIGN.md DoD-5 / DoD-6 / DoD-1）
 
