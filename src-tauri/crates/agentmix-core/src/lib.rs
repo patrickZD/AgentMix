@@ -8,3 +8,4 @@ pub mod health;
 pub mod parser;
 pub mod scanner;
 pub mod security;
+pub mod update;
