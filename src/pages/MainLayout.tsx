@@ -304,6 +304,7 @@ export default function MainLayout() {
   const { projects, scanning, scanAndAdd, removeProject } = useProjectStore();
   const {
     comboItems,
+    mergedItems,
     conflicts,
     addToCombo,
     removeItem,
@@ -382,13 +383,26 @@ export default function MainLayout() {
     if (dir) setTargetPath(dir);
   };
 
-  const exportItems = () =>
-    comboItems.map((c) => ({
+  const exportItems = () => [
+    ...comboItems.map((c) => ({
       assetId: c.skill.id,
       source: { type: 'directory' as const, dir: c.skill.skillDirPath },
       exportedName: c.exportedName,
       sourceRef: `${c.skill.sourceProjectId}:${c.skill.relativePathInProject}`,
-    }));
+    })),
+    // Merged entries are content-backed: SKILL.md from the draft, scripts
+    // optionally from the chosen source directory (T23/T24).
+    ...mergedItems.map((m) => ({
+      assetId: m.id,
+      source: {
+        type: 'content' as const,
+        content: m.draft,
+        scriptsFromDir: m.scriptsFromDir,
+      },
+      exportedName: m.name,
+      sourceRef: `merged:${m.sourceSkillNames.join('+')}`,
+    })),
+  ];
 
   const handleBuildPlan = () => void buildPlan(exportItems());
   const handleExport = () => void execute(exportItems());
@@ -470,7 +484,7 @@ export default function MainLayout() {
   useEffect(() => {
     void refreshConflicts();
     resetPlan();
-  }, [comboItems, refreshConflicts, resetPlan]);
+  }, [comboItems, mergedItems, refreshConflicts, resetPlan]);
 
   const effectiveView = resolveView(projects.length, view);
 

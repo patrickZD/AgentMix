@@ -52,3 +52,18 @@ export interface ComboItem {
   // by the Rust composer, not flagged per-item here.
   exportedName: string;
 }
+
+// A manually merged entry in the composition (T24, DESIGN.md §6.3). Exported
+// content-backed: SKILL.md comes from `draft`, scripts optionally from one
+// source directory. `replacedItems` are the combo items the merge consumed,
+// kept so removing the merged entry restores them (T25).
+export interface MergedComboItem {
+  id: string;
+  // Exported name == the draft's frontmatter `name` (workbench-validated).
+  name: string;
+  draft: string;
+  scriptsFromDir: string | null;
+  // Source skill names for display ("merged from a + b").
+  sourceSkillNames: string[];
+  replacedItems: ComboItem[];
+}

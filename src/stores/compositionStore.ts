@@ -1,8 +1,9 @@
 import { create } from 'zustand';
-import type { ComboItem, ExportConflict, Skill, SourceProject } from '@/types';
+import type { ComboItem, ExportConflict, MergedComboItem, Skill, SourceProject } from '@/types';
 import { detectConflicts } from '@/lib/composer';
 
 let comboIdCounter = 0;
+let mergedIdCounter = 0;
 
 // The user's current combination: which skills are selected, their export
 // names, and the detected conflicts. Selection mutations are synchronous and
@@ -11,8 +12,17 @@ let comboIdCounter = 0;
 // rule). The UI calls refreshConflicts whenever comboItems changes.
 interface CompositionState {
   comboItems: ComboItem[];
+  // Manually merged entries (T24); they join conflict detection and export
+  // alongside the regular items.
+  mergedItems: MergedComboItem[];
   conflicts: ExportConflict[];
   addToCombo: (skill: Skill, project: SourceProject) => void;
+  // Confirm a merge: the consumed combo items leave the list (kept inside the
+  // entry for restore) and the merged entry joins the composition.
+  addMergedItem: (
+    merged: Omit<MergedComboItem, 'id' | 'replacedItems'>,
+    replacedItemIds: string[],
+  ) => void;
   removeItem: (itemId: string) => void;
   moveItem: (itemId: string, direction: 'up' | 'down') => void;
   removeItemsByProject: (projectId: string) => void;
@@ -27,7 +37,22 @@ interface CompositionState {
 
 export const useCompositionStore = create<CompositionState>((set, get) => ({
   comboItems: [],
+  mergedItems: [],
   conflicts: [],
+
+  addMergedItem: (merged, replacedItemIds) =>
+    set((state) => {
+      const replaced = new Set(replacedItemIds);
+      const entry: MergedComboItem = {
+        ...merged,
+        id: `merged-${++mergedIdCounter}`,
+        replacedItems: state.comboItems.filter((c) => replaced.has(c.id)),
+      };
+      return {
+        comboItems: state.comboItems.filter((c) => !replaced.has(c.id)),
+        mergedItems: [...state.mergedItems, entry],
+      };
+    }),
 
   addToCombo: (skill, project) =>
     set((state) => {
@@ -86,10 +111,12 @@ export const useCompositionStore = create<CompositionState>((set, get) => ({
     }),
 
   refreshConflicts: async () => {
-    const candidates = get().comboItems.map((c) => ({
-      id: c.id,
-      exportedName: c.exportedName,
-    }));
+    const { comboItems, mergedItems } = get();
+    // Merged entries compete for names like any other item (T24).
+    const candidates = [
+      ...comboItems.map((c) => ({ id: c.id, exportedName: c.exportedName })),
+      ...mergedItems.map((m) => ({ id: m.id, exportedName: m.name })),
+    ];
     const conflicts = await detectConflicts(candidates);
     set({ conflicts });
   },
