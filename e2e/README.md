@@ -11,7 +11,7 @@ The deterministic pipeline assertions also run headless (no GUI) in `src-tauri/c
 > (`cargo test`) and these two WebDriver UI specs (`pnpm test:e2e`), verified on
 > Edge/WebView2 148.0.3967.96, tauri-driver 2.0.6, WDIO 9.27.
 
-## How the e2e binary is built (important)
+## How the e2e binary is built
 
 `onPrepare` builds with the **Tauri CLI**, not raw `cargo`:
 
@@ -50,7 +50,7 @@ pnpm test:e2e
 
 `onPrepare` builds the e2e binary for you via `tauri build --debug --no-bundle --features e2e` (see "How the e2e binary is built" above). The specs drive `src-tauri/target/debug/agentmix.exe`.
 
-## The native-dialog seam (why a test command exists)
+## The native-dialog seam
 
 WebDriver cannot drive the OS folder picker, so folder selection is fed in instead of clicked:
 

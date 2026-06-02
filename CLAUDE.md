@@ -91,9 +91,9 @@ agentmix/
 - Windows 路径比较前必须规范化；名称冲突按大小写不敏感处理。
 - 导入顺序：标准库 / 平台 API -> 第三方 -> 本地模块。
 
-### README 编写规范（standard-readme）
+### README 编写规范
 
-编写或修改 README 时遵循 standard-readme 规范：
+编写或修改 README 时遵循以下规范：
 
 - 章节顺序：Title → Short Description → TOC → Install → Usage → API → Contributing → License
 - Short Description 必须 <120 字符，且与 package.json `description` 一致
