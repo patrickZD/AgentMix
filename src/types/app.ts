@@ -34,6 +34,7 @@ export type {
   SecurityFinding,
   BinaryAsset,
   SkillSecurityReport,
+  MergeDraftValidation,
   UpdateCheckResult,
   UpdateDownloadProgress,
 } from './generated';

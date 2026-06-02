@@ -46,7 +46,9 @@ fn item_scan_dir(item: &ExportRequestItem) -> Option<&str> {
 /// boundary that keeps every export write confined to `.claude/skills/`
 /// (DESIGN.md §6.11). Enforced in `execute` (the single writer) and surfaced in
 /// the preview, so a renamed asset can never steer a write outside the target.
-fn is_safe_segment(name: &str) -> bool {
+/// Also consulted by the merge-draft validation (crate::merge) so the
+/// workbench's confirm gate matches the export gate exactly.
+pub(crate) fn is_safe_segment(name: &str) -> bool {
     !name.is_empty()
         && name.chars().count() <= NAME_MAX_LEN
         && name != "."

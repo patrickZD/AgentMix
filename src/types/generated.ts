@@ -206,6 +206,29 @@ export type ManagedManifest = {
 };
 
 /**
+ *  Live validation result for a merge-workbench draft (DESIGN.md §6.3, T24).
+ *  Reuses the parser/health single source of truth — the frontend renders
+ *  these and never re-implements the rules. `can_confirm` is the confirm-gate:
+ *  false on any blocking problem (error-level issue, name collision with the
+ *  composition, or a name unusable as the exported directory segment).
+ */
+export type MergeDraftValidation = {
+	healthStatus: HealthStatus,
+	/**  Findings with i18n-key messages, same shape the health report uses. */
+	issues: HealthIssue[],
+	/**  The draft's name clashes (case-insensitively) with a composition name. */
+	nameCollision: boolean,
+	/**
+	 *  The draft's name cannot be a single safe directory segment (empty,
+	 *  over the 64-char cap, traversal, or path separators).
+	 */
+	nameUnsafe: boolean,
+	/**  Frontmatter `name` — the merged asset's exported name once confirmed. */
+	parsedName: string | null,
+	canConfirm: boolean,
+};
+
+/**
  *  One high-risk line found in a script (DESIGN.md §6.11). Carries the rule, the
  *  script path relative to the skill directory, the 1-based line number, and the
  *  line text so the UI can highlight exactly what matched.

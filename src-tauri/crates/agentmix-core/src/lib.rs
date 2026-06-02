@@ -5,6 +5,7 @@
 pub mod composer;
 pub mod exporter;
 pub mod health;
+pub mod merge;
 pub mod parser;
 pub mod scanner;
 pub mod security;

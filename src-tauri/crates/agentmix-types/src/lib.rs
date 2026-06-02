@@ -326,6 +326,27 @@ pub struct SkillSecurityReport {
     pub requires_confirmation: bool,
 }
 
+/// Live validation result for a merge-workbench draft (DESIGN.md §6.3, T24).
+/// Reuses the parser/health single source of truth — the frontend renders
+/// these and never re-implements the rules. `can_confirm` is the confirm-gate:
+/// false on any blocking problem (error-level issue, name collision with the
+/// composition, or a name unusable as the exported directory segment).
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct MergeDraftValidation {
+    pub health_status: HealthStatus,
+    /// Findings with i18n-key messages, same shape the health report uses.
+    pub issues: Vec<HealthIssue>,
+    /// The draft's name clashes (case-insensitively) with a composition name.
+    pub name_collision: bool,
+    /// The draft's name cannot be a single safe directory segment (empty,
+    /// over the 64-char cap, traversal, or path separators).
+    pub name_unsafe: bool,
+    /// Frontmatter `name` — the merged asset's exported name once confirmed.
+    pub parsed_name: Option<String>,
+    pub can_confirm: bool,
+}
+
 /// Result of an update check against GitHub Releases (DESIGN.md §6.16).
 /// `available == false` covers both "already up to date" and the silent
 /// network-failure path (fail quiet, retry next launch).

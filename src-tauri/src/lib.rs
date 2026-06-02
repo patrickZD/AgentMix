@@ -5,7 +5,7 @@ use agentmix_core::update::{
 };
 use agentmix_types::{
     ConflictCandidate, ExecutionReport, ExportConflict, ExportPlan, ExportRequestItem,
-    SourceProject, UpdateCheckResult, UpdateDownloadProgress,
+    MergeDraftValidation, SourceProject, UpdateCheckResult, UpdateDownloadProgress,
 };
 use tauri::Emitter;
 use tauri_plugin_dialog::DialogExt;
@@ -73,6 +73,19 @@ fn scan_project(path: String) -> Result<SourceProject, String> {
 #[tauri::command]
 fn detect_conflicts(candidates: Vec<ConflictCandidate>) -> Vec<ExportConflict> {
     agentmix_core::composer::detect_export_conflicts(&candidates)
+}
+
+/// Live validation for the merge workbench draft (T24). Thin wrapper over the
+/// tauri-free merge logic, which reuses parser/health and the exporter's
+/// safe-segment rule — the frontend renders the result and never re-implements
+/// a second rule set (DESIGN.md §6.3).
+#[tauri::command]
+fn validate_merge_draft(
+    draft: String,
+    existing_names: Vec<String>,
+    keeps_scripts: bool,
+) -> MergeDraftValidation {
+    agentmix_core::merge::validate_merge_draft(&draft, &existing_names, keeps_scripts)
 }
 
 /// Resolve the per-user AgentMix data root: ~/.agentmix (backups, update-check
@@ -290,6 +303,7 @@ pub fn run() {
         scan_project,
         pick_directory,
         detect_conflicts,
+        validate_merge_draft,
         build_export_plan,
         execute_export,
         open_path,
@@ -302,6 +316,7 @@ pub fn run() {
         scan_project,
         pick_directory,
         detect_conflicts,
+        validate_merge_draft,
         build_export_plan,
         execute_export,
         open_path,
