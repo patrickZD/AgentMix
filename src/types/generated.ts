@@ -276,3 +276,26 @@ export type SourceProject = {
 	lastCheckedAt: string | null,
 	skills: Skill[],
 };
+
+/**
+ *  Result of an update check against GitHub Releases (DESIGN.md §6.16).
+ *  `available == false` covers both "already up to date" and the silent
+ *  network-failure path (fail quiet, retry next launch).
+ */
+export type UpdateCheckResult = {
+	available: boolean,
+	/**  Latest release version, e.g. "0.1.5"; set only when `available`. */
+	version: string | null,
+	/**  Release notes (GitHub release body) for the update modal. */
+	notes: string | null,
+};
+
+/**
+ *  Payload of the `update-download-progress` event emitted while
+ *  `install_update` downloads the new package.
+ */
+export type UpdateDownloadProgress = {
+	downloadedBytes: number,
+	/**  Total size if the server reported a Content-Length. */
+	totalBytes: number | null,
+};

@@ -297,6 +297,31 @@ pub struct SkillSecurityReport {
     pub requires_confirmation: bool,
 }
 
+/// Result of an update check against GitHub Releases (DESIGN.md §6.16).
+/// `available == false` covers both "already up to date" and the silent
+/// network-failure path (fail quiet, retry next launch).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateCheckResult {
+    pub available: bool,
+    /// Latest release version, e.g. "0.1.5"; set only when `available`.
+    pub version: Option<String>,
+    /// Release notes (GitHub release body) for the update modal.
+    pub notes: Option<String>,
+}
+
+/// Payload of the `update-download-progress` event emitted while
+/// `install_update` downloads the new package.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateDownloadProgress {
+    #[specta(type = u32)]
+    pub downloaded_bytes: u64,
+    /// Total size if the server reported a Content-Length.
+    #[specta(type = Option<u32>)]
+    pub total_bytes: Option<u64>,
+}
+
 /// A source project (folder) that was scanned for assets.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
