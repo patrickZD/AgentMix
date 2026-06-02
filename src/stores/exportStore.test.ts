@@ -9,7 +9,9 @@ const mockExecute = vi.mocked(executeExport);
 
 const emptyPlan: ExportPlan = {
   targetDir: 'C:/proj/.claude/skills',
-  operations: [{ kind: 'create', path: 'x', sourcePath: 'src/x', size: 1, sourceAsset: 'a' }],
+  operations: [
+    { kind: 'create', path: 'x', source: { type: 'path', path: 'src/x' }, size: 1, sourceAsset: 'a' },
+  ],
   conflicts: [],
   backups: [],
   securityReports: [],
@@ -63,7 +65,12 @@ describe('exportStore.buildPlan', () => {
     useExportStore.setState({ targetPath: 'C:/proj' });
 
     const items = [
-      { assetId: 'a', sourceDir: 'C:/src/a', exportedName: 'a', sourceRef: 'p:a' },
+      {
+        assetId: 'a',
+        source: { type: 'directory' as const, dir: 'C:/src/a' },
+        exportedName: 'a',
+        sourceRef: 'p:a',
+      },
     ];
     await useExportStore.getState().buildPlan(items);
 
@@ -97,7 +104,12 @@ describe('exportStore.execute', () => {
     mockExecute.mockResolvedValue(report);
     useExportStore.setState({ plan: emptyPlan });
     const items = [
-      { assetId: 'a', sourceDir: 'C:/src/a', exportedName: 'a', sourceRef: 'p:a' },
+      {
+        assetId: 'a',
+        source: { type: 'directory' as const, dir: 'C:/src/a' },
+        exportedName: 'a',
+        sourceRef: 'p:a',
+      },
     ];
 
     await useExportStore.getState().execute(items);
@@ -113,7 +125,12 @@ describe('exportStore.execute', () => {
     mockExecute.mockResolvedValue(report);
     useExportStore.setState({ plan: emptyPlan });
     const items = [
-      { assetId: 'a', sourceDir: 'C:/src/a', exportedName: 'a', sourceRef: 'p:a' },
+      {
+        assetId: 'a',
+        source: { type: 'directory' as const, dir: 'C:/src/a' },
+        exportedName: 'a',
+        sourceRef: 'p:a',
+      },
     ];
 
     const store = useExportStore.getState();
@@ -129,7 +146,12 @@ describe('exportStore.execute', () => {
     mockExecute.mockResolvedValue(report);
     useExportStore.setState({ plan: emptyPlan, overwriteConfirmed: true });
     const items = [
-      { assetId: 'a', sourceDir: 'C:/src/a', exportedName: 'a', sourceRef: 'p:a' },
+      {
+        assetId: 'a',
+        source: { type: 'directory' as const, dir: 'C:/src/a' },
+        exportedName: 'a',
+        sourceRef: 'p:a',
+      },
     ];
 
     await useExportStore.getState().execute(items);

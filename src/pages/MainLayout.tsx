@@ -385,7 +385,7 @@ export default function MainLayout() {
   const exportItems = () =>
     comboItems.map((c) => ({
       assetId: c.skill.id,
-      sourceDir: c.skill.skillDirPath,
+      source: { type: 'directory' as const, dir: c.skill.skillDirPath },
       exportedName: c.exportedName,
       sourceRef: `${c.skill.sourceProjectId}:${c.skill.relativePathInProject}`,
     }));

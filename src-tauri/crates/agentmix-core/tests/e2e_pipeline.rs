@@ -9,7 +9,7 @@
 use std::path::Path;
 
 use agentmix_core::{exporter, scanner};
-use agentmix_types::{ConflictKind, ExportRequestItem, FileOperationKind, Skill};
+use agentmix_types::{ConflictKind, ExportItemSource, ExportRequestItem, FileOperationKind, Skill};
 
 /// Write a minimal valid skill (name matches its directory) under `root/dir`.
 fn write_skill(root: &Path, dir: &str, name: &str, topic: &str) {
@@ -28,7 +28,9 @@ fn write_skill(root: &Path, dir: &str, name: &str, topic: &str) {
 fn item_from(skill: &Skill, exported_name: &str) -> ExportRequestItem {
     ExportRequestItem {
         asset_id: skill.id.clone(),
-        source_dir: skill.skill_dir_path.clone(),
+        source: ExportItemSource::Directory {
+            dir: skill.skill_dir_path.clone(),
+        },
         exported_name: exported_name.to_string(),
         source_ref: format!(
             "{}:{}",
@@ -140,4 +142,75 @@ fn conflict_path_rename_resolves_and_syncs_frontmatter() {
         .find(|l| l.trim_start().starts_with("name:"))
         .expect("renamed SKILL.md must keep a name field");
     assert_eq!(name_line.trim(), "name: code-review-b");
+}
+
+#[test]
+fn merged_path_conflict_merge_resolves_and_exports_draft() {
+    let tmp = tempfile::tempdir().unwrap();
+    // Two source repos shipping the same `code-review` skill; one bundles scripts.
+    let repo_a = tmp.path().join("repo-a");
+    let repo_b = tmp.path().join("repo-b");
+    write_skill(&repo_a, "code-review", "code-review", "reviewing code in A");
+    write_skill(&repo_b, "code-review", "code-review", "reviewing code in B");
+    std::fs::create_dir_all(repo_b.join("code-review/scripts")).unwrap();
+    std::fs::write(repo_b.join("code-review/scripts/lint.sh"), "echo lint").unwrap();
+    let project_a = scanner::scan_project(&repo_a);
+    let project_b = scanner::scan_project(&repo_b);
+    let skill_a = &project_a.skills[0];
+    let skill_b = &project_b.skills[0];
+
+    let target = tmp.path().join("target");
+    let backups = tmp.path().join("backups");
+
+    // Both selected under the same name -> NameCollision blocks export.
+    let colliding = vec![
+        item_from(skill_a, "code-review"),
+        item_from(skill_b, "code-review"),
+    ];
+    let plan = exporter::build_export_plan(&colliding, &target, &backups);
+    assert!(plan
+        .conflicts
+        .iter()
+        .any(|c| c.kind == ConflictKind::NameCollision));
+
+    // Resolve via the merge workbench (v0.1.5 manual merge): the two colliding
+    // items are replaced by ONE content-backed merged item whose SKILL.md is
+    // the user's draft, keeping repo-b's scripts (single-choice, §6.3).
+    let draft = "---\nname: code-review\ndescription: Use when reviewing code (merged from A and B).\n---\n## Merged guidance\nA body + B body\n";
+    let merged = ExportRequestItem {
+        asset_id: "merged-code-review".to_string(),
+        source: ExportItemSource::Content {
+            content: draft.to_string(),
+            scripts_from_dir: Some(skill_b.skill_dir_path.clone()),
+        },
+        exported_name: "code-review".to_string(),
+        source_ref: format!("merged:{}+{}", skill_a.id, skill_b.id),
+    };
+    let resolved = vec![merged];
+
+    // The conflict is gone and the same plan object drives execution.
+    let plan = exporter::build_export_plan(&resolved, &target, &backups);
+    assert!(plan.conflicts.is_empty());
+    let report = exporter::execute(&plan, &resolved, &[], false).unwrap();
+    assert_eq!(report.skills_exported, 1);
+
+    // The target holds the merged skill: draft byte-identical, kept scripts
+    // from the chosen source, and the manifest records the merged entry.
+    let out = target.join(".claude").join("skills").join("code-review");
+    assert_eq!(
+        std::fs::read(out.join("SKILL.md")).unwrap(),
+        draft.as_bytes()
+    );
+    assert_eq!(
+        std::fs::read_to_string(out.join("scripts/lint.sh")).unwrap(),
+        "echo lint"
+    );
+    for op in &plan.operations {
+        assert_eq!(
+            std::fs::metadata(&op.path).unwrap().len(),
+            op.size,
+            "plan/execute byte parity for {}",
+            op.path
+        );
+    }
 }

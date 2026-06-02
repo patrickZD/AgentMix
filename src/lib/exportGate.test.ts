@@ -12,7 +12,7 @@ function plan(
     operations: Array.from({ length: opCount }, (_, i) => ({
       kind: 'create',
       path: `C:/proj/.claude/skills/s/file${i}.md`,
-      sourcePath: `C:/src/s/file${i}.md`,
+      source: { type: 'path', path: `C:/src/s/file${i}.md` },
       size: 10,
       sourceAsset: 's',
     })),
