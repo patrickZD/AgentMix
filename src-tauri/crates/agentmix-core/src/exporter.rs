@@ -167,15 +167,17 @@ pub fn execute(
     }
 
     let acknowledged: HashSet<&str> = acknowledged_asset_ids.iter().map(String::as_str).collect();
-    if let Some(report) = plan
-        .security_reports
-        .iter()
-        .find(|r| r.requires_confirmation && !acknowledged.contains(r.asset_id.as_str()))
-    {
-        return Err(format!(
-            "unacknowledged security risk for asset `{}`; review and accept it before exporting",
-            report.asset_id
-        ));
+    // Re-scan each source dir at write time so the gate is authoritative: a
+    // stale or tampered plan can't relax it (the plan's security_reports are for
+    // the preview only). A high-risk asset is refused unless explicitly accepted.
+    for item in items {
+        let report = scan_skill_security(Path::new(&item.source_dir), &item.asset_id);
+        if report.requires_confirmation && !acknowledged.contains(item.asset_id.as_str()) {
+            return Err(format!(
+                "unacknowledged security risk for asset `{}`; review and accept it before exporting",
+                item.asset_id
+            ));
+        }
     }
 
     let by_id: HashMap<&str, &ExportRequestItem> =

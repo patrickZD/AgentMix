@@ -11,7 +11,7 @@
 - 扫描任意文件夹识别 `SKILL.md`，按通用 / 工具专用 / 无效三分类，并做确定性健康检查。
 - 跨项目把 Skill 组合成清单，自动检测同名冲突（大小写不敏感），就地重命名 / 保留一个解决。
 - Dry-run 预览将发生的文件改动 → 确认 → 导出到 Claude Code 项目级 `.claude/skills/`；覆盖前把目标备份到 `~/.agentmix/backups/<project-hash>/`，不落目标项目树。
-- `scripts/` 静态安全预检：命中下载执行 / 敏感路径 / 动态执行 / 反弹 shell 或挖矿规则的 Skill 默认拒绝导出，需逐个确认才放行。
+- `scripts/` 静态安全预检：命中下载执行 / 敏感路径 / 动态执行 / 反弹 shell 或挖矿规则的 Skill 默认拒绝导出，需逐个确认才放行。安全评审后加固了匹配器（两步式下载、Windows certutil/BITS/PowerShell TCPClient、`.bat`/`.cmd`、空白绕过、更多凭据路径），并让 `execute` 在写入前重扫源目录、以最新结果为准（不信任传入 plan 的报告）。
 - 欢迎屏入口、中英语言切换（持久化）、显示无效候选开关。
 - Windows x64 `.msi` 与 `.exe` 安装包。
 
