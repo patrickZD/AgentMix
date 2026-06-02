@@ -55,6 +55,6 @@ target-project/
 
 ## 许可
 
-[MIT](LICENSE) © 2026 AgentMix
+[MIT](LICENSE) © 2026 Patrick.zhang
 
 SPDX-License-Identifier: MIT
