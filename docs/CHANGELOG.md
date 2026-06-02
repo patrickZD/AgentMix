@@ -2,7 +2,7 @@
 
 本文件记录 AgentMix 的版本变更。格式参考 Keep a Changelog，版本号遵循语义化版本。
 
-## [0.1.0] — Alpha（未发布）
+## [0.1.0] — Alpha — 2026-06-02
 
 首个 alpha。范围与边界以 `docs/DESIGN.md` 为准。
 
@@ -15,6 +15,15 @@
 - 欢迎屏入口、中英语言切换（持久化）、显示无效候选开关。
 - Windows x64 `.msi` 与 `.exe` 安装包。
 
+### 安全（发布前 review 修复）
+
+- 修复导出路径穿越（任意文件写入）：导出名必须是单段目录名，`execute` 写入前强制校验，并逐条确认每个写入路径都在目标 `.claude/skills/` 之内；预览以「导出名不合法」冲突阻断。
+- 覆盖目标中已有的 Skill 需要显式确认，由后端强制（原先只有界面提示）。
+- 源 SKILL.md 在写入时读取失败会显式报错，不再静默写出空文件。
+- 扫描时单个 SKILL.md 读取上限 1 MiB，超限标记为无效，防止恶意目录耗尽内存。
+- 移除界面对文件系统的直接访问面（`fs:default` capability 与 `tauri-plugin-fs` 注册），所有文件操作只走 Rust 命令。
+- 移除超出 v0.1 范围的合并工作台界面（含模拟 AI 输出），保留组合清单中「合并待后续版本」的占位。
+
 ### 已知限制 / 不在 v0.1
 
 - 仅 Windows x64、仅 Claude Code 项目级导出；无自动更新（手动升级）。
@@ -23,7 +32,8 @@
 
 ### 测试
 
-- headless 集成测试（`cargo test` 的 `e2e_pipeline`）与 WebDriver UI e2e（`pnpm test:e2e`）均通过；UI e2e 需真实显示 + tauri-driver/msedgedriver，作独立手动 gate，不进 `check:all`（见 `e2e/README.md`）。
+- 发布构建前 `pnpm check:all` 全绿（type-check、ESLint、4 个 lint 守卫、Vitest 50、cargo fmt / clippy、cargo test 66 单测 + 2 条 headless e2e）。
+- WebDriver UI e2e（`pnpm test:e2e`）在安全加固前的构建上通过；加固后未重跑（用例不涉及被移除的合并工作台）。UI e2e 需真实显示 + tauri-driver/msedgedriver，作独立手动 gate，不进 `check:all`（见 `e2e/README.md`）。
 
 ### 安装包与校验
 
@@ -31,8 +41,8 @@
 
 | 文件 | 大小 | SHA-256 |
 |---|---|---|
-| `AgentMix_0.1.0_x64_en-US.msi` | 3.57 MB | `76e35c77383de8467f1f743115b6c79c0b1e4c9b9482f54fed4740783807dcdd` |
-| `AgentMix_0.1.0_x64-setup.exe` | 2.37 MB | `6d2f486106291b9a258f144f1afa01b8f83457b687b8fea8e39c3c79f29fa884` |
+| `AgentMix_0.1.0_x64_en-US.msi` | 3.37 MB | `4a434b3465b3af8cdfb406079cd28b537142603fad2b9396e473a0291ceb59e5` |
+| `AgentMix_0.1.0_x64-setup.exe` | 2.24 MB | `aab8f827a427898646e5048806ca0099e827dc30771345e1edc8f0c3f44d0cee` |
 
 ### 性能核验（DESIGN.md DoD-5 / DoD-6 / DoD-1）
 
