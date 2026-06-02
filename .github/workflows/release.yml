@@ -1,0 +1,73 @@
+# Release pipeline (plan T22, DESIGN.md §6.16 decisions 17/19).
+#
+# Trigger: pushing a `v*` tag. Gate: the same `pnpm check:all` that gates local
+# commits. Build: signed msi + nsis bundles (signing key comes from the repo
+# secrets TAURI_SIGNING_PRIVATE_KEY / TAURI_SIGNING_PRIVATE_KEY_PASSWORD — the
+# private key never lives in the repo). Publish: a DRAFT release carrying
+# .msi/.exe/.sig/latest.json; a human verifies the assets before publishing.
+# SHA-256 checksums are printed in the job log for the CHANGELOG table.
+#
+# Re-running for an existing tag fails at `gh release create` if the draft
+# already exists — delete the draft first.
+
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # pnpm version is pinned by package.json's `packageManager` field.
+      - name: Enable corepack (pnpm)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Full local gate: type-check, ESLint, lint guards, Vitest, fmt, clippy,
+      # cargo test incl. the headless golden/conflict e2e (see check-all.mjs).
+      - name: Quality gate
+        run: pnpm check:all
+
+      - name: Build signed bundles
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: pnpm tauri build
+
+      - name: Generate latest.json
+        env:
+          TAG: ${{ github.ref_name }}
+        run: node scripts/make-latest-json.mjs
+
+      - name: Create draft release with assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        shell: pwsh
+        run: |
+          $bundle = "src-tauri/target/release/bundle"
+          $assets = @(
+            Get-ChildItem "$bundle/msi/*.msi", "$bundle/msi/*.msi.sig",
+                          "$bundle/nsis/*.exe", "$bundle/nsis/*.exe.sig"
+          ) + (Get-Item "$bundle/latest.json")
+          if ($assets.Count -ne 5) {
+            Write-Error "expected 5 release assets (msi, msi.sig, exe, exe.sig, latest.json), found $($assets.Count)"
+            exit 1
+          }
+          Write-Output "SHA-256 checksums (for the CHANGELOG table):"
+          $assets | Get-FileHash -Algorithm SHA256 | Format-Table Hash, Path -AutoSize
+          gh release create $env:TAG --draft --verify-tag `
+            --title "AgentMix $env:TAG" --generate-notes `
+            @($assets | ForEach-Object { $_.FullName })
