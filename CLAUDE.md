@@ -76,7 +76,7 @@ agentmix/
 - Rust tests: `cargo test`
 - All checks: `pnpm check:all`
 
-`pnpm check:all` 必须串联 typecheck、ESLint、`cargo clippy`、`cargo fmt --check`、Vitest、`cargo test`、两条 v0.1 e2e，以及 `lint:asset-purity`、`lint:no-direct-write`、`lint:i18n`、`lint:i18n:keys`。
+`pnpm check:all` 必须串联 typecheck、ESLint、`cargo clippy`、`cargo fmt --check`、Vitest、`cargo test`、两条 v0.1 e2e，以及 `lint:asset-purity`、`lint:no-direct-write`、`lint:i18n`、`lint:i18n:keys`。两条 v0.1 e2e 指 headless 的 `agentmix-core/tests/e2e_pipeline.rs`（golden + conflict，由 `cargo test` 跑）；WebDriver UI 套件（`pnpm test:e2e`）需真实显示 + tauri-driver/msedgedriver，是独立手动 gate，不进 `check:all`（详见 `e2e/README.md`）。
 
 ## 5. 编码规范
 
