@@ -67,7 +67,9 @@ export default function SkillItem({
         <span
           data-testid="skill-add"
           className={`flex-shrink-0 flex items-center cursor-pointer transition-opacity ${
-            isInCombo ? 'opacity-40' : 'opacity-0 group-hover:opacity-70 hover:!opacity-100'
+            // Always visible (T26): hover-only discovery hid the main action
+            // from alpha users.
+            isInCombo ? 'opacity-40' : 'opacity-70 hover:!opacity-100'
           }`}
           onClick={handleAdd}
           style={{ color: isInCombo ? 'var(--am-green)' : 'var(--am-blue)' }}

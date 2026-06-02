@@ -13,7 +13,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import { exportGate } from '@/lib/exportGate';
-import type { ComboItem, ExecutionReport, ExportPlan, MergedComboItem } from '../types';
+import type {
+  ComboItem,
+  ExecutionReport,
+  ExportPlan,
+  MergedComboItem,
+  SourceProject,
+} from '../types';
 
 // v0.1 ships a single export target. The other tools are shown but deferred.
 const TARGET_TOOLS: ReadonlyArray<{ label: string; level: string; color: string; active: boolean }> = [
@@ -28,6 +34,10 @@ interface ExportPanelProps {
   mergedItems?: MergedComboItem[];
   plan?: ExportPlan | null;
   targetPath?: string | null;
+  // Quick-pick targets (T26): persisted recents + the loaded source projects.
+  recentTargetPaths?: string[];
+  sourceProjects?: SourceProject[];
+  onSelectTarget?: (path: string) => void;
   building?: boolean;
   buildError?: string | null;
   overwriteConfirmed?: boolean;
@@ -55,6 +65,9 @@ export default function ExportPanel({
   mergedItems = [],
   plan = null,
   targetPath = null,
+  recentTargetPaths = [],
+  sourceProjects = [],
+  onSelectTarget = () => {},
   building = false,
   buildError = null,
   overwriteConfirmed = false,
@@ -129,26 +142,82 @@ export default function ExportPanel({
 
             {/* Target project path picker (active tool only) */}
             {tool.active && (
-              <Tooltip title={targetPath ?? t('exportPanel.selectTarget')} placement="top">
-                <button
-                  onClick={onPickTarget}
-                  data-testid="export-target"
-                  className="flex items-center gap-1 mt-1.5 w-full text-left group/path"
-                >
-                  <FolderIcon size={11} className="text-muted-foreground flex-shrink-0" />
-                  <span
-                    className="truncate group-hover/path:text-foreground transition-colors"
-                    style={{
-                      minWidth: 0,
-                      fontSize: '10.5px',
-                      fontFamily: 'monospace',
-                      color: targetPath ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
-                    }}
+              <>
+                <Tooltip title={targetPath ?? t('exportPanel.selectTarget')} placement="top">
+                  <button
+                    onClick={onPickTarget}
+                    data-testid="export-target"
+                    className="flex items-center gap-1 mt-1.5 w-full text-left group/path"
                   >
-                    {targetPath ?? t('exportPanel.selectTarget')}
-                  </span>
-                </button>
-              </Tooltip>
+                    <FolderIcon size={11} className="text-muted-foreground flex-shrink-0" />
+                    <span
+                      className="truncate group-hover/path:text-foreground transition-colors"
+                      style={{
+                        minWidth: 0,
+                        fontSize: '10.5px',
+                        fontFamily: 'monospace',
+                        color: targetPath ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
+                      }}
+                    >
+                      {targetPath ?? t('exportPanel.selectTarget')}
+                    </span>
+                  </button>
+                </Tooltip>
+
+                {/* What "target project" means (T26). */}
+                <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>
+                  {t('exportPanel.targetHint')}
+                </p>
+
+                {/* Quick picks: recent targets, then loaded source projects. */}
+                {(recentTargetPaths.length > 0 || sourceProjects.length > 0) && (
+                  <div className="mt-1.5 flex flex-col gap-0.5">
+                    {recentTargetPaths.length > 0 && (
+                      <p
+                        className="text-muted-foreground"
+                        style={{ fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase' }}
+                      >
+                        {t('exportPanel.recentTargets')}
+                      </p>
+                    )}
+                    {recentTargetPaths.map((path) => (
+                      <button
+                        key={path}
+                        onClick={() => onSelectTarget(path)}
+                        data-testid="export-target-recent"
+                        className="text-left truncate rounded px-1 py-0.5 hover:bg-secondary transition-colors"
+                        style={{ fontSize: '10px', fontFamily: 'monospace' }}
+                        title={path}
+                      >
+                        {path}
+                      </button>
+                    ))}
+                    {sourceProjects.length > 0 && (
+                      <p
+                        className="text-muted-foreground mt-0.5"
+                        style={{ fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase' }}
+                      >
+                        {t('exportPanel.fromSourceProjects')}
+                      </p>
+                    )}
+                    {sourceProjects.map((project) => (
+                      <button
+                        key={project.id}
+                        onClick={() => onSelectTarget(project.rootPath)}
+                        data-testid="export-target-source"
+                        className="text-left truncate rounded px-1 py-0.5 hover:bg-secondary transition-colors"
+                        style={{ fontSize: '10px' }}
+                        title={project.rootPath}
+                      >
+                        {project.name}
+                        <span className="text-muted-foreground ml-1" style={{ fontFamily: 'monospace' }}>
+                          {project.rootPath}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         ))}

@@ -320,6 +320,7 @@ export default function MainLayout() {
   } = useCompositionStore();
   const {
     targetPath,
+    recentTargetPaths,
     plan,
     building,
     buildError,
@@ -680,6 +681,9 @@ export default function MainLayout() {
                     mergedItems={mergedItems}
                     plan={plan}
                     targetPath={targetPath}
+                    recentTargetPaths={recentTargetPaths}
+                    sourceProjects={projects}
+                    onSelectTarget={setTargetPath}
                     building={building}
                     buildError={buildError}
                     overwriteConfirmed={overwriteConfirmed}
