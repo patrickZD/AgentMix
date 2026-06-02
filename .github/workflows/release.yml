@@ -24,6 +24,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # actions/checkout peels annotated tags to plain commits (checkout#290),
+      # which would feed the commit message into latest.json's notes. Re-fetch
+      # the real tag object so the tag message is what the update modal shows.
+      - name: Restore annotated tag
+        run: git fetch --force origin "refs/tags/${{ github.ref_name }}:refs/tags/${{ github.ref_name }}"
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
