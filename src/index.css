@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* Inter is vendored locally (T27, offline-first); see src/assets/fonts/. */
+@import "./assets/fonts/inter.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 
