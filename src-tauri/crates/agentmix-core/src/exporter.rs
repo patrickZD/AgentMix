@@ -121,7 +121,7 @@ pub fn build_export_plan(
             backup_archive: path_string(
                 &backups_root
                     .join(path_hash(&path_string(target_project_path)))
-                    .join(format!("{}.zip", now_millis())),
+                    .join(format!("{}.zip", now_stamp())),
             ),
             size_bytes: dir_size(&target_dir),
         }]
@@ -357,10 +357,12 @@ fn dir_size(dir: &Path) -> u64 {
         .sum()
 }
 
-fn now_millis() -> String {
+/// Unique-enough stamp for a backup filename: Unix-epoch nanoseconds, so two
+/// backups of the same target can't collide on a same-millisecond name.
+fn now_stamp() -> String {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_millis().to_string())
+        .map(|d| d.as_nanos().to_string())
         .unwrap_or_else(|_| "0".to_string())
 }
 

@@ -48,7 +48,9 @@ function walk(dir, exts, files = []) {
 }
 
 // Production code only: drop the inline `#[cfg(test)]` module (tests write to
-// tempdirs, which is fine).
+// tempdirs, which is fine). Fragility: this truncates at the FIRST `#[cfg(test)]`,
+// assuming the test module sits at the end of the file (the convention here). A
+// `#[cfg(test)]` item placed above real code would hide writes after it.
 function productionSource(content) {
   const idx = content.indexOf("#[cfg(test)]");
   return idx === -1 ? content : content.slice(0, idx);

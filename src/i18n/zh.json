@@ -151,7 +151,6 @@
     "scriptsNoCompatibilityFix": "补一个 compatibility 字段说明运行环境"
   },
   "security": {
-    "title": "安全预检",
     "riskTitle": "{{name}} 命中高危项",
     "oversize": "体积超过单 Skill 2MB 上限（{{size}}）",
     "acknowledge": "我已审查并接受该 Skill 的风险",

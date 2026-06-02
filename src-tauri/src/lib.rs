@@ -113,7 +113,10 @@ fn execute_export(
 }
 
 /// Reveal a path in the OS file manager (Windows Explorer); used by the
-/// "open backup folder" action. v0.1 is Windows-only.
+/// "open backup folder" action. v0.1 is Windows-only. The path is passed as a
+/// single argument (no shell), so it is not a command-injection sink; keep the
+/// caller feeding it an internally-sourced path (the backup archive dir), never
+/// a raw user string, so it can't become an arbitrary-`explorer`-argument sink.
 #[tauri::command]
 fn open_path(path: String) -> Result<(), String> {
     let native = path.replace('/', "\\");
