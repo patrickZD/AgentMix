@@ -11,7 +11,7 @@
 ## Phase 1：自动更新
 - [x] **T20** updater 后端（tauri-plugin-updater 引入、签名密钥对（私钥 ~/.tauri/agentmix.key，未入库）、`check_for_update` 24h 缓存 / `install_update` 命令、纯逻辑入 agentmix-core 15 单测；tauri-plugin-process 不需要——Rust 侧 `AppHandle::restart()` 是 core API；双 target `.sig` 本地构建验证 ✔）— 依赖：无 — M
 - [x] **T21** 更新 UI（红点徽标（落在专属更新图标上）、modal 三选项、设置开关默认开 + 手动检查、文案 en/zh 同步、updateStore 14 Vitest）— 依赖：T20 — M
-- [ ] **T22** GitHub Actions release workflow（workflow + make-latest-json 脚本已合入；prerelease tag 实跑待用户配置 secrets 后执行）— 依赖：T20 — M
+- [x] **T22** GitHub Actions release workflow（v0.1.5-rc.1 实跑全绿：draft 含 5 类资产、latest.json 签名/URL 正确、日志无私钥、SHA-256 已输出；临时 release/tag 已删；补了 annotated-tag re-fetch 修复 notes 来源）— 依赖：T20 — M
 
 ### Checkpoint G（T20–T22）— 更新闭环
 - [ ] 本地人工走通：检测 → 红点 → modal → 下载 → 签名校验 → 安装 → 重启
