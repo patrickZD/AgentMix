@@ -61,7 +61,11 @@
     "rename": "重命名",
     "keepOne": "保留一个",
     "merge": "合并",
-    "mergeDeferred": "合并工作台 —— v0.1.5 提供"
+    "mergeStart": "合并为新 Skill",
+    "mergeSelected": "合并 {{count}} 项",
+    "mergeCancel": "取消选择",
+    "mergedBadge": "已合并",
+    "mergedFrom": "由 {{names}} 合并"
   },
   "exportPanel": {
     "titleSimple": "导出到",

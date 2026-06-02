@@ -311,6 +311,7 @@ export default function MainLayout() {
     addToCombo,
     addMergedItem,
     removeItem,
+    removeMergedItem,
     moveItem,
     removeItemsByProject,
     renameItem,
@@ -380,6 +381,7 @@ export default function MainLayout() {
     scriptsFromItemId,
     validation: mergeValidation,
     validating: mergeValidating,
+    openWorkbench,
     closeWorkbench,
     setDraft: setMergeDraft,
     appendToDraft,
@@ -662,16 +664,20 @@ export default function MainLayout() {
               <div className="flex-1 overflow-y-auto scrollbar-thin flex flex-col" style={{ minHeight: 0 }}>
                 <ComboListPanel
                   comboItems={comboItems}
+                  mergedItems={mergedItems}
                   conflicts={conflicts}
                   onRemoveItem={handleRemoveComboItem}
                   onMoveItem={handleMoveComboItem}
                   onRenameItem={renameItem}
                   onKeepOne={keepOne}
+                  onOpenMerge={openWorkbench}
+                  onRemoveMergedItem={removeMergedItem}
                   simpleMode={simpleMode}
                 />
                 <div className="flex-1" style={{ minHeight: 0 }}>
                   <ExportPanel
                     comboItems={comboItems}
+                    mergedItems={mergedItems}
                     plan={plan}
                     targetPath={targetPath}
                     building={building}

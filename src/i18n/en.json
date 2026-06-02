@@ -63,7 +63,11 @@
     "rename": "Rename",
     "keepOne": "Keep one",
     "merge": "Merge",
-    "mergeDeferred": "Merge Workbench — available in v0.1.5"
+    "mergeStart": "Merge as new Skill",
+    "mergeSelected": "Merge {{count}}",
+    "mergeCancel": "Cancel selection",
+    "mergedBadge": "merged",
+    "mergedFrom": "merged from {{names}}"
   },
   "exportPanel": {
     "titleSimple": "Export To",

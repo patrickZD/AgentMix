@@ -23,6 +23,9 @@ interface CompositionState {
     merged: Omit<MergedComboItem, 'id' | 'replacedItems'>,
     replacedItemIds: string[],
   ) => void;
+  // Remove a merged entry and restore the items it had replaced, so the prior
+  // conflict state can be re-detected (T25).
+  removeMergedItem: (mergedId: string) => void;
   removeItem: (itemId: string) => void;
   moveItem: (itemId: string, direction: 'up' | 'down') => void;
   removeItemsByProject: (projectId: string) => void;
@@ -51,6 +54,16 @@ export const useCompositionStore = create<CompositionState>((set, get) => ({
       return {
         comboItems: state.comboItems.filter((c) => !replaced.has(c.id)),
         mergedItems: [...state.mergedItems, entry],
+      };
+    }),
+
+  removeMergedItem: (mergedId) =>
+    set((state) => {
+      const entry = state.mergedItems.find((m) => m.id === mergedId);
+      if (!entry) return state;
+      return {
+        mergedItems: state.mergedItems.filter((m) => m.id !== mergedId),
+        comboItems: [...state.comboItems, ...entry.replacedItems],
       };
     }),
 

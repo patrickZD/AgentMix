@@ -129,6 +129,30 @@ describe('compositionStore.refreshConflicts', () => {
 });
 
 describe('compositionStore merged entries (T24)', () => {
+  it('removeMergedItem restores the items the merge had replaced (T25)', () => {
+    store().addToCombo(makeSkill('s1', 'code-review'), makeProject('p1'));
+    store().addToCombo(makeSkill('s2', 'code-review'), makeProject('p2'));
+    const replacedIds = store().comboItems.map((c) => c.id);
+    store().addMergedItem(
+      {
+        name: 'code-review',
+        draft: '---\nname: code-review\n---\n',
+        scriptsFromDir: null,
+        sourceSkillNames: ['code-review', 'code-review'],
+      },
+      replacedIds,
+    );
+    expect(store().comboItems).toHaveLength(0);
+    const mergedId = store().mergedItems[0].id;
+
+    store().removeMergedItem(mergedId);
+
+    // The merged entry is gone and the original (conflicting) items are back,
+    // so the prior conflict state can be re-detected.
+    expect(store().mergedItems).toHaveLength(0);
+    expect(store().comboItems.map((c) => c.id)).toEqual(replacedIds);
+  });
+
   it('addMergedItem replaces its source items and records them for restore', () => {
     store().addToCombo(makeSkill('s1', 'code-review'), makeProject('p1'));
     store().addToCombo(makeSkill('s2', 'code-review'), makeProject('p2'));

@@ -3,6 +3,7 @@ import {
   ListChecksIcon,
   Trash2Icon,
   MergeIcon,
+  GitMergeIcon,
   ArrowUpIcon,
   ArrowDownIcon,
   AlertTriangleIcon,
@@ -14,34 +15,47 @@ import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
 import { displayLabel } from '@/lib/skillView';
+import { canMergeConflict, mergeSourceIdsForConflict, MERGE_MIN_SOURCES } from '@/lib/mergeSources';
 import Badge from './Badge';
-import type { ComboItem, ExportConflict } from '../types';
+import type { ComboItem, ExportConflict, MergedComboItem } from '../types';
 
 interface ComboListPanelProps {
   comboItems?: ComboItem[];
+  mergedItems?: MergedComboItem[];
   conflicts?: ExportConflict[];
   onRemoveItem?: (itemId: string) => void;
   onMoveItem?: (itemId: string, direction: 'up' | 'down') => void;
   onRenameItem?: (itemId: string, exportedName: string) => void;
   onKeepOne?: (itemId: string) => void;
+  // Open the merge workbench over these combo items (both entries: the
+  // conflict row's third button and the generic select-mode header action).
+  onOpenMerge?: (sourceItemIds: string[]) => void;
+  onRemoveMergedItem?: (mergedId: string) => void;
   simpleMode?: boolean;
 }
 
 export default function ComboListPanel({
   comboItems = [],
+  mergedItems = [],
   conflicts = [],
   onRemoveItem = () => {},
   onMoveItem = () => {},
   onRenameItem = () => {},
   onKeepOne = () => {},
+  onOpenMerge = () => {},
+  onRemoveMergedItem = () => {},
   simpleMode = false,
 }: ComboListPanelProps) {
   const { t } = useTranslation();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState('');
+  // Generic merge entry (T25, decision 5): pick >= 2 items, any names.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Which combo items collide, per the authoritative composer result.
+  // Which items collide, per the authoritative composer result.
   const conflictingIds = new Set(conflicts.flatMap((c) => c.assetIds));
+  const itemCount = comboItems.length + mergedItems.length;
 
   const startRename = (itemId: string, current: string) => {
     setEditingId(itemId);
@@ -52,6 +66,29 @@ export default function ComboListPanel({
     if (editingId && draftName.trim()) onRenameItem(editingId, draftName.trim());
     setEditingId(null);
   };
+
+  const toggleSelected = (itemId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  };
+
+  const cancelSelect = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const confirmSelect = () => {
+    onOpenMerge([...selectedIds]);
+    cancelSelect();
+  };
+
+  // The conflict row's merge button feeds the workbench that conflict's
+  // combo-item participants.
+  const conflictOf = (itemId: string) => conflicts.find((c) => c.assetIds.includes(itemId));
 
   return (
     <div
@@ -69,12 +106,12 @@ export default function ComboListPanel({
           <span className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
             {t(simpleMode ? 'comboPanel.titleSimple' : 'comboPanel.titleFull')}
           </span>
-          {comboItems.length > 0 && (
+          {itemCount > 0 && (
             <span
               className="text-muted-foreground bg-secondary rounded-full px-1.5"
               style={{ fontSize: '10px', fontWeight: 600 }}
             >
-              {comboItems.length}
+              {itemCount}
             </span>
           )}
           {conflicts.length > 0 && (
@@ -93,19 +130,43 @@ export default function ComboListPanel({
           )}
         </div>
 
-        {/* Merge Workbench is deferred to v0.1.5. */}
-        <Tooltip title={t('comboPanel.mergeDeferred')} placement="bottom">
-          <span>
-            <IconButton disabled className="h-[26px] w-[26px]">
-              <MergeIcon size={13} />
-            </IconButton>
-          </span>
-        </Tooltip>
+        {/* Generic merge entry (T25): select >= 2 items, then merge them. */}
+        {selectMode ? (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={confirmSelect}
+              disabled={selectedIds.size < MERGE_MIN_SOURCES}
+              data-testid="combo-merge-selected"
+              className="px-2 py-0.5 rounded-md font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ fontSize: '11px', background: 'var(--am-blue)' }}
+            >
+              {t('comboPanel.mergeSelected', { count: selectedIds.size })}
+            </button>
+            <Tooltip title={t('comboPanel.mergeCancel')} placement="bottom">
+              <IconButton onClick={cancelSelect} className="h-[26px] w-[26px]">
+                <XIcon size={13} />
+              </IconButton>
+            </Tooltip>
+          </div>
+        ) : (
+          <Tooltip title={t('comboPanel.mergeStart')} placement="bottom">
+            <span>
+              <IconButton
+                disabled={comboItems.length < MERGE_MIN_SOURCES}
+                onClick={() => setSelectMode(true)}
+                data-testid="combo-merge-start"
+                className="h-[26px] w-[26px]"
+              >
+                <MergeIcon size={13} />
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
       </div>
 
       {/* List */}
       <div className="flex-1 overflow-y-auto scrollbar-thin py-1" style={{ maxHeight: 260 }}>
-        {comboItems.length === 0 && (
+        {itemCount === 0 && (
           <div className="flex flex-col items-center justify-center py-6 gap-1.5">
             <ListChecksIcon size={24} className="text-muted-foreground opacity-30" />
             <p className="text-muted-foreground" style={{ fontSize: '11.5px' }}>
@@ -129,6 +190,17 @@ export default function ComboListPanel({
               }`}
             >
               <div className="flex items-center gap-1.5">
+                {/* Selection checkbox for the generic merge entry (T25) */}
+                {selectMode && (
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(item.id)}
+                    onChange={() => toggleSelected(item.id)}
+                    data-testid="combo-merge-pick"
+                    className="flex-shrink-0 accent-current"
+                    style={{ width: 12, height: 12 }}
+                  />
+                )}
                 {/* Conflict marker or health status */}
                 <span className="flex-shrink-0" style={{ width: 14 }}>
                   {isConflicting ? (
@@ -237,18 +309,82 @@ export default function ComboListPanel({
                     <CheckIcon size={9} />
                     {t('comboPanel.keepOne')}
                   </button>
-                  <Tooltip title={t('comboPanel.mergeDeferred')} placement="top">
-                    <button
-                      disabled
-                      className="flex items-center gap-0.5 rounded px-1.5 py-0.5 opacity-40 cursor-not-allowed"
-                      style={{ fontSize: '10px', fontWeight: 600 }}
-                    >
-                      <MergeIcon size={9} />
-                      {t('comboPanel.merge')}
-                    </button>
-                  </Tooltip>
+                  {(() => {
+                    const conflict = conflictOf(item.id);
+                    const mergeable = conflict !== undefined && canMergeConflict(conflict, comboItems);
+                    return (
+                      <button
+                        disabled={!mergeable}
+                        onClick={() =>
+                          conflict && onOpenMerge(mergeSourceIdsForConflict(conflict, comboItems))
+                        }
+                        data-testid="combo-merge-conflict"
+                        className="flex items-center gap-0.5 rounded px-1.5 py-0.5 hover:bg-card transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ fontSize: '10px', fontWeight: 600, color: 'var(--am-blue)' }}
+                      >
+                        <MergeIcon size={9} />
+                        {t('comboPanel.merge')}
+                      </button>
+                    );
+                  })()}
                 </div>
               )}
+            </div>
+          );
+        })}
+
+        {/* Merged entries (T25): content-backed, removable; removing one
+            restores the items it replaced. */}
+        {mergedItems.map((merged) => {
+          const isConflicting = conflictingIds.has(merged.id);
+          return (
+            <div
+              key={merged.id}
+              data-testid="combo-merged-entry"
+              className={`flex items-center gap-1.5 px-2 py-1 group hover:bg-secondary rounded mx-1 ${
+                isConflicting ? 'bg-orange-50' : ''
+              }`}
+            >
+              <span className="flex-shrink-0" style={{ width: 14 }}>
+                {isConflicting ? (
+                  <AlertTriangleIcon size={11} style={{ color: 'var(--am-orange)' }} />
+                ) : (
+                  <GitMergeIcon size={11} className="text-primary" />
+                )}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="text-foreground truncate" style={{ fontSize: '12px', fontWeight: 500 }}>
+                    {simpleMode ? displayLabel(merged.name) : merged.name}
+                  </span>
+                  <span
+                    className="rounded px-1 flex-shrink-0"
+                    style={{
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      background: 'var(--am-blue)',
+                      color: '#fff',
+                    }}
+                  >
+                    {t('comboPanel.mergedBadge')}
+                  </span>
+                  {isConflicting && <Badge variant="conflict" />}
+                </div>
+                <div className="text-muted-foreground truncate" style={{ fontSize: '10.5px' }}>
+                  {t('comboPanel.mergedFrom', { names: merged.sourceSkillNames.join(' + ') })}
+                </div>
+              </div>
+              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                <Tooltip title={t('comboPanel.removeFromCombo')} placement="left">
+                  <IconButton
+                    onClick={() => onRemoveMergedItem(merged.id)}
+                    data-testid="combo-merged-remove"
+                    className="h-[20px] w-[20px]"
+                  >
+                    <Trash2Icon size={11} />
+                  </IconButton>
+                </Tooltip>
+              </div>
             </div>
           );
         })}

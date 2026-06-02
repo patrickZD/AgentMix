@@ -13,7 +13,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import { exportGate } from '@/lib/exportGate';
-import type { ComboItem, ExecutionReport, ExportPlan } from '../types';
+import type { ComboItem, ExecutionReport, ExportPlan, MergedComboItem } from '../types';
 
 // v0.1 ships a single export target. The other tools are shown but deferred.
 const TARGET_TOOLS: ReadonlyArray<{ label: string; level: string; color: string; active: boolean }> = [
@@ -25,6 +25,7 @@ const TARGET_TOOLS: ReadonlyArray<{ label: string; level: string; color: string;
 
 interface ExportPanelProps {
   comboItems?: ComboItem[];
+  mergedItems?: MergedComboItem[];
   plan?: ExportPlan | null;
   targetPath?: string | null;
   building?: boolean;
@@ -51,6 +52,7 @@ function formatBytes(n: number): string {
 
 export default function ExportPanel({
   comboItems = [],
+  mergedItems = [],
   plan = null,
   targetPath = null,
   building = false,
@@ -70,11 +72,15 @@ export default function ExportPanel({
 }: ExportPanelProps) {
   const { t } = useTranslation();
 
-  const canPreview = !!targetPath && comboItems.length > 0 && !building;
+  // Merged entries export alongside the regular items (T25).
+  const itemCount = comboItems.length + mergedItems.length;
+  const canPreview = !!targetPath && itemCount > 0 && !building;
   const gate = exportGate(plan, overwriteConfirmed, acknowledgedRiskIds);
   // Resolve an asset id to the name it exports as, for risk-card headings.
   const skillName = (assetId: string) =>
-    comboItems.find((c) => c.skill.id === assetId)?.exportedName ?? assetId;
+    comboItems.find((c) => c.skill.id === assetId)?.exportedName ??
+    mergedItems.find((m) => m.id === assetId)?.name ??
+    assetId;
   const riskReports = plan?.securityReports.filter((r) => r.requiresConfirmation) ?? [];
   const createCount = plan?.operations.filter((o) => o.kind === 'create').length ?? 0;
   const overwriteCount = plan?.operations.filter((o) => o.kind === 'overwrite').length ?? 0;
@@ -162,7 +168,7 @@ export default function ExportPanel({
 
         {!canPreview && !building && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10px' }}>
-            {comboItems.length === 0
+            {itemCount === 0
               ? t('exportPanel.previewNeedsCombo')
               : t('exportPanel.noTarget')}
           </p>
@@ -353,17 +359,17 @@ export default function ExportPanel({
           {gate.canExport ? <CheckIcon size={13} /> : <XIcon size={13} />}
           {executing
             ? t('exportPanel.exporting')
-            : comboItems.length > 0
-              ? t('exportPanel.exportWithCount', { count: comboItems.length })
+            : itemCount > 0
+              ? t('exportPanel.exportWithCount', { count: itemCount })
               : t('exportPanel.export')}
         </button>
 
-        {comboItems.length === 0 && (
+        {itemCount === 0 && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10.5px' }}>
             {t(simpleMode ? 'exportPanel.emptyComboSimple' : 'exportPanel.emptyComboFull')}
           </p>
         )}
-        {comboItems.length > 0 && !targetPath && (
+        {itemCount > 0 && !targetPath && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10.5px' }}>
             {t('exportPanel.noTarget')}
           </p>
