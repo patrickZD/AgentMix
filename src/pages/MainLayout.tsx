@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   HeartPulseIcon,
   BookOpenIcon,
@@ -16,6 +16,7 @@ import ExportPanel from '../components/ExportPanel';
 import HealthCheckPanel from '../components/HealthCheckPanel';
 import WelcomeScreen from '../components/WelcomeScreen';
 import UpdateModal from '../components/UpdateModal';
+import MergeWorkbench from '../components/MergeWorkbench';
 import { displayLabel, categoryLabelKey } from '@/lib/skillView';
 import { resolveView } from '@/lib/viewRouting';
 import { pickDirectory } from '@/lib/scan';
@@ -27,6 +28,7 @@ import { useCompositionStore } from '@/stores/compositionStore';
 import { useExportStore } from '@/stores/exportStore';
 import { useUiStore } from '@/stores/uiStore';
 import { isBadgeVisible, useUpdateStore } from '@/stores/updateStore';
+import { useMergeStore } from '@/stores/mergeStore';
 import { onUpdateDownloadProgress } from '@/lib/updater';
 
 // Skill detail / preview panel
@@ -307,6 +309,7 @@ export default function MainLayout() {
     mergedItems,
     conflicts,
     addToCombo,
+    addMergedItem,
     removeItem,
     moveItem,
     removeItemsByProject,
@@ -369,6 +372,55 @@ export default function MainLayout() {
 
   // The red badge shows for a non-skipped newer release (T21).
   const updateBadge = isBadgeVisible(availableVersion, skippedVersion);
+
+  const {
+    open: mergeOpen,
+    sourceItemIds: mergeSourceIds,
+    draft: mergeDraft,
+    scriptsFromItemId,
+    validation: mergeValidation,
+    validating: mergeValidating,
+    closeWorkbench,
+    setDraft: setMergeDraft,
+    appendToDraft,
+    setScriptsFrom,
+    validate: validateMerge,
+  } = useMergeStore();
+
+  // Source columns for the workbench, resolved from the live combo items.
+  const mergeSources = comboItems.filter((c) => mergeSourceIds.includes(c.id));
+
+  // Names the draft must not collide with: everything in the composition
+  // except the items being merged (they are replaced on confirm). Stable
+  // identity (useCallback) so the workbench's debounced-validate effect does
+  // not re-arm on validation state changes.
+  const handleValidateMerge = useCallback(
+    () =>
+      void validateMerge([
+        ...comboItems
+          .filter((c) => !mergeSourceIds.includes(c.id))
+          .map((c) => c.exportedName),
+        ...mergedItems.map((m) => m.name),
+      ]),
+    [comboItems, mergedItems, mergeSourceIds, validateMerge],
+  );
+
+  // Confirm: the validated draft becomes a merged entry; its sources leave the
+  // combo (restorable, T25) and the workbench closes.
+  const handleConfirmMerge = () => {
+    if (!mergeValidation?.canConfirm || !mergeValidation.parsedName) return;
+    const scriptsItem = mergeSources.find((c) => c.id === scriptsFromItemId);
+    addMergedItem(
+      {
+        name: mergeValidation.parsedName,
+        draft: mergeDraft,
+        scriptsFromDir: scriptsItem ? scriptsItem.skill.skillDirPath : null,
+        sourceSkillNames: mergeSources.map((s) => s.exportedName),
+      },
+      mergeSourceIds,
+    );
+    closeWorkbench();
+  };
 
   // Handler aliases so the JSX below reads naturally; store actions do the work.
   const handleNavigate = setView;
@@ -673,6 +725,22 @@ export default function MainLayout() {
           setSettingsOpen(false);
           openUpdateModal();
         }}
+      />
+
+      {/* Merge workbench overlay (T24) */}
+      <MergeWorkbench
+        open={mergeOpen}
+        sources={mergeSources}
+        draft={mergeDraft}
+        scriptsFromItemId={scriptsFromItemId}
+        validation={mergeValidation}
+        validating={mergeValidating}
+        onDraftChange={setMergeDraft}
+        onAppend={appendToDraft}
+        onScriptsFrom={setScriptsFrom}
+        onValidate={handleValidateMerge}
+        onConfirm={handleConfirmMerge}
+        onClose={closeWorkbench}
       />
 
       {/* Update prompt overlay (T21) */}

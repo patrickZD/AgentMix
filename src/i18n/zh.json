@@ -170,6 +170,21 @@
       "reverse-shell-or-miner": "反弹 shell / 挖矿特征"
     }
   },
+  "merge": {
+    "title": "合并工作台",
+    "append": "追加到草稿",
+    "draftTitle": "合并草稿（SKILL.md）",
+    "draftPlaceholder": "在此撰写合并后的 SKILL.md，或用 → 从来源拼接段落",
+    "validating": "正在校验…",
+    "validationOk": "草稿校验通过",
+    "nameCollision": "name 与组合内现有条目冲突",
+    "nameUnsafe": "name 无法用作目录名",
+    "scriptsTitle": "保留 scripts：",
+    "scriptsNone": "不保留",
+    "scriptsFrom": "保留 {{name}} 的",
+    "confirm": "合并入组合",
+    "cancel": "取消"
+  },
   "update": {
     "title": "更新到 AgentMix {{version}}",
     "notesEmpty": "该版本没有更新说明。",

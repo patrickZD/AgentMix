@@ -175,6 +175,21 @@
       "reverse-shell-or-miner": "Reverse-shell / crypto-miner signature"
     }
   },
+  "merge": {
+    "title": "Merge Workbench",
+    "append": "Append to draft",
+    "draftTitle": "Merged draft (SKILL.md)",
+    "draftPlaceholder": "Write the merged SKILL.md here, or splice paragraphs from the sources with →",
+    "validating": "Validating…",
+    "validationOk": "Draft is valid",
+    "nameCollision": "name conflicts with an existing item in the combo",
+    "nameUnsafe": "name cannot be used as a folder name",
+    "scriptsTitle": "Keep scripts:",
+    "scriptsNone": "None",
+    "scriptsFrom": "From {{name}}",
+    "confirm": "Add merged skill to Combo",
+    "cancel": "Cancel"
+  },
   "update": {
     "title": "Update to AgentMix {{version}}",
     "notesEmpty": "No release notes for this version.",
