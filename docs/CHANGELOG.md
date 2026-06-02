@@ -33,7 +33,7 @@
 ### 测试
 
 - 发布构建前 `pnpm check:all` 全绿（type-check、ESLint、4 个 lint 守卫、Vitest 50、cargo fmt / clippy、cargo test 66 单测 + 2 条 headless e2e）。
-- WebDriver UI e2e（`pnpm test:e2e`）在安全加固前的构建上通过；加固后未重跑（用例不涉及被移除的合并工作台）。UI e2e 需真实显示 + tauri-driver/msedgedriver，作独立手动 gate，不进 `check:all`（见 `e2e/README.md`）。
+- WebDriver UI e2e（`pnpm test:e2e`）在安全加固后的代码上重跑通过（2026-06-02，golden-path + conflict-path 2 spec 全过，Edge/WebView2 148.0.3967.96，tauri-driver 2.0.6）。UI e2e 需真实显示 + tauri-driver/msedgedriver，作独立手动 gate，不进 `check:all`（见 `e2e/README.md`）。
 
 ### 安装包与校验
 
