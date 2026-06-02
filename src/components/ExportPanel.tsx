@@ -226,6 +226,12 @@ export default function ExportPanel({
                 {t('exportPanel.nameCollisionWarn', { count: gate.nameCollisions })}
               </p>
             )}
+            {gate.invalidNames > 0 && (
+              <p className="flex items-start gap-1" style={{ fontSize: '10.5px', color: 'var(--am-red)' }}>
+                <AlertTriangleIcon size={11} style={{ flexShrink: 0, marginTop: 1 }} />
+                {t('exportPanel.invalidNameWarn', { count: gate.invalidNames })}
+              </p>
+            )}
             {gate.targetExists > 0 && (
               <label className="flex items-start gap-1.5 cursor-pointer" style={{ fontSize: '10.5px' }}>
                 <input

@@ -70,8 +70,8 @@ fn golden_path_scan_select_preview_export() {
         .iter()
         .all(|o| o.kind == FileOperationKind::Create));
 
-    // Execute consumes the same plan (clean -> nothing to acknowledge).
-    let report = exporter::execute(&plan, &items, &[]).unwrap();
+    // Execute consumes the same plan (clean -> nothing to acknowledge, no overwrite).
+    let report = exporter::execute(&plan, &items, &[], false).unwrap();
     assert_eq!(report.skills_exported, 3);
     assert_eq!(report.files_overwritten, 0);
 
@@ -112,7 +112,7 @@ fn conflict_path_rename_resolves_and_syncs_frontmatter() {
         .conflicts
         .iter()
         .any(|c| c.kind == ConflictKind::NameCollision));
-    assert!(exporter::execute(&plan, &colliding, &[]).is_err());
+    assert!(exporter::execute(&plan, &colliding, &[], false).is_err());
     assert!(
         !target.join(".claude").exists(),
         "nothing may be written while a collision is unresolved"
@@ -125,7 +125,7 @@ fn conflict_path_rename_resolves_and_syncs_frontmatter() {
     ];
     let plan = exporter::build_export_plan(&resolved, &target, &backups);
     assert!(plan.conflicts.is_empty());
-    exporter::execute(&plan, &resolved, &[]).unwrap();
+    exporter::execute(&plan, &resolved, &[], false).unwrap();
 
     // Both skills coexist in the target.
     let skills_dir = target.join(".claude").join("skills");

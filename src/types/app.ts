@@ -7,7 +7,7 @@
 // are the single source of truth. They are re-exported here so components keep
 // importing everything from '@/types'. The types defined below are purely-UI
 // composites that the backend does not model (combo bookkeeping, export-target
-// view rows, merge-draft blocks, the health-report view shape).
+// view rows, the health-report view shape).
 
 export type {
   Skill,
@@ -36,7 +36,7 @@ export type {
 
 import type { Skill, SourceProject } from './generated';
 
-export type AppView = 'welcome' | 'main' | 'merge-workbench' | 'health-check';
+export type AppView = 'welcome' | 'main' | 'health-check';
 
 export interface ComboItem {
   id: string;
@@ -46,10 +46,4 @@ export interface ComboItem {
   // changed by conflict resolution (rename). Conflicts are detected from these
   // by the Rust composer, not flagged per-item here.
   exportedName: string;
-}
-
-export interface MergeBlock {
-  id: string;
-  source: 'A' | 'B' | 'draft';
-  text: string;
 }

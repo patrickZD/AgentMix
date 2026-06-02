@@ -45,6 +45,11 @@ const targetExists: ExportConflict = {
   exportedName: 'deploy',
   assetIds: ['c'],
 };
+const invalidName: ExportConflict = {
+  kind: 'invalidName',
+  exportedName: '../evil',
+  assetIds: ['d'],
+};
 
 describe('exportGate', () => {
   it('blocks when there is no plan', () => {
@@ -73,6 +78,12 @@ describe('exportGate', () => {
     const confirmed = exportGate(plan([targetExists]), true);
     expect(confirmed.canExport).toBe(true);
     expect(confirmed.needsOverwriteConfirm).toBe(false);
+  });
+
+  it('blocks an unsafe exported name (not clearable in preview)', () => {
+    const gate = exportGate(plan([invalidName]), true);
+    expect(gate.canExport).toBe(false);
+    expect(gate.invalidNames).toBe(1);
   });
 
   it('blocks a high-risk skill until its risk is acknowledged (per-skill)', () => {

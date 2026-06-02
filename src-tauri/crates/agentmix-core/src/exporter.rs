@@ -19,10 +19,58 @@ use agentmix_types::{
 use walkdir::WalkDir;
 
 use crate::composer::detect_export_conflicts;
+use crate::parser::NAME_MAX_LEN;
 use crate::security::scan_skill_security;
 
 const MANIFEST_FILE: &str = ".agentmix-manifest.json";
 const SKILL_FILE: &str = "SKILL.md";
+
+/// True when `name` is safe to use as a single directory segment under the
+/// target skills dir: non-empty, within the SKILL.md `name` length, and free of
+/// `.`/`..` traversal, path separators, or a drive prefix. This is the security
+/// boundary that keeps every export write confined to `.claude/skills/`
+/// (DESIGN.md §6.11). Enforced in `execute` (the single writer) and surfaced in
+/// the preview, so a renamed asset can never steer a write outside the target.
+fn is_safe_segment(name: &str) -> bool {
+    !name.is_empty()
+        && name.chars().count() <= NAME_MAX_LEN
+        && name != "."
+        && name != ".."
+        && !name.contains(['/', '\\', ':', '\0'])
+}
+
+/// Lexically split a forward-slashed path into normalized segments, collapsing
+/// `.`/`..` without touching the filesystem (the destination does not exist
+/// yet). Returns None when `..` would rise above the path's own root.
+fn lexical_parts(path: &str) -> Option<Vec<&str>> {
+    let mut parts: Vec<&str> = Vec::new();
+    for seg in path.split('/') {
+        match seg {
+            "" | "." => {}
+            ".." => {
+                parts.pop()?;
+            }
+            other => parts.push(other),
+        }
+    }
+    Some(parts)
+}
+
+/// True when `candidate` lexically resolves to `base` or a path inside it. Both
+/// are forward-slashed (path_string form) and compared case-insensitively
+/// (Windows). This is the write-time containment gate: even a tampered plan
+/// cannot direct a write outside the target dir (DESIGN.md §6.11, §8.2).
+fn is_within(base: &str, candidate: &str) -> bool {
+    let (Some(base_parts), Some(cand_parts)) = (lexical_parts(base), lexical_parts(candidate))
+    else {
+        return false;
+    };
+    cand_parts.len() >= base_parts.len()
+        && base_parts
+            .iter()
+            .zip(&cand_parts)
+            .all(|(b, c)| b.eq_ignore_ascii_case(c))
+}
 
 /// Build the export plan for `items` into `target_project_path`'s
 /// `.claude/skills/` directory. Produces operations, conflicts, the backup plan
@@ -51,6 +99,17 @@ pub fn build_export_plan(
     conflicts.extend(detect_export_conflicts(&candidates));
 
     for item in items {
+        // An unsafe export name cannot be a directory segment under the target;
+        // surface it as a blocking conflict and build no operations for it. The
+        // same name is refused authoritatively in execute (the single writer).
+        if !is_safe_segment(&item.exported_name) {
+            conflicts.push(ExportConflict {
+                kind: ConflictKind::InvalidName,
+                exported_name: item.exported_name.clone(),
+                asset_ids: vec![item.asset_id.clone()],
+            });
+            continue;
+        }
         let skill_target = target_dir.join(&item.exported_name);
 
         // Static security pre-check (DESIGN.md §6.11); same scan runs at import.
@@ -86,7 +145,9 @@ pub fn build_export_plan(
             // The skill's own SKILL.md is written with its `name:` normalized to
             // the exported name, so its planned size is the rewritten size.
             let size = if is_skill_md_rel(rel) {
-                exported_skill_md(entry.path(), &item.exported_name).len() as u64
+                exported_skill_md(entry.path(), &item.exported_name)
+                    .map(|b| b.len() as u64)
+                    .unwrap_or(0)
             } else {
                 entry.metadata().map(|m| m.len()).unwrap_or(0)
             };
@@ -152,11 +213,15 @@ pub fn build_export_plan(
 /// SKILL.md `name:` field. `acknowledged_asset_ids` are the assets whose security
 /// risk the user explicitly accepted in the preview (per-skill, no bulk bypass);
 /// the gate is enforced here too so a high-risk asset can never be written
-/// silently (DESIGN.md §6.11).
+/// silently (DESIGN.md §6.11). `overwrite_confirmed` is the user's explicit
+/// consent (given in the preview) to overwrite files that already exist at the
+/// target; without it, a `TargetExists` conflict refuses the write here too, so
+/// the preview→confirm→execute guarantee holds even on a stale or tampered plan.
 pub fn execute(
     plan: &ExportPlan,
     items: &[ExportRequestItem],
     acknowledged_asset_ids: &[String],
+    overwrite_confirmed: bool,
 ) -> Result<ExecutionReport, String> {
     if plan
         .conflicts
@@ -164,6 +229,50 @@ pub fn execute(
         .any(|c| c.kind == ConflictKind::NameCollision)
     {
         return Err("unresolved name collision; resolve it before exporting".to_string());
+    }
+
+    // Overwriting files already at the target needs the user's explicit consent
+    // from the preview; refuse here too so a stale or tampered plan can't
+    // overwrite without it (the frontend gate is not authoritative, DESIGN.md §6.2).
+    if !overwrite_confirmed
+        && plan
+            .conflicts
+            .iter()
+            .any(|c| c.kind == ConflictKind::TargetExists)
+    {
+        return Err("target already exists; confirm overwrite before exporting".to_string());
+    }
+
+    // The plan must target a `.claude/skills` directory; refuse a tampered plan
+    // that points the writes elsewhere (DESIGN.md §6.11, §8.2).
+    if !plan.target_dir.ends_with("/.claude/skills") {
+        return Err("invalid target directory in plan".to_string());
+    }
+
+    // Reject unsafe export names before anything touches the filesystem: a name
+    // with a path separator, drive prefix, or `..` could steer a write outside
+    // `.claude/skills/`. Enforced here (the single writer) so a tampered plan or
+    // a direct IPC call cannot bypass the preview's check (DESIGN.md §6.11).
+    for item in items {
+        if !is_safe_segment(&item.exported_name) {
+            return Err(format!(
+                "unsafe export name `{}`; rename it to a single name without path separators",
+                item.exported_name
+            ));
+        }
+    }
+
+    // Pre-flight: every planned write must land inside the target dir. Even a
+    // tampered plan (the whole object crosses the IPC boundary) cannot redirect
+    // a write outside `.claude/skills/`. Checked before any write so a later bad
+    // operation cannot leave earlier files on disk.
+    for op in &plan.operations {
+        if !is_within(&plan.target_dir, &op.path) {
+            return Err(format!(
+                "operation path `{}` escapes the target directory",
+                op.path
+            ));
+        }
     }
 
     let acknowledged: HashSet<&str> = acknowledged_asset_ids.iter().map(String::as_str).collect();
@@ -209,7 +318,7 @@ pub fn execute(
             .unwrap_or(false);
         if is_skill_md {
             let name = item.map(|it| it.exported_name.as_str()).unwrap_or_default();
-            std::fs::write(dest, exported_skill_md(src, name)).map_err(|e| e.to_string())?;
+            std::fs::write(dest, exported_skill_md(src, name)?).map_err(|e| e.to_string())?;
         } else {
             std::fs::copy(src, dest).map_err(|e| e.to_string())?;
         }
@@ -256,10 +365,13 @@ fn is_skill_md_rel(rel: &Path) -> bool {
 
 /// The bytes to write for a skill's SKILL.md: its `name:` normalized to the
 /// exported name. Used by both the planner (for the operation size) and execute
-/// (for the actual write), so the two agree.
-fn exported_skill_md(skill_md: &Path, exported_name: &str) -> Vec<u8> {
-    let content = std::fs::read_to_string(skill_md).unwrap_or_default();
-    rewrite_skill_name(&content, exported_name).into_bytes()
+/// (for the actual write), so the two agree. Returns an error if the source is
+/// unreadable, so execute fails loudly instead of writing an empty file
+/// (DESIGN.md §7.12); the planner treats an unreadable source as size 0.
+fn exported_skill_md(skill_md: &Path, exported_name: &str) -> Result<Vec<u8>, String> {
+    let content = std::fs::read_to_string(skill_md)
+        .map_err(|e| format!("cannot read {}: {e}", skill_md.to_string_lossy()))?;
+    Ok(rewrite_skill_name(&content, exported_name).into_bytes())
 }
 
 /// Set the frontmatter `name:` to `exported_name`, preserving everything else.
@@ -515,7 +627,7 @@ mod tests {
         let items = vec![item("a", &src, "code-review")];
 
         let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
-        let report = execute(&plan, &items, &[]).unwrap();
+        let report = execute(&plan, &items, &[], false).unwrap();
 
         // DoD-3: every planned op produced a file of exactly the planned size.
         for op in &plan.operations {
@@ -548,7 +660,7 @@ mod tests {
         let items = vec![item("a", &src, "code-review-vercel")];
 
         let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
-        execute(&plan, &items, &[]).unwrap();
+        execute(&plan, &items, &[], false).unwrap();
 
         let written =
             std::fs::read_to_string(target.join(".claude/skills/code-review-vercel/SKILL.md"))
@@ -583,7 +695,8 @@ mod tests {
 
         let plan = build_export_plan(&items, &target, &backups);
         assert!(!plan.backups.is_empty());
-        let report = execute(&plan, &items, &[]).unwrap();
+        // Overwriting the existing target requires explicit user consent.
+        let report = execute(&plan, &items, &[], true).unwrap();
 
         // The backup archive exists under the injected backups root (DoD-8)...
         let archive = report.backup_archive.expect("a backup was planned");
@@ -612,7 +725,7 @@ mod tests {
         let items = vec![item("a", &a, "dup"), item("b", &b, "dup")];
 
         let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
-        let err = execute(&plan, &items, &[]).unwrap_err();
+        let err = execute(&plan, &items, &[], false).unwrap_err();
 
         assert!(err.contains("name collision"));
         assert!(!target.join(".claude").exists(), "nothing must be written");
@@ -680,7 +793,7 @@ mod tests {
         let items = vec![item("risky", &src, "risky")];
 
         let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
-        let err = execute(&plan, &items, &[]).unwrap_err();
+        let err = execute(&plan, &items, &[], false).unwrap_err();
 
         assert!(err.contains("security risk"));
         assert!(!target.join(".claude").exists(), "nothing must be written");
@@ -700,11 +813,159 @@ mod tests {
 
         let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
         // The user accepted the risk for this specific asset.
-        let report = execute(&plan, &items, &["risky".to_string()]).unwrap();
+        let report = execute(&plan, &items, &["risky".to_string()], false).unwrap();
 
         assert_eq!(report.skills_exported, 1);
         assert!(target
             .join(".claude/skills/risky/scripts/install.sh")
             .exists());
+    }
+
+    #[test]
+    fn is_safe_segment_rejects_traversal_and_separators() {
+        assert!(is_safe_segment("code-review"));
+        assert!(is_safe_segment("code_review"));
+        assert!(!is_safe_segment(""));
+        assert!(!is_safe_segment("."));
+        assert!(!is_safe_segment(".."));
+        assert!(!is_safe_segment("a/b"));
+        assert!(!is_safe_segment("a\\b"));
+        assert!(!is_safe_segment("C:")); // drive prefix
+        assert!(!is_safe_segment("a:b"));
+    }
+
+    #[test]
+    fn is_within_blocks_escaping_paths() {
+        let base = "C:/proj/.claude/skills";
+        assert!(is_within(
+            base,
+            "C:/proj/.claude/skills/code-review/SKILL.md"
+        ));
+        assert!(is_within(base, "C:/proj/.claude/skills")); // the dir itself
+        assert!(is_within(base, "c:/PROJ/.claude/Skills/x")); // case-insensitive
+        assert!(!is_within(
+            base,
+            "C:/proj/.claude/skills/../../../Windows/x"
+        ));
+        assert!(!is_within(base, "C:/proj/.claude/other/x"));
+        assert!(!is_within(base, "D:/evil/x"));
+    }
+
+    #[test]
+    fn execute_rejects_a_path_traversal_exported_name() {
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("src/code-review");
+        write_file(&src.join("SKILL.md"), "---\nname: code-review\n---\nbody");
+        let target = tmp.path().join("target");
+        // A conflict-resolution rename that tries to climb out of .claude/skills/.
+        let items = vec![item("a", &src, "../../../evil")];
+
+        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let err = execute(&plan, &items, &[], false).unwrap_err();
+
+        assert!(err.contains("export name"), "got: {err}");
+        assert!(!tmp.path().join("evil").exists());
+        assert!(!target.join(".claude/skills/evil").exists());
+    }
+
+    #[test]
+    fn execute_rejects_an_absolute_exported_name() {
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("src/code-review");
+        write_file(&src.join("SKILL.md"), "---\nname: code-review\n---\nbody");
+        let target = tmp.path().join("target");
+        let escape = tmp.path().join("escape-abs");
+        // An absolute destination (drive/UNC/root) must be refused.
+        let abs_name = path_string(&escape);
+        let items = vec![item("a", &src, &abs_name)];
+
+        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let err = execute(&plan, &items, &[], false).unwrap_err();
+
+        assert!(err.contains("export name"), "got: {err}");
+        assert!(!escape.exists());
+    }
+
+    #[test]
+    fn execute_rejects_a_tampered_operation_path_outside_the_target() {
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("src/code-review");
+        write_file(&src.join("SKILL.md"), "---\nname: code-review\n---\nbody");
+        let target = tmp.path().join("target");
+        let items = vec![item("a", &src, "code-review")];
+
+        let mut plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        // Simulate a tampered plan crossing the IPC boundary: redirect a write
+        // outside the target dir. execute must refuse rather than trust op.path.
+        let escaped = tmp.path().join("escaped.md");
+        plan.operations[0].path = path_string(&escaped);
+        let err = execute(&plan, &items, &[], false).unwrap_err();
+
+        assert!(err.contains("escapes the target"), "got: {err}");
+        assert!(
+            !escaped.exists(),
+            "no write may land outside the target dir"
+        );
+    }
+
+    #[test]
+    fn execute_refuses_an_unconfirmed_overwrite() {
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("src/code-review");
+        write_file(&src.join("SKILL.md"), "---\nname: code-review\n---\nnew");
+        let target = tmp.path().join("target");
+        write_file(
+            &target.join(".claude/skills/code-review/SKILL.md"),
+            "old content",
+        );
+        let items = vec![item("a", &src, "code-review")];
+
+        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        // The target exists but the user has not confirmed the overwrite.
+        let err = execute(&plan, &items, &[], false).unwrap_err();
+
+        assert!(err.contains("overwrite"), "got: {err}");
+        // The existing file is left untouched.
+        assert_eq!(
+            std::fs::read_to_string(target.join(".claude/skills/code-review/SKILL.md")).unwrap(),
+            "old content",
+        );
+    }
+
+    #[test]
+    fn execute_fails_loudly_when_source_skill_md_is_unreadable() {
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("src/code-review");
+        write_file(&src.join("SKILL.md"), "---\nname: code-review\n---\nbody");
+        let target = tmp.path().join("target");
+        let items = vec![item("a", &src, "code-review")];
+
+        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        // The source SKILL.md disappears between plan and execute.
+        std::fs::remove_file(src.join("SKILL.md")).unwrap();
+        let err = execute(&plan, &items, &[], false).unwrap_err();
+
+        assert!(err.contains("cannot read"), "got: {err}");
+        // No empty SKILL.md is left behind at the target.
+        assert!(!target.join(".claude/skills/code-review/SKILL.md").exists());
+    }
+
+    #[test]
+    fn build_export_plan_flags_an_unsafe_exported_name_as_a_conflict() {
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("src/code-review");
+        write_file(&src.join("SKILL.md"), "---\nname: code-review\n---\nbody");
+        let target = tmp.path().join("target");
+        let items = vec![item("a", &src, "../evil")];
+
+        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+
+        // The preview surfaces the bad name as a blocking conflict (no silent
+        // skip) and builds no file operations for it.
+        assert!(plan
+            .conflicts
+            .iter()
+            .any(|c| c.kind == ConflictKind::InvalidName));
+        assert!(plan.operations.is_empty());
     }
 }

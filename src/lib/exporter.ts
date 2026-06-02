@@ -15,8 +15,14 @@ export function executeExport(
   plan: ExportPlan,
   items: ExportRequestItem[],
   acknowledgedAssetIds: string[],
+  overwriteConfirmed: boolean,
 ): Promise<ExecutionReport> {
-  return invoke<ExecutionReport>('execute_export', { plan, items, acknowledgedAssetIds });
+  return invoke<ExecutionReport>('execute_export', {
+    plan,
+    items,
+    acknowledgedAssetIds,
+    overwriteConfirmed,
+  });
 }
 
 // Reveal a path in the OS file manager (used for "open backup folder").

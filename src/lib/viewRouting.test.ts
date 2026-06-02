@@ -5,7 +5,6 @@ describe('resolveView', () => {
   it('forces the welcome screen when no projects are loaded', () => {
     expect(resolveView(0, 'main')).toBe('welcome');
     expect(resolveView(0, 'health-check')).toBe('welcome');
-    expect(resolveView(0, 'merge-workbench')).toBe('welcome');
   });
 
   it('honors the chosen view once a project is loaded', () => {

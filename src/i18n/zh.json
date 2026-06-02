@@ -4,7 +4,6 @@
   },
   "titleBar": {
     "workspace": "工作区",
-    "mergeWorkbench": "合并工作台",
     "healthCheck": "健康检查",
     "simple": "简洁",
     "settings": "设置",
@@ -77,6 +76,7 @@
     "affectedSkills": "{{count}} 个 Skill",
     "backupAt": "备份 → {{path}}（{{size}}）",
     "nameCollisionWarn": "请先在组合清单解决 {{count}} 个名称冲突",
+    "invalidNameWarn": "请重命名 {{count}} 个导出名不合法的 Skill",
     "confirmOverwrite": "确认覆盖目标中 {{count}} 个同名 Skill",
     "export": "导出",
     "exportWithCount": "导出 {{count}} 个 Skill",

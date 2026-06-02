@@ -13,7 +13,6 @@ import TitleBar from '../components/TitleBar';
 import SourceProjectPanel from '../components/SourceProjectPanel';
 import ComboListPanel from '../components/ComboListPanel';
 import ExportPanel from '../components/ExportPanel';
-import MergeWorkbench from '../components/MergeWorkbench';
 import HealthCheckPanel from '../components/HealthCheckPanel';
 import WelcomeScreen from '../components/WelcomeScreen';
 import { displayLabel, categoryLabelKey } from '@/lib/skillView';
@@ -271,8 +270,6 @@ export default function MainLayout() {
     showInvalid,
     settingsOpen,
     leftCollapsed,
-    mergeSkillA,
-    mergeSkillB,
     setView,
     selectSkill,
     toggleSimpleMode,
@@ -521,16 +518,6 @@ export default function MainLayout() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Merge Workbench */}
-        <div className={effectiveView === 'merge-workbench' ? 'flex-1 overflow-hidden' : 'hidden'}>
-          <MergeWorkbench
-            skillA={mergeSkillA}
-            skillB={mergeSkillB}
-            onNavigate={handleNavigate}
-            simpleMode={simpleMode}
-          />
         </div>
 
         {/* Health Check */}

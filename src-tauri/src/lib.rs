@@ -103,13 +103,16 @@ fn build_export_plan(
 /// delegates to the single writer in agentmix-core (DESIGN.md §8.2).
 /// `acknowledged_asset_ids` are the assets whose security risk the user
 /// explicitly accepted in the preview (per-skill, no bulk bypass, §6.11).
+/// `overwrite_confirmed` is the user's explicit consent to overwrite files that
+/// already exist at the target (§6.2); execute refuses an unconfirmed overwrite.
 #[tauri::command]
 fn execute_export(
     plan: ExportPlan,
     items: Vec<ExportRequestItem>,
     acknowledged_asset_ids: Vec<String>,
+    overwrite_confirmed: bool,
 ) -> Result<ExecutionReport, String> {
-    agentmix_core::exporter::execute(&plan, &items, &acknowledged_asset_ids)
+    agentmix_core::exporter::execute(&plan, &items, &acknowledged_asset_ids, overwrite_confirmed)
 }
 
 /// Reveal a path in the OS file manager (Windows Explorer); used by the
@@ -129,9 +132,10 @@ fn open_path(path: String) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default()
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init());
+    // Only the dialog plugin is exposed to the renderer. The fs plugin is
+    // deliberately NOT registered: all file I/O goes through the Rust commands
+    // (the single writer), so the webview gets no direct filesystem surface.
+    let builder = tauri::Builder::default().plugin(tauri_plugin_dialog::init());
 
     // The e2e build registers one extra test-only command; production does not.
     #[cfg(not(feature = "e2e"))]

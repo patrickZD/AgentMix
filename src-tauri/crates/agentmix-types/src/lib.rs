@@ -102,6 +102,10 @@ pub enum ConflictKind {
     NameCollision,
     /// A selected asset's exported name already exists in the target directory.
     TargetExists,
+    /// A selected asset's exported name is unsafe as a directory segment (empty,
+    /// `.`/`..`, or contains a path separator / drive prefix). It must be renamed
+    /// before export so every write stays inside `.claude/skills/` (§6.11).
+    InvalidName,
 }
 
 /// A v0.1 export conflict: assets that would collide on a name in the target

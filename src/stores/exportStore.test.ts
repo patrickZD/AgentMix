@@ -102,7 +102,7 @@ describe('exportStore.execute', () => {
 
     await useExportStore.getState().execute(items);
 
-    expect(mockExecute).toHaveBeenCalledWith(emptyPlan, items, []);
+    expect(mockExecute).toHaveBeenCalledWith(emptyPlan, items, [], false);
     const s = useExportStore.getState();
     expect(s.report).toEqual(report);
     expect(s.plan).toBeNull();
@@ -122,7 +122,19 @@ describe('exportStore.execute', () => {
     store.acknowledgeRisk('b', false); // toggled back off
     await useExportStore.getState().execute(items);
 
-    expect(mockExecute).toHaveBeenCalledWith(emptyPlan, items, ['a']);
+    expect(mockExecute).toHaveBeenCalledWith(emptyPlan, items, ['a'], false);
+  });
+
+  it('forwards the overwrite confirmation to execute', async () => {
+    mockExecute.mockResolvedValue(report);
+    useExportStore.setState({ plan: emptyPlan, overwriteConfirmed: true });
+    const items = [
+      { assetId: 'a', sourceDir: 'C:/src/a', exportedName: 'a', sourceRef: 'p:a' },
+    ];
+
+    await useExportStore.getState().execute(items);
+
+    expect(mockExecute).toHaveBeenCalledWith(emptyPlan, items, [], true);
   });
 
   it('surfaces an execution failure in executeError and keeps the plan', async () => {

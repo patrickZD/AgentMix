@@ -56,7 +56,13 @@ export type ConflictKind =
 /**  Two or more selected assets share the same exported name. */
 "nameCollision" | 
 /**  A selected asset's exported name already exists in the target directory. */
-"targetExists";
+"targetExists" | 
+/**
+ *  A selected asset's exported name is unsafe as a directory segment (empty,
+ *  `.`/`..`, or contains a path separator / drive prefix). It must be renamed
+ *  before export so every write stays inside `.claude/skills/` (§6.11).
+ */
+"invalidName";
 
 /**
  *  What execute actually did. Returned by ExportCoordinator.execute (T13) and

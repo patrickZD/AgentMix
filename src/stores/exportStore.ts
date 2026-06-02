@@ -80,11 +80,11 @@ export const useExportStore = create<ExportState>((set, get) => ({
     }),
 
   execute: async (items) => {
-    const { plan, acknowledgedRiskIds } = get();
+    const { plan, acknowledgedRiskIds, overwriteConfirmed } = get();
     if (!plan) return;
     set({ executing: true, executeError: null });
     try {
-      const report = await executeExport(plan, items, acknowledgedRiskIds);
+      const report = await executeExport(plan, items, acknowledgedRiskIds, overwriteConfirmed);
       // The plan is now spent; show the report instead.
       set({
         executing: false,

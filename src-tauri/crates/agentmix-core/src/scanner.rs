@@ -16,6 +16,11 @@ pub const MAX_SCAN_DEPTH: usize = 8;
 const SKILL_FILE: &str = "SKILL.md";
 /// Directories never descended into during a scan.
 const SKIP_DIRS: &[&str] = &[".git", "node_modules", "target"];
+/// Largest SKILL.md read into memory during a scan. A SKILL.md is markdown text
+/// with frontmatter at the top; 1 MiB is far above any legitimate file. Bounding
+/// the read keeps a hostile directory of huge files from exhausting memory; an
+/// over-cap file is classified invalid rather than parsed (DESIGN.md §6.11).
+const MAX_SKILL_MD_BYTES: u64 = 1024 * 1024;
 
 /// Scan a project directory at the default depth.
 pub fn scan_project(root: &Path) -> SourceProject {
@@ -76,7 +81,17 @@ fn is_skipped_dir(e: &DirEntry) -> bool {
 fn build_skill(skill_md: &Path, root: &Path, project_id: &str) -> Option<Skill> {
     let skill_dir = skill_md.parent()?;
     let dir_name = skill_dir.file_name()?.to_string_lossy().to_string();
-    let content = std::fs::read_to_string(skill_md).ok()?;
+    // Bound the read: an over-cap SKILL.md is not parsed (memory-DoS guard on a
+    // hostile dir); empty content makes parse_frontmatter fail -> classified
+    // invalid, which is how the UI surfaces it.
+    let oversize = std::fs::metadata(skill_md)
+        .map(|m| m.len() > MAX_SKILL_MD_BYTES)
+        .unwrap_or(false);
+    let content = if oversize {
+        String::new()
+    } else {
+        std::fs::read_to_string(skill_md).ok()?
+    };
 
     let fm = parse_frontmatter(&content);
     let category = classify(&fm, &dir_name);
@@ -223,6 +238,23 @@ mod tests {
 
         assert!(project.is_git_repo);
         assert_eq!(project.skills.len(), 1);
+    }
+
+    #[test]
+    fn oversize_skill_md_is_classified_invalid_without_parsing() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        // Valid-looking frontmatter, but the file is pushed past the scan-time
+        // read cap. It must not be fully read/parsed (memory-DoS guard on a
+        // hostile dir) and is classified invalid.
+        let mut content = String::from("---\nname: huge\ndescription: Use when huge.\n---\n");
+        content.push_str(&"x".repeat(MAX_SKILL_MD_BYTES as usize + 1));
+        write_skill(root, "huge", &content);
+
+        let project = scan_project(root);
+
+        assert_eq!(project.skills.len(), 1);
+        assert_eq!(project.skills[0].category, AssetCategory::Invalid);
     }
 
     #[test]

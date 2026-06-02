@@ -32,7 +32,6 @@ export default function TitleBar({
   const breadcrumbMap: Record<AppView, string> = {
     welcome: '',
     main: t('titleBar.workspace'),
-    'merge-workbench': t('titleBar.mergeWorkbench'),
     'health-check': t('titleBar.healthCheck'),
   };
 
@@ -63,7 +62,7 @@ export default function TitleBar({
             >
               {t('titleBar.workspace')}
             </span>
-            {(currentView === 'merge-workbench' || currentView === 'health-check') && (
+            {currentView === 'health-check' && (
               <>
                 <ChevronRightIcon size={12} />
                 <span className="text-foreground">{breadcrumbMap[currentView]}</span>
