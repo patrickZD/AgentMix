@@ -1,0 +1,174 @@
+{
+  "common": {
+    "appName": "AgentMix"
+  },
+  "titleBar": {
+    "workspace": "Workspace",
+    "healthCheck": "Health Check",
+    "simple": "Simple",
+    "settings": "Settings",
+    "about": "About AgentMix"
+  },
+  "welcome": {
+    "subtitleSimple": "Mix and export AI coding skills from your projects",
+    "subtitleFull": "Local tool for mixing Agent Skills across projects and exporting to AI coding tools",
+    "ctaSimple": "Open a Project Folder",
+    "ctaFull": "Add Source Project",
+    "hintSimple": "Choose a folder that contains AI skills",
+    "hintFull": "Open a directory containing a `.claude/skills/` or `skills/` folder",
+    "docs": "Docs",
+    "github": "GitHub",
+    "featureMixTitle": "Mix Agent Skills",
+    "featureMixDesc": "Combine skills from multiple projects into one powerful combo.",
+    "featureExportTitle": "Export Anywhere",
+    "featureExportDesc": "Send to Claude Code, Cursor, Codex CLI, OpenCode in one click.",
+    "featureMergeTitle": "Merge Conflicts",
+    "featureMergeDesc": "Use the visual Merge Workbench to resolve skill conflicts.",
+    "featureHealthTitle": "Health Checks",
+    "featureHealthDesc": "Validate frontmatter, detect stale or broken skills instantly.",
+    "importGitUrl": "Import from Git URL",
+    "newSkill": "New Skill",
+    "deferred": "v0.2"
+  },
+  "sourcePanel": {
+    "title": "Source Projects",
+    "counts": "{{projects}}p · {{skills}}s",
+    "addProject": "Add Source Project",
+    "rescan": "Re-scan",
+    "removeProject": "Remove Project",
+    "emptySimple": "No projects yet.\nClick + to add a folder.",
+    "emptyFull": "No source projects.\nClick + to open a directory.",
+    "noSkills": "No skills found",
+    "noMatch": "No skills match the filter",
+    "search": "Search skills",
+    "filterAll": "All",
+    "showInvalid": "Show invalid candidates",
+    "hideInvalid": "Hide invalid candidates"
+  },
+  "skillItem": {
+    "alreadyInCombo": "Already in Combo",
+    "addToCombo": "Add to Combo"
+  },
+  "comboPanel": {
+    "titleSimple": "My Combo",
+    "titleFull": "Combo List",
+    "conflicts_one": "{{count}} conflict",
+    "conflicts_other": "{{count}} conflicts",
+    "emptySimple": "Add skills from the left panel",
+    "emptyFull": "No skills in combo. Add from Source Projects.",
+    "moveUp": "Move Up",
+    "moveDown": "Move Down",
+    "removeFromCombo": "Remove from Combo",
+    "rename": "Rename",
+    "keepOne": "Keep one",
+    "merge": "Merge",
+    "mergeDeferred": "Merge Workbench — available in v0.1.5"
+  },
+  "exportPanel": {
+    "titleSimple": "Export To",
+    "titleFull": "Export Targets",
+    "deferred": "v0.2",
+    "selectTarget": "Select target project…",
+    "preview": "Preview (Dry-run)",
+    "previewing": "Building preview…",
+    "previewNeedsCombo": "Add skills to the combo first (hover a skill, click +)",
+    "buildFailed": "Preview failed: {{error}}",
+    "createCount": "{{count}} new",
+    "overwriteCount": "{{count}} overwrite",
+    "affectedSkills": "{{count}} skills",
+    "backupAt": "Backup → {{path}} ({{size}})",
+    "nameCollisionWarn": "Resolve {{count}} name conflict(s) in the combo first",
+    "invalidNameWarn": "Rename {{count}} skill(s) with an unsafe export name",
+    "confirmOverwrite": "Confirm overwriting {{count}} existing skill(s)",
+    "export": "Export",
+    "exportWithCount": "Export {{count}} Skills",
+    "exporting": "Exporting…",
+    "exportDone": "Exported {{skills}} skill(s) — {{created}} created, {{overwritten}} overwritten",
+    "openBackup": "Open backup folder",
+    "executeFailed": "Export failed: {{error}}",
+    "emptyComboSimple": "Add skills to your combo first",
+    "emptyComboFull": "No skills in Combo List.",
+    "noTarget": "Choose a target project first"
+  },
+  "healthPanel": {
+    "titleSimple": "Skill Health",
+    "titleFull": "Health Check",
+    "backToWorkspace": "Back to Workspace",
+    "rerun": "Re-run Health Check",
+    "okCount": "{{count}} ok",
+    "warnCount": "{{count}} warn",
+    "errCount": "{{count}} err",
+    "scanning": "Scanning skills…",
+    "noResults": "No skills to check yet. Scan a project first."
+  },
+  "mainLayout": {
+    "selectSkillSimple": "Select a skill to preview",
+    "selectSkillFull": "Select a skill to preview its content",
+    "skillPreview": "Skill Preview",
+    "healthCheck": "Health Check",
+    "expandPanel": "Expand Projects Panel",
+    "expand": "Expand",
+    "collapse": "Collapse"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "langZh": "中文",
+    "langEn": "English",
+    "simpleMode": "Simple Mode",
+    "simpleModeDesc": "Hides technical field names",
+    "showInvalid": "Show invalid candidates",
+    "showInvalidDesc": "List skills that fail validation in the source panel",
+    "footer": "AgentMix v0.1.0 — Local open-source tool.",
+    "close": "Close"
+  },
+  "badge": {
+    "conflict": "CONFLICT"
+  },
+  "category": {
+    "portable": "Portable",
+    "toolSpecific": "Tool-specific",
+    "invalid": "Invalid"
+  },
+  "health": {
+    "ok": "OK",
+    "warning": "Warning",
+    "error": "Error",
+    "noIssues": "No issues found",
+    "editDeferred": "Skill editor — available in v0.2",
+    "frontmatterInvalid": "YAML frontmatter is missing or could not be parsed",
+    "frontmatterInvalidFix": "Add a valid `---` frontmatter block with name and description",
+    "nameMissing": "name is required",
+    "nameMissingFix": "Add a name field that matches the skill directory",
+    "nameMismatch": "name does not match the skill directory",
+    "nameMismatchFix": "Rename the field or the directory so they match",
+    "nameTooLong": "name exceeds 64 characters",
+    "nameTooLongFix": "Shorten the name to 64 characters or fewer",
+    "nameFormat": "name should use lowercase letters, digits and hyphens",
+    "nameFormatFix": "Use a kebab-case name, e.g. code-review",
+    "descriptionMissing": "description is required",
+    "descriptionMissingFix": "Add a description that says when to use this skill",
+    "descriptionTooLong": "description exceeds 1024 characters",
+    "descriptionTooLongFix": "Trim the description to 1024 characters or fewer",
+    "descriptionNoTrigger": "description has no trigger phrase",
+    "descriptionNoTriggerFix": "State when to use it, e.g. 'Use when...'",
+    "scriptsNoCompatibility": "bundles scripts but declares no compatibility",
+    "scriptsNoCompatibilityFix": "Add a compatibility field describing the runtime requirements"
+  },
+  "security": {
+    "riskTitle": "{{name}} has high-risk findings",
+    "oversize": "Exceeds the 2MB per-skill cap ({{size}})",
+    "acknowledge": "I have reviewed and accept this skill's risk",
+    "unresolvedRisks": "Confirm {{count}} high-risk skill(s) individually first",
+    "rule": {
+      "network-download-execute": "Downloads and executes a remote script",
+      "sensitive-path-access": "Accesses sensitive paths or credentials",
+      "dynamic-eval": "Dynamically executes a string",
+      "reverse-shell-or-miner": "Reverse-shell / crypto-miner signature"
+    }
+  },
+  "notFound": {
+    "message": "Oops! Page not found",
+    "returnHome": "Return to Home"
+  }
+}

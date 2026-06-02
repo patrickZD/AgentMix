@@ -1,0 +1,21 @@
+[package]
+name = "agentmix-types"
+version = "0.1.0"
+edition = "2021"
+description = "Cross-end data models for AgentMix — the single source of truth for shared types"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+specta = { version = "2.0.0-rc.25", features = ["derive"] }
+# Only needed by the headless export binary; gated so the Tauri app doesn't compile them.
+specta-typescript = { version = "0.0.12", optional = true }
+specta-serde = { version = "0.0.12", optional = true }
+
+[features]
+# Enables the TypeScript bindings exporter (export-bindings bin).
+export = ["dep:specta-typescript", "dep:specta-serde", "specta/collect"]
+
+[[bin]]
+name = "export-bindings"
+path = "src/bin/export_bindings.rs"
+required-features = ["export"]

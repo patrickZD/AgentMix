@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AgentMix",
+  "version": "0.1.0",
+  "identifier": "com.agentmix.app",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "AgentMix",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "AgentMix",
+    "category": "DeveloperTool",
+    "shortDescription": "Scan, mix and export Agent Skills to AI coding tools",
+    "longDescription": "AgentMix is a local, open-source desktop tool to scan, pick and compose Agent Skills from any project and export them to AI coding tools. v0.1 Alpha targets Windows and Claude Code project-level export."
+  }
+}

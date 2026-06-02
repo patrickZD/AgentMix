@@ -1,0 +1,169 @@
+{
+  "common": {
+    "appName": "AgentMix"
+  },
+  "titleBar": {
+    "workspace": "工作区",
+    "healthCheck": "健康检查",
+    "simple": "简洁",
+    "settings": "设置",
+    "about": "关于 AgentMix"
+  },
+  "welcome": {
+    "subtitleSimple": "把项目里的 AI 编程 Skill 组合并导出",
+    "subtitleFull": "本地工具：跨项目组合 Agent Skills 并导出到 AI 编程工具",
+    "ctaSimple": "打开项目文件夹",
+    "ctaFull": "添加来源项目",
+    "hintSimple": "选择一个包含 AI Skill 的文件夹",
+    "hintFull": "打开包含 `.claude/skills/` 或 `skills/` 的目录",
+    "docs": "文档",
+    "github": "GitHub",
+    "featureMixTitle": "组合 Agent Skills",
+    "featureMixDesc": "把多个项目里的 Skill 组合成一份配置。",
+    "featureExportTitle": "随处导出",
+    "featureExportDesc": "一键发送到 Claude Code、Cursor、Codex CLI、OpenCode。",
+    "featureMergeTitle": "解决冲突",
+    "featureMergeDesc": "用可视化合并工作台解决 Skill 冲突。",
+    "featureHealthTitle": "健康检查",
+    "featureHealthDesc": "校验 frontmatter，即时发现失效或损坏的 Skill。",
+    "importGitUrl": "从 Git URL 导入",
+    "newSkill": "新建 Skill",
+    "deferred": "v0.2"
+  },
+  "sourcePanel": {
+    "title": "来源项目",
+    "addProject": "添加来源项目",
+    "rescan": "重新扫描",
+    "removeProject": "移除项目",
+    "emptySimple": "还没有项目。\n点击 + 添加文件夹。",
+    "emptyFull": "还没有来源项目。\n点击 + 打开一个目录。",
+    "noSkills": "未发现 Skill",
+    "noMatch": "没有符合筛选条件的 Skill",
+    "search": "搜索 Skill",
+    "filterAll": "全部",
+    "showInvalid": "显示无效候选",
+    "hideInvalid": "隐藏无效候选"
+  },
+  "skillItem": {
+    "alreadyInCombo": "已在组合中",
+    "addToCombo": "加入组合"
+  },
+  "comboPanel": {
+    "titleSimple": "我的组合",
+    "titleFull": "组合清单",
+    "conflicts_other": "{{count}} 个冲突",
+    "emptySimple": "从左侧面板添加 Skill",
+    "emptyFull": "组合为空，请从来源项目添加。",
+    "moveUp": "上移",
+    "moveDown": "下移",
+    "removeFromCombo": "从组合移除",
+    "rename": "重命名",
+    "keepOne": "保留一个",
+    "merge": "合并",
+    "mergeDeferred": "合并工作台 —— v0.1.5 提供"
+  },
+  "exportPanel": {
+    "titleSimple": "导出到",
+    "titleFull": "导出目标",
+    "deferred": "v0.2",
+    "selectTarget": "选择目标项目…",
+    "preview": "生成预览 (Dry-run)",
+    "previewing": "正在生成预览…",
+    "previewNeedsCombo": "请先把 Skill 加入组合（悬浮 Skill，点 +）",
+    "buildFailed": "生成预览失败：{{error}}",
+    "createCount": "新建 {{count}}",
+    "overwriteCount": "覆盖 {{count}}",
+    "affectedSkills": "{{count}} 个 Skill",
+    "backupAt": "备份 → {{path}}（{{size}}）",
+    "nameCollisionWarn": "请先在组合清单解决 {{count}} 个名称冲突",
+    "invalidNameWarn": "请重命名 {{count}} 个导出名不合法的 Skill",
+    "confirmOverwrite": "确认覆盖目标中 {{count}} 个同名 Skill",
+    "export": "导出",
+    "exportWithCount": "导出 {{count}} 个 Skill",
+    "exporting": "正在导出…",
+    "exportDone": "已导出 {{skills}} 个 Skill —— 新建 {{created}}，覆盖 {{overwritten}}",
+    "openBackup": "打开备份目录",
+    "executeFailed": "导出失败：{{error}}",
+    "emptyComboSimple": "请先把 Skill 加入组合",
+    "emptyComboFull": "组合清单为空。",
+    "noTarget": "请先选择目标项目"
+  },
+  "healthPanel": {
+    "titleSimple": "Skill 健康",
+    "titleFull": "健康检查",
+    "backToWorkspace": "返回工作区",
+    "rerun": "重新运行健康检查",
+    "okCount": "{{count}} 正常",
+    "warnCount": "{{count}} 警告",
+    "errCount": "{{count}} 错误",
+    "scanning": "正在扫描 Skill…",
+    "noResults": "还没有可检查的 Skill，请先扫描项目。"
+  },
+  "mainLayout": {
+    "selectSkillSimple": "选择一个 Skill 预览",
+    "selectSkillFull": "选择一个 Skill 预览其内容",
+    "skillPreview": "Skill 预览",
+    "healthCheck": "健康检查"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "langZh": "中文",
+    "langEn": "English",
+    "simpleMode": "简洁模式",
+    "simpleModeDesc": "隐藏技术字段名",
+    "showInvalid": "显示无效候选",
+    "showInvalidDesc": "在来源面板中列出未通过校验的 Skill",
+    "footer": "AgentMix v0.1.0 —— 本地开源工具。",
+    "close": "关闭"
+  },
+  "badge": {
+    "conflict": "冲突"
+  },
+  "category": {
+    "portable": "通用",
+    "toolSpecific": "工具专用",
+    "invalid": "无效"
+  },
+  "health": {
+    "ok": "正常",
+    "warning": "警告",
+    "error": "错误",
+    "noIssues": "未发现问题",
+    "editDeferred": "Skill 编辑器 —— v0.2 提供",
+    "frontmatterInvalid": "缺少 YAML frontmatter 或解析失败",
+    "frontmatterInvalidFix": "补一个合法的 `---` frontmatter，含 name 与 description",
+    "nameMissing": "缺少 name",
+    "nameMissingFix": "补一个与 Skill 目录一致的 name 字段",
+    "nameMismatch": "name 与 Skill 目录不一致",
+    "nameMismatchFix": "重命名字段或目录，使二者一致",
+    "nameTooLong": "name 超过 64 字符",
+    "nameTooLongFix": "把 name 缩短到 64 字符以内",
+    "nameFormat": "name 应使用小写字母、数字和连字符",
+    "nameFormatFix": "改用 kebab-case，如 code-review",
+    "descriptionMissing": "缺少 description",
+    "descriptionMissingFix": "补一个说明何时使用该 Skill 的 description",
+    "descriptionTooLong": "description 超过 1024 字符",
+    "descriptionTooLongFix": "把 description 精简到 1024 字符以内",
+    "descriptionNoTrigger": "description 缺少触发场景短语",
+    "descriptionNoTriggerFix": "写明何时使用，如“当…时使用”",
+    "scriptsNoCompatibility": "包含脚本但未声明 compatibility",
+    "scriptsNoCompatibilityFix": "补一个 compatibility 字段说明运行环境"
+  },
+  "security": {
+    "riskTitle": "{{name}} 命中高危项",
+    "oversize": "体积超过单 Skill 2MB 上限（{{size}}）",
+    "acknowledge": "我已审查并接受该 Skill 的风险",
+    "unresolvedRisks": "请先逐个确认 {{count}} 个高危 Skill",
+    "rule": {
+      "network-download-execute": "下载并执行远程脚本",
+      "sensitive-path-access": "访问敏感路径或凭据",
+      "dynamic-eval": "动态执行字符串",
+      "reverse-shell-or-miner": "反弹 shell / 挖矿特征"
+    }
+  },
+  "notFound": {
+    "message": "哎呀！页面不存在",
+    "returnHome": "返回首页"
+  }
+}
