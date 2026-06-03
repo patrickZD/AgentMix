@@ -62,9 +62,6 @@ export default function WelcomeScreen({
             >
               {t('common.appName')}
             </h1>
-            <p className="text-muted-foreground" style={{ fontSize: '13px', marginTop: 4 }}>
-              {t(simpleMode ? 'welcome.subtitleSimple' : 'welcome.subtitleFull')}
-            </p>
           </div>
         </div>
 

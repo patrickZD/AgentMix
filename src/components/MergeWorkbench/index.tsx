@@ -106,12 +106,14 @@ export default function MergeWorkbench({
               <div
                 className="px-3 py-2 border-b border-border flex-shrink-0"
                 style={{ background: 'var(--am-panel-bg)' }}
+                title={source.skill.skillDirPath}
               >
+                {/* Lead with the project — colliding sources share a name. */}
                 <p className="font-semibold text-foreground truncate" style={{ fontSize: '12px' }}>
-                  {source.exportedName}
+                  {source.project.name}
                 </p>
                 <p className="text-muted-foreground truncate" style={{ fontSize: '10.5px' }}>
-                  {source.project.name}
+                  {source.exportedName}
                 </p>
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-thin p-2 flex flex-col gap-1.5">
@@ -216,6 +218,11 @@ export default function MergeWorkbench({
                 <button
                   key={s.id}
                   onClick={() => onScriptsFrom(s.id)}
+                  // Merge sources often share a name (a cross-project name
+                  // collision), so identify the scripts owner by its source
+                  // project, not the (identical) skill name; the full path is
+                  // on hover as the unambiguous tiebreaker.
+                  title={s.skill.skillDirPath}
                   className="px-2 py-0.5 rounded-md border transition-colors"
                   style={{
                     borderColor: scriptsFromItemId === s.id ? 'var(--am-blue)' : 'var(--am-border, #E2E8F0)',
@@ -223,7 +230,7 @@ export default function MergeWorkbench({
                   }}
                   data-testid="merge-scripts-choice"
                 >
-                  {t('merge.scriptsFrom', { name: s.exportedName })}
+                  {t('merge.scriptsFrom', { project: s.project.name })}
                 </button>
               ))}
             </div>

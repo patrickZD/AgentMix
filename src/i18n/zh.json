@@ -11,8 +11,6 @@
     "updateAvailable": "有新版本"
   },
   "welcome": {
-    "subtitleSimple": "把项目里的 AI 编程 Skill 组合并导出",
-    "subtitleFull": "本地工具：跨项目组合 Agent Skills 并导出到 AI 编程工具",
     "ctaSimple": "打开项目文件夹",
     "ctaFull": "添加来源项目",
     "hintSimple": "选择一个包含 AI Skill 的文件夹",
@@ -74,7 +72,6 @@
     "titleFull": "导出目标",
     "deferred": "v0.2",
     "selectTarget": "选择目标项目…",
-    "targetHint": "目标项目 = 把 Skill 装到哪个项目供 Claude Code 使用",
     "recentTargets": "最近用过",
     "fromSourceProjects": "已导入的源项目",
     "preview": "生成预览 (Dry-run)",
@@ -193,7 +190,7 @@
     "nameUnsafe": "name 无法用作目录名",
     "scriptsTitle": "保留 scripts：",
     "scriptsNone": "不保留",
-    "scriptsFrom": "保留 {{name}} 的",
+    "scriptsFrom": "保留 {{project}} 的",
     "confirm": "合并入组合",
     "cancel": "取消"
   },

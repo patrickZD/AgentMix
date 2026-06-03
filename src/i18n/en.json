@@ -11,8 +11,6 @@
     "updateAvailable": "New version available"
   },
   "welcome": {
-    "subtitleSimple": "Mix and export AI coding skills from your projects",
-    "subtitleFull": "Local tool for mixing Agent Skills across projects and exporting to AI coding tools",
     "ctaSimple": "Open a Project Folder",
     "ctaFull": "Add Source Project",
     "hintSimple": "Choose a folder that contains AI skills",
@@ -74,7 +72,6 @@
     "titleFull": "Export Targets",
     "deferred": "v0.2",
     "selectTarget": "Select target project…",
-    "targetHint": "Target project = the project where the skills are installed for Claude Code to use",
     "recentTargets": "Recent targets",
     "fromSourceProjects": "Loaded source projects",
     "preview": "Preview (Dry-run)",
@@ -193,7 +190,7 @@
     "nameUnsafe": "name cannot be used as a folder name",
     "scriptsTitle": "Keep scripts:",
     "scriptsNone": "None",
-    "scriptsFrom": "From {{name}}",
+    "scriptsFrom": "From {{project}}",
     "confirm": "Add merged skill to Combo",
     "cancel": "Cancel"
   },

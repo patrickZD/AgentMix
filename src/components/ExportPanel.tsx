@@ -164,11 +164,6 @@ export default function ExportPanel({
                   </button>
                 </Tooltip>
 
-                {/* What "target project" means (T26). */}
-                <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>
-                  {t('exportPanel.targetHint')}
-                </p>
-
                 {/* Quick picks: recent targets, then loaded source projects. */}
                 {(recentTargetPaths.length > 0 || sourceProjects.length > 0) && (
                   <div className="mt-1.5 flex flex-col gap-0.5">
