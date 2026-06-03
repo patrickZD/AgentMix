@@ -4,7 +4,7 @@
 
 AgentMix 是本地开源桌面工具，用于从任意项目扫描、挑选、组合 Agent Skills，并导出到 Claude Code、Cursor、Codex、OpenCode 等 AI 编程工具。
 
-当前执行范围以 `docs/DESIGN.md` 的 v0.1 Alpha 为准；不得自行实现后续版本功能。本文是 `docs/DESIGN.md` 的执行摘要，更新本文时必须先与设计文档比对；若执行中发现不一致，停止并汇报，不自行折中。
+当前执行范围以 `docs/DESIGN.md` 的 v0.1.5 Beta 为准；不得自行实现 v0.2 及后续版本功能。本文是 `docs/DESIGN.md` 的执行摘要，更新本文时必须先与设计文档比对；若执行中发现不一致，停止并汇报，不自行折中。
 
 ## 2. 技术栈
 
@@ -104,8 +104,8 @@ agentmix/
 
 ## 6. 架构约束
 
-- v0.1 只做 Windows + Claude Code 项目级 `.claude/skills/` 导出。
-- v0.1 不做 AI、自动更新、多目标导出、`.agentmix.lock`、Git URL、合并工作台、Skill 编辑器、Source Tracking。
+- v0.1.5 只做 Windows + Claude Code 项目级 `.claude/skills/` 导出。
+- v0.1.5 不做 AI、多目标导出、`.agentmix.lock`、Git URL、Skill 编辑器、Source Tracking。
 - 扫描、校验、冲突、导出、备份必须基于 `Asset` 抽象；pipeline 禁止写 `Skill` 专属硬分支。
 - `Skill` 是 v0.1 唯一 provider；provider 内部可以 Skill-specific，pipeline 必须保持资产类型透明。
 - `ExportPlan` 是 Dry-run UI 和正式执行的唯一数据源。
@@ -137,7 +137,7 @@ agentmix/
 - 禁止私自新增第三方依赖。
 - 禁止为了代码风格重写稳定代码。
 - 禁止删除有效业务逻辑和关键注释。
-- 禁止实现超出 v0.1 的“顺手功能”。
+- 禁止实现超出 v0.1.5 的”顺手功能”。
 - 禁止忽略 lint、类型、构建、测试错误。
 - 禁止绕过 `ExportPlan` 或 `ExportCoordinator.execute` 直接写用户目标目录。
 - 禁止静默放宽 Skill 校验以适配某个工具。
@@ -153,7 +153,7 @@ agentmix/
 - [ ] 涉及导出时，是否验证 `ExportPlan` 预览与执行一致。
 - [ ] 涉及扫描 / 解析 / 冲突时，是否有 Rust 单测或集成测试。
 - [ ] 涉及前端状态时，是否有 Vitest 覆盖 store / 分支逻辑。
-- [ ] v0.1 e2e 是否覆盖 golden path 与冲突路径。
+- [ ] v0.1.5 e2e 是否覆盖 golden path、冲突路径与合并路径。
 - [ ] 测试是否验证业务行为，而不是只验证结构。
 - [ ] 是否无无关依赖、死代码、注释废弃代码。
 - [ ] 是否说明失败、跳过、截断或未完成项。

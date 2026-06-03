@@ -1,6 +1,6 @@
 # 贡献指南
 
-AgentMix v0.1 Alpha。改动前先读 `docs/DESIGN.md`（v0.1 范围与架构红线）与根目录 `CLAUDE.md`（编码与提交约定）。本文只补开发流程的操作细节。
+AgentMix v0.1.5 Beta。改动前先读 `docs/DESIGN.md`（范围与架构红线）与根目录 `CLAUDE.md`（编码与提交约定）。本文只补开发流程的操作细节。
 
 ## 环境
 
@@ -33,7 +33,7 @@ pnpm install
 
 - **Asset 抽象**：pipeline 不写 `Skill` 专属硬分支（`kind === 'skill'` / `as Skill` / `AssetKind::Skill`）。守护：`lint:asset-purity`。
 - **唯一写入口**：只有 `agentmix-core::exporter::execute`（`ExportCoordinator.execute`）能改用户文件。守护：`lint:no-direct-write`（Cargo 集成测试目录 `tests/` 例外）。
-- **i18n 全覆盖**：用户可见文案全部走 `t(key)`，`en.json` 为完整目录、`zh.json` 是其子集。守护：`lint:i18n` / `lint:i18n:keys`。
+- **i18n 全覆盖**：用户可见文案全部走 `t(key)`，`en.json` 与 `zh.json` keys 完全一致（全等，非子集）。守护：`lint:i18n` / `lint:i18n:keys`。
 - **预览 = 执行**：Dry-run 预览与 `execute` 消费同一个 `ExportPlan`；备份只写 `~/.agentmix/backups/<project-hash>/`，不落目标项目树。
 
 ## 跨端类型
