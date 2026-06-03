@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   FolderOpenIcon,
+  FolderDownIcon,
   PlusIcon,
   RefreshCwIcon,
   ChevronDownIcon,
@@ -28,7 +29,9 @@ interface SourceProjectPanelProps {
   onScanProject?: (projectId: string) => void;
   onAddToCombo?: (skill: Skill, project: SourceProject) => void;
   onToggleShowInvalid?: () => void;
-  simpleMode?: boolean;
+  // True while a folder is dragged over the window — highlights the panel as a
+  // drop target (the drop itself is handled at the window level in MainLayout).
+  dragging?: boolean;
 }
 
 const CATEGORY_CHIPS: ReadonlyArray<{ value: SkillFilter['category']; labelKey: string }> = [
@@ -62,11 +65,27 @@ export default function SourceProjectPanel({
   onScanProject = () => {},
   onAddToCombo = () => {},
   onToggleShowInvalid = () => {},
-  simpleMode = false,
+  dragging = false,
 }: SourceProjectPanelProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<SkillFilter>(EMPTY_FILTER);
+
+  // Persistent dashed affordance: doubles as the drag-drop hint and a click
+  // entry equivalent to the "+" button (DESIGN.md §7: drag and button parity).
+  const dropZone = (
+    <button
+      onClick={onAddProject}
+      data-testid="drop-zone"
+      className="flex flex-col items-center justify-center gap-1 w-full rounded-lg border border-dashed border-border text-muted-foreground hover:border-[var(--am-blue)] hover:text-[var(--am-blue)] transition-colors"
+      style={{ padding: '14px 8px' }}
+    >
+      <FolderDownIcon size={18} className="opacity-70" />
+      <span style={{ fontSize: '11px', textAlign: 'center', lineHeight: 1.4 }}>
+        {t('sourcePanel.dropHint')}
+      </span>
+    </button>
+  );
 
   const toggleCollapse = (id: string) => {
     setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -98,7 +117,6 @@ export default function SourceProjectPanel({
             selected={selectedSkill?.id === skill.id}
             onClick={(s) => onSelectSkill(s, project)}
             onAddToCombo={onAddToCombo}
-            simpleMode={simpleMode}
           />
         ))}
       </div>
@@ -108,9 +126,27 @@ export default function SourceProjectPanel({
   return (
     <div
       data-cmp="SourceProjectPanel"
-      className="flex flex-col h-full border-r border-border bg-card"
-      style={{ minWidth: 200 }}
+      className="relative flex flex-col h-full border-r border-border bg-card"
+      style={{
+        minWidth: 200,
+        // Drag-over highlight: an inset ring in the brand blue, no layout shift.
+        boxShadow: dragging ? 'inset 0 0 0 2px var(--am-blue)' : undefined,
+      }}
     >
+      {/* Drag-over overlay — visual only; the native drop is handled at the
+          window level, so it stays click-through (pointer-events-none). */}
+      {dragging && (
+        <div
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 pointer-events-none"
+          style={{ background: 'var(--am-blue-bg)', opacity: 0.96 }}
+          data-testid="drop-overlay"
+        >
+          <FolderDownIcon size={32} style={{ color: 'var(--am-blue)' }} />
+          <span className="font-semibold" style={{ fontSize: '13px', color: 'var(--am-blue)' }}>
+            {t('sourcePanel.dropActive')}
+          </span>
+        </div>
+      )}
       {/* Panel header */}
       <div
         className="flex items-center justify-between px-3 border-b border-border flex-shrink-0"
@@ -198,11 +234,11 @@ export default function SourceProjectPanel({
       {/* Project list */}
       <div className="flex-1 overflow-y-auto scrollbar-thin py-1">
         {projects.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-2 p-4">
-            <FolderOpenIcon size={28} className="text-muted-foreground opacity-40" />
+          <div className="flex flex-col items-center justify-center h-full gap-3 p-4">
             <p className="text-muted-foreground text-center" style={{ fontSize: '12px' }}>
-              {t(simpleMode ? 'sourcePanel.emptySimple' : 'sourcePanel.emptyFull')}
+              {t('sourcePanel.emptyFull')}
             </p>
+            {dropZone}
           </div>
         )}
 
@@ -278,6 +314,12 @@ export default function SourceProjectPanel({
           );
         })}
       </div>
+
+      {/* Compact drop affordance pinned to the panel's bottom when projects
+          already exist, so it stays reachable without scrolling. */}
+      {projects.length > 0 && (
+        <div className="flex-shrink-0 border-t border-border px-2 py-2">{dropZone}</div>
+      )}
     </div>
   );
 }

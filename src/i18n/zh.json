@@ -5,16 +5,12 @@
   "titleBar": {
     "workspace": "工作区",
     "healthCheck": "健康检查",
-    "simple": "简洁",
     "settings": "设置",
-    "about": "关于 AgentMix"
+    "about": "关于 AgentMix",
+    "updateAvailable": "有新版本"
   },
   "welcome": {
-    "subtitleSimple": "把项目里的 AI 编程 Skill 组合并导出",
-    "subtitleFull": "本地工具：跨项目组合 Agent Skills 并导出到 AI 编程工具",
-    "ctaSimple": "打开项目文件夹",
     "ctaFull": "添加来源项目",
-    "hintSimple": "选择一个包含 AI Skill 的文件夹",
     "hintFull": "打开包含 `.claude/skills/` 或 `skills/` 的目录",
     "docs": "文档",
     "github": "GitHub",
@@ -32,27 +28,28 @@
   },
   "sourcePanel": {
     "title": "来源项目",
+    "counts": "{{projects}} 项目 · {{skills}} Skill",
     "addProject": "添加来源项目",
     "rescan": "重新扫描",
     "removeProject": "移除项目",
-    "emptySimple": "还没有项目。\n点击 + 添加文件夹。",
     "emptyFull": "还没有来源项目。\n点击 + 打开一个目录。",
     "noSkills": "未发现 Skill",
     "noMatch": "没有符合筛选条件的 Skill",
     "search": "搜索 Skill",
     "filterAll": "全部",
     "showInvalid": "显示无效候选",
-    "hideInvalid": "隐藏无效候选"
+    "hideInvalid": "隐藏无效候选",
+    "dropHint": "拖拽文件夹到此，或点击 +",
+    "dropActive": "松手即导入"
   },
   "skillItem": {
     "alreadyInCombo": "已在组合中",
     "addToCombo": "加入组合"
   },
   "comboPanel": {
-    "titleSimple": "我的组合",
     "titleFull": "组合清单",
+    "conflicts_one": "{{count}} 个冲突",
     "conflicts_other": "{{count}} 个冲突",
-    "emptySimple": "从左侧面板添加 Skill",
     "emptyFull": "组合为空，请从来源项目添加。",
     "moveUp": "上移",
     "moveDown": "下移",
@@ -60,13 +57,18 @@
     "rename": "重命名",
     "keepOne": "保留一个",
     "merge": "合并",
-    "mergeDeferred": "合并工作台 —— v0.1.5 提供"
+    "mergeStart": "合并为新 Skill",
+    "mergeSelected": "合并 {{count}} 项",
+    "mergeCancel": "取消选择",
+    "mergedBadge": "已合并",
+    "mergedFrom": "由 {{names}} 合并"
   },
   "exportPanel": {
-    "titleSimple": "导出到",
     "titleFull": "导出目标",
     "deferred": "v0.2",
     "selectTarget": "选择目标项目…",
+    "recentTargets": "最近用过",
+    "fromSourceProjects": "已导入的源项目",
     "preview": "生成预览 (Dry-run)",
     "previewing": "正在生成预览…",
     "previewNeedsCombo": "请先把 Skill 加入组合（悬浮 Skill，点 +）",
@@ -84,12 +86,10 @@
     "exportDone": "已导出 {{skills}} 个 Skill —— 新建 {{created}}，覆盖 {{overwritten}}",
     "openBackup": "打开备份目录",
     "executeFailed": "导出失败：{{error}}",
-    "emptyComboSimple": "请先把 Skill 加入组合",
     "emptyComboFull": "组合清单为空。",
     "noTarget": "请先选择目标项目"
   },
   "healthPanel": {
-    "titleSimple": "Skill 健康",
     "titleFull": "健康检查",
     "backToWorkspace": "返回工作区",
     "rerun": "重新运行健康检查",
@@ -100,21 +100,28 @@
     "noResults": "还没有可检查的 Skill，请先扫描项目。"
   },
   "mainLayout": {
-    "selectSkillSimple": "选择一个 Skill 预览",
     "selectSkillFull": "选择一个 Skill 预览其内容",
     "skillPreview": "Skill 预览",
-    "healthCheck": "健康检查"
+    "healthCheck": "健康检查",
+    "expandPanel": "展开项目面板",
+    "expand": "展开",
+    "collapse": "收起"
   },
   "settings": {
     "title": "设置",
     "language": "语言",
     "langZh": "中文",
     "langEn": "English",
-    "simpleMode": "简洁模式",
-    "simpleModeDesc": "隐藏技术字段名",
     "showInvalid": "显示无效候选",
     "showInvalidDesc": "在来源面板中列出未通过校验的 Skill",
-    "footer": "AgentMix v0.1.0 —— 本地开源工具。",
+    "autoCheckUpdates": "自动检查更新",
+    "autoCheckUpdatesDesc": "启动时检查 GitHub Releases，每天至多一次",
+    "checkUpdates": "检查更新",
+    "checkingUpdates": "正在检查…",
+    "upToDate": "已是最新版本",
+    "updateFound": "可更新到 {{version}}",
+    "viewUpdate": "查看更新",
+    "footer": "AgentMix v0.1.5",
     "close": "关闭"
   },
   "badge": {
@@ -161,6 +168,31 @@
       "dynamic-eval": "动态执行字符串",
       "reverse-shell-or-miner": "反弹 shell / 挖矿特征"
     }
+  },
+  "merge": {
+    "title": "合并工作台",
+    "append": "追加到草稿",
+    "draftTitle": "合并草稿（SKILL.md）",
+    "draftPlaceholder": "在此撰写合并后的 SKILL.md，或用 → 从来源拼接段落",
+    "validating": "正在校验…",
+    "validationOk": "草稿校验通过",
+    "nameCollision": "name 与组合内现有条目冲突",
+    "nameUnsafe": "name 无法用作目录名",
+    "scriptsTitle": "保留 scripts：",
+    "scriptsNone": "不保留",
+    "scriptsFrom": "保留 {{project}} 的",
+    "confirm": "合并入组合",
+    "cancel": "取消"
+  },
+  "update": {
+    "title": "更新到 AgentMix {{version}}",
+    "notesEmpty": "该版本没有更新说明。",
+    "installNow": "立即更新",
+    "later": "稍后",
+    "skipVersion": "跳过此版本",
+    "downloading": "正在下载更新…",
+    "restartHint": "更新完成后 AgentMix 会自动重启。",
+    "installFailed": "更新失败：{{error}}"
   },
   "notFound": {
     "message": "哎呀！页面不存在",

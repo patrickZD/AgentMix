@@ -13,7 +13,6 @@ import type { AppView } from '../types';
 interface WelcomeScreenProps {
   onAddProject?: () => void;
   onNavigate?: (view: AppView) => void;
-  simpleMode?: boolean;
 }
 
 const features = [
@@ -33,7 +32,6 @@ const deferredEntries = [
 export default function WelcomeScreen({
   onAddProject = () => {},
   onNavigate = () => {},
-  simpleMode = false,
 }: WelcomeScreenProps) {
   const { t } = useTranslation();
   return (
@@ -62,9 +60,6 @@ export default function WelcomeScreen({
             >
               {t('common.appName')}
             </h1>
-            <p className="text-muted-foreground" style={{ fontSize: '13px', marginTop: 4 }}>
-              {t(simpleMode ? 'welcome.subtitleSimple' : 'welcome.subtitleFull')}
-            </p>
           </div>
         </div>
 
@@ -82,11 +77,11 @@ export default function WelcomeScreen({
             }}
           >
             <FolderPlusIcon size={16} />
-            {t(simpleMode ? 'welcome.ctaSimple' : 'welcome.ctaFull')}
+            {t('welcome.ctaFull')}
           </button>
 
           <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
-            {t(simpleMode ? 'welcome.hintSimple' : 'welcome.hintFull')}
+            {t('welcome.hintFull')}
           </p>
 
           {/* Deferred entry points (v0.2) — disabled, present for discoverability. */}
@@ -160,7 +155,7 @@ export default function WelcomeScreen({
             onClick={(e) => e.preventDefault()}
           >
             <ZapIcon size={11} />
-            v0.1.0
+            v0.1.5
           </a>
         </div>
       </div>

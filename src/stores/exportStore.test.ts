@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useExportStore } from './exportStore';
+import { RECENT_TARGET_PATHS_MAX, useExportStore } from './exportStore';
 import { buildExportPlan, executeExport } from '@/lib/exporter';
 import type { ExecutionReport, ExportPlan } from '@/types';
 
@@ -7,9 +7,28 @@ vi.mock('@/lib/exporter', () => ({ buildExportPlan: vi.fn(), executeExport: vi.f
 const mockBuild = vi.mocked(buildExportPlan);
 const mockExecute = vi.mocked(executeExport);
 
+// The recents list persists like the language choice does (localStorage);
+// vitest runs in node, so provide a minimal in-memory stand-in.
+function stubLocalStorage(): Map<string, string> {
+  const backing = new Map<string, string>();
+  globalThis.localStorage = {
+    getItem: (k: string) => backing.get(k) ?? null,
+    setItem: (k: string, v: string) => void backing.set(k, v),
+    removeItem: (k: string) => void backing.delete(k),
+    clear: () => backing.clear(),
+    key: () => null,
+    get length() {
+      return backing.size;
+    },
+  } as Storage;
+  return backing;
+}
+
 const emptyPlan: ExportPlan = {
   targetDir: 'C:/proj/.claude/skills',
-  operations: [{ kind: 'create', path: 'x', sourcePath: 'src/x', size: 1, sourceAsset: 'a' }],
+  operations: [
+    { kind: 'create', path: 'x', source: { type: 'path', path: 'src/x' }, size: 1, sourceAsset: 'a' },
+  ],
   conflicts: [],
   backups: [],
   securityReports: [],
@@ -25,11 +44,15 @@ const report: ExecutionReport = {
   backupArchive: null,
 };
 
+let stored: Map<string, string>;
+
 beforeEach(() => {
   mockBuild.mockReset();
   mockExecute.mockReset();
+  stored = stubLocalStorage();
   useExportStore.setState({
     targetPath: null,
+    recentTargetPaths: [],
     plan: null,
     building: false,
     buildError: null,
@@ -52,6 +75,42 @@ describe('exportStore.setTargetPath', () => {
   });
 });
 
+describe('exportStore recent target paths (T26)', () => {
+  it('records each chosen target at the front of the recents', () => {
+    useExportStore.getState().setTargetPath('C:/proj-a');
+    useExportStore.getState().setTargetPath('C:/proj-b');
+    expect(useExportStore.getState().recentTargetPaths).toEqual(['C:/proj-b', 'C:/proj-a']);
+  });
+
+  it('dedupes by normalized path (case + separators), moving the hit to the front', () => {
+    useExportStore.getState().setTargetPath('C:/proj-a');
+    useExportStore.getState().setTargetPath('C:/proj-b');
+    // Same directory as proj-a, spelled differently (Windows rule).
+    useExportStore.getState().setTargetPath('c:\\Proj-A');
+    expect(useExportStore.getState().recentTargetPaths).toEqual(['c:\\Proj-A', 'C:/proj-b']);
+  });
+
+  it('caps the list at RECENT_TARGET_PATHS_MAX', () => {
+    for (let i = 0; i < RECENT_TARGET_PATHS_MAX + 2; i++) {
+      useExportStore.getState().setTargetPath(`C:/proj-${i}`);
+    }
+    const recents = useExportStore.getState().recentTargetPaths;
+    expect(recents).toHaveLength(RECENT_TARGET_PATHS_MAX);
+    expect(recents[0]).toBe(`C:/proj-${RECENT_TARGET_PATHS_MAX + 1}`);
+  });
+
+  it('persists the list so it survives a restart', () => {
+    useExportStore.getState().setTargetPath('C:/proj-a');
+    expect(JSON.parse(stored.get('agentmix.recentTargetPaths') ?? '[]')).toEqual(['C:/proj-a']);
+  });
+
+  it('clearing the target records nothing', () => {
+    useExportStore.getState().setTargetPath(null);
+    expect(useExportStore.getState().recentTargetPaths).toEqual([]);
+    expect(stored.has('agentmix.recentTargetPaths')).toBe(false);
+  });
+});
+
 describe('exportStore.buildPlan', () => {
   it('does nothing without a target path', async () => {
     await useExportStore.getState().buildPlan([]);
@@ -63,7 +122,12 @@ describe('exportStore.buildPlan', () => {
     useExportStore.setState({ targetPath: 'C:/proj' });
 
     const items = [
-      { assetId: 'a', sourceDir: 'C:/src/a', exportedName: 'a', sourceRef: 'p:a' },
+      {
+        assetId: 'a',
+        source: { type: 'directory' as const, dir: 'C:/src/a' },
+        exportedName: 'a',
+        sourceRef: 'p:a',
+      },
     ];
     await useExportStore.getState().buildPlan(items);
 
@@ -97,7 +161,12 @@ describe('exportStore.execute', () => {
     mockExecute.mockResolvedValue(report);
     useExportStore.setState({ plan: emptyPlan });
     const items = [
-      { assetId: 'a', sourceDir: 'C:/src/a', exportedName: 'a', sourceRef: 'p:a' },
+      {
+        assetId: 'a',
+        source: { type: 'directory' as const, dir: 'C:/src/a' },
+        exportedName: 'a',
+        sourceRef: 'p:a',
+      },
     ];
 
     await useExportStore.getState().execute(items);
@@ -113,7 +182,12 @@ describe('exportStore.execute', () => {
     mockExecute.mockResolvedValue(report);
     useExportStore.setState({ plan: emptyPlan });
     const items = [
-      { assetId: 'a', sourceDir: 'C:/src/a', exportedName: 'a', sourceRef: 'p:a' },
+      {
+        assetId: 'a',
+        source: { type: 'directory' as const, dir: 'C:/src/a' },
+        exportedName: 'a',
+        sourceRef: 'p:a',
+      },
     ];
 
     const store = useExportStore.getState();
@@ -129,7 +203,12 @@ describe('exportStore.execute', () => {
     mockExecute.mockResolvedValue(report);
     useExportStore.setState({ plan: emptyPlan, overwriteConfirmed: true });
     const items = [
-      { assetId: 'a', sourceDir: 'C:/src/a', exportedName: 'a', sourceRef: 'p:a' },
+      {
+        assetId: 'a',
+        source: { type: 'directory' as const, dir: 'C:/src/a' },
+        exportedName: 'a',
+        sourceRef: 'p:a',
+      },
     ];
 
     await useExportStore.getState().execute(items);

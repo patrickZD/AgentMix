@@ -1,7 +1,6 @@
 import { PlusCircleIcon, CheckCircleIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
-import { displayLabel } from '@/lib/skillView';
 import Badge from './Badge';
 import type { Skill, SourceProject, ComboItem } from '../types';
 
@@ -12,7 +11,6 @@ interface SkillItemProps {
   selected?: boolean;
   onClick?: (skill: Skill) => void;
   onAddToCombo?: (skill: Skill, project: SourceProject) => void;
-  simpleMode?: boolean;
 }
 
 export default function SkillItem({
@@ -22,7 +20,6 @@ export default function SkillItem({
   selected = false,
   onClick = () => {},
   onAddToCombo = () => {},
-  simpleMode = false,
 }: SkillItemProps) {
   const { t } = useTranslation();
   if (!skill || !project) return null;
@@ -36,7 +33,7 @@ export default function SkillItem({
     if (!isInCombo) onAddToCombo(skill, project);
   };
 
-  const nameLabel = simpleMode ? displayLabel(skill.name) : skill.name;
+  const nameLabel = skill.name;
 
   return (
     <div
@@ -67,7 +64,9 @@ export default function SkillItem({
         <span
           data-testid="skill-add"
           className={`flex-shrink-0 flex items-center cursor-pointer transition-opacity ${
-            isInCombo ? 'opacity-40' : 'opacity-0 group-hover:opacity-70 hover:!opacity-100'
+            // Always visible (T26): hover-only discovery hid the main action
+            // from alpha users.
+            isInCombo ? 'opacity-40' : 'opacity-70 hover:!opacity-100'
           }`}
           onClick={handleAdd}
           style={{ color: isInCombo ? 'var(--am-green)' : 'var(--am-blue)' }}

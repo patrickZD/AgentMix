@@ -3,6 +3,7 @@ import {
   InfoIcon,
   LayersIcon,
   ChevronRightIcon,
+  DownloadIcon,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import IconButton from '@/components/ui/IconButton';
@@ -15,8 +16,10 @@ interface TitleBarProps {
   onAboutClick?: () => void;
   onNavigate?: (view: AppView) => void;
   projectCount?: number;
-  simpleMode?: boolean;
-  onSimpleModeToggle?: () => void;
+  // Update badge (T21): shown only while a non-skipped newer release exists;
+  // clicking it opens the update modal.
+  updateAvailable?: boolean;
+  onUpdateClick?: () => void;
 }
 
 export default function TitleBar({
@@ -25,8 +28,8 @@ export default function TitleBar({
   onAboutClick = () => {},
   onNavigate = () => {},
   projectCount = 0,
-  simpleMode = false,
-  onSimpleModeToggle = () => {},
+  updateAvailable = false,
+  onUpdateClick = () => {},
 }: TitleBarProps) {
   const { t } = useTranslation();
   const breadcrumbMap: Record<AppView, string> = {
@@ -74,18 +77,21 @@ export default function TitleBar({
 
       {/* Right: actions */}
       <div className="flex items-center gap-0.5">
-        {/* Simple mode toggle */}
-        <button
-          onClick={onSimpleModeToggle}
-          className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-            simpleMode
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-          }`}
-          style={{ fontSize: '11px' }}
-        >
-          {t('titleBar.simple')}
-        </button>
+        {updateAvailable && (
+          <Tooltip title={t('titleBar.updateAvailable')} placement="bottom">
+            <IconButton
+              onClick={onUpdateClick}
+              className="h-[28px] w-[28px] relative"
+              data-testid="update-badge"
+            >
+              <DownloadIcon size={14} />
+              <span
+                className="absolute rounded-full"
+                style={{ top: 4, right: 4, width: 6, height: 6, background: '#EF4444' }}
+              />
+            </IconButton>
+          </Tooltip>
+        )}
 
         <Tooltip title={t('titleBar.settings')} placement="bottom">
           <IconButton onClick={onSettingsClick} className="h-[28px] w-[28px]">

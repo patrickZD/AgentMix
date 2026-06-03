@@ -1,6 +1,29 @@
 import { create } from 'zustand';
 import type { ExecutionReport, ExportPlan, ExportRequestItem } from '@/types';
 import { buildExportPlan, executeExport } from '@/lib/exporter';
+import { normalizePath } from '@/lib/path';
+
+// Recently used target paths (T26): a quick-pick list in the export panel,
+// persisted across launches, deduped by the normalized-path rule (Windows:
+// case-insensitive, both separators).
+export const RECENT_TARGET_PATHS_MAX = 5;
+const RECENT_TARGETS_KEY = 'agentmix.recentTargetPaths';
+
+function readRecentTargets(): string[] {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(RECENT_TARGETS_KEY) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((p): p is string => typeof p === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRecentTargets(paths: string[]): void {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(RECENT_TARGETS_KEY, JSON.stringify(paths));
+  }
+}
 
 // The export target, the built Dry-run plan, and the execution report. v0.1
 // ships a single target (Claude Code project-level), so the target is a chosen
@@ -9,6 +32,8 @@ import { buildExportPlan, executeExport } from '@/lib/exporter';
 // execute writes the files and returns the report.
 interface ExportState {
   targetPath: string | null;
+  // Most-recent-first quick-pick targets (persisted, T26).
+  recentTargetPaths: string[];
   plan: ExportPlan | null;
   building: boolean;
   buildError: string | null;
@@ -31,6 +56,7 @@ interface ExportState {
 
 export const useExportStore = create<ExportState>((set, get) => ({
   targetPath: null,
+  recentTargetPaths: readRecentTargets(),
   plan: null,
   building: false,
   buildError: null,
@@ -40,16 +66,30 @@ export const useExportStore = create<ExportState>((set, get) => ({
   executeError: null,
   report: null,
 
-  // Changing the target invalidates any existing preview / report.
+  // Changing the target invalidates any existing preview / report. A chosen
+  // path also moves to the front of the persisted recents (T26).
   setTargetPath: (targetPath) =>
-    set({
-      targetPath,
-      plan: null,
-      overwriteConfirmed: false,
-      acknowledgedRiskIds: [],
-      buildError: null,
-      report: null,
-      executeError: null,
+    set((state) => {
+      let recentTargetPaths = state.recentTargetPaths;
+      if (targetPath) {
+        recentTargetPaths = [
+          targetPath,
+          ...state.recentTargetPaths.filter(
+            (p) => normalizePath(p) !== normalizePath(targetPath),
+          ),
+        ].slice(0, RECENT_TARGET_PATHS_MAX);
+        writeRecentTargets(recentTargetPaths);
+      }
+      return {
+        targetPath,
+        recentTargetPaths,
+        plan: null,
+        overwriteConfirmed: false,
+        acknowledgedRiskIds: [],
+        buildError: null,
+        report: null,
+        executeError: null,
+      };
     }),
 
   buildPlan: async (items) => {

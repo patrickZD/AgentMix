@@ -132,18 +132,30 @@ pub enum FileOperationKind {
     Overwrite,
 }
 
-/// One planned file write (DESIGN.md §8.2 FileOperation). Carries the source
-/// file path so execute copies exactly what the plan listed — preview and
-/// execution can't diverge (DoD-3). `sourcePath` extends the design model,
-/// which named only the asset; the path is needed for plan-driven execution.
+/// Where a planned write's bytes come from (T23). `Path` copies a source
+/// file; `Content` writes the provided string verbatim (a manually merged
+/// asset's primary file is backed by its draft, not by a source file).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub enum FileSource {
+    #[serde(rename_all = "camelCase")]
+    Path { path: String },
+    #[serde(rename_all = "camelCase")]
+    Content { content: String },
+}
+
+/// One planned file write (DESIGN.md §8.2 FileOperation). Carries the byte
+/// source so execute writes exactly what the plan listed — preview and
+/// execution can't diverge (DoD-3). `source` extends the design model, which
+/// named only the asset; the source is needed for plan-driven execution.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FileOperation {
     pub kind: FileOperationKind,
     /// Absolute destination path.
     pub path: String,
-    /// Absolute source file path to copy from.
-    pub source_path: String,
+    /// Where the written bytes come from (file copy or inline content).
+    pub source: FileSource,
     /// Bytes that will be written. Equals the source size for verbatim files;
     /// for the skill's SKILL.md it is the size after the `name:` rewrite.
     /// Exported to TS as `number` (byte counts stay in JS's safe-integer range).
@@ -186,15 +198,32 @@ pub struct ManagedManifest {
     pub managed_assets: Vec<ManagedAsset>,
 }
 
-/// One selected asset to export: the source directory to copy and the name it
-/// will be written as. Asset-kind-agnostic — the planner copies directories and
-/// never inspects a concrete asset type.
+/// Where an export item's files come from (T23). `Directory` copies a scanned
+/// asset's whole directory. `Content` is a content-backed asset (a manual
+/// merge, DESIGN.md §6.3): the primary file is written from the draft string,
+/// and `scripts_from_dir` optionally names ONE source asset directory whose
+/// `scripts/` subtree is kept (the user's single-choice in the workbench).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub enum ExportItemSource {
+    #[serde(rename_all = "camelCase")]
+    Directory { dir: String },
+    #[serde(rename_all = "camelCase")]
+    Content {
+        content: String,
+        scripts_from_dir: Option<String>,
+    },
+}
+
+/// One selected asset to export: where its files come from and the name it
+/// will be written as. Asset-kind-agnostic — the planner copies directories or
+/// writes provided content and never inspects a concrete asset type.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ExportRequestItem {
     pub asset_id: String,
-    /// Absolute path of the asset's source directory (a Skill's skillDirPath).
-    pub source_dir: String,
+    /// The item's file source (a Skill's skillDirPath, or a merge draft).
+    pub source: ExportItemSource,
     pub exported_name: String,
     /// Source reference recorded in the manifest (e.g. sourceProjectId:relPath).
     pub source_ref: String,
@@ -295,6 +324,52 @@ pub struct SkillSecurityReport {
     /// True when there is any high-risk finding or the skill is oversize; the
     /// user must confirm this skill before it may be imported/exported.
     pub requires_confirmation: bool,
+}
+
+/// Live validation result for a merge-workbench draft (DESIGN.md §6.3, T24).
+/// Reuses the parser/health single source of truth — the frontend renders
+/// these and never re-implements the rules. `can_confirm` is the confirm-gate:
+/// false on any blocking problem (error-level issue, name collision with the
+/// composition, or a name unusable as the exported directory segment).
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct MergeDraftValidation {
+    pub health_status: HealthStatus,
+    /// Findings with i18n-key messages, same shape the health report uses.
+    pub issues: Vec<HealthIssue>,
+    /// The draft's name clashes (case-insensitively) with a composition name.
+    pub name_collision: bool,
+    /// The draft's name cannot be a single safe directory segment (empty,
+    /// over the 64-char cap, traversal, or path separators).
+    pub name_unsafe: bool,
+    /// Frontmatter `name` — the merged asset's exported name once confirmed.
+    pub parsed_name: Option<String>,
+    pub can_confirm: bool,
+}
+
+/// Result of an update check against GitHub Releases (DESIGN.md §6.16).
+/// `available == false` covers both "already up to date" and the silent
+/// network-failure path (fail quiet, retry next launch).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateCheckResult {
+    pub available: bool,
+    /// Latest release version, e.g. "0.1.5"; set only when `available`.
+    pub version: Option<String>,
+    /// Release notes (GitHub release body) for the update modal.
+    pub notes: Option<String>,
+}
+
+/// Payload of the `update-download-progress` event emitted while
+/// `install_update` downloads the new package.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateDownloadProgress {
+    #[specta(type = u32)]
+    pub downloaded_bytes: u64,
+    /// Total size if the server reported a Content-Length.
+    #[specta(type = Option<u32>)]
+    pub total_bytes: Option<u64>,
 }
 
 /// A source project (folder) that was scanned for assets.

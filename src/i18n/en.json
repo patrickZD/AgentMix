@@ -5,16 +5,12 @@
   "titleBar": {
     "workspace": "Workspace",
     "healthCheck": "Health Check",
-    "simple": "Simple",
     "settings": "Settings",
-    "about": "About AgentMix"
+    "about": "About AgentMix",
+    "updateAvailable": "New version available"
   },
   "welcome": {
-    "subtitleSimple": "Mix and export AI coding skills from your projects",
-    "subtitleFull": "Local tool for mixing Agent Skills across projects and exporting to AI coding tools",
-    "ctaSimple": "Open a Project Folder",
     "ctaFull": "Add Source Project",
-    "hintSimple": "Choose a folder that contains AI skills",
     "hintFull": "Open a directory containing a `.claude/skills/` or `skills/` folder",
     "docs": "Docs",
     "github": "GitHub",
@@ -36,25 +32,24 @@
     "addProject": "Add Source Project",
     "rescan": "Re-scan",
     "removeProject": "Remove Project",
-    "emptySimple": "No projects yet.\nClick + to add a folder.",
     "emptyFull": "No source projects.\nClick + to open a directory.",
     "noSkills": "No skills found",
     "noMatch": "No skills match the filter",
     "search": "Search skills",
     "filterAll": "All",
     "showInvalid": "Show invalid candidates",
-    "hideInvalid": "Hide invalid candidates"
+    "hideInvalid": "Hide invalid candidates",
+    "dropHint": "Drag a folder here, or click +",
+    "dropActive": "Drop to import"
   },
   "skillItem": {
     "alreadyInCombo": "Already in Combo",
     "addToCombo": "Add to Combo"
   },
   "comboPanel": {
-    "titleSimple": "My Combo",
     "titleFull": "Combo List",
     "conflicts_one": "{{count}} conflict",
     "conflicts_other": "{{count}} conflicts",
-    "emptySimple": "Add skills from the left panel",
     "emptyFull": "No skills in combo. Add from Source Projects.",
     "moveUp": "Move Up",
     "moveDown": "Move Down",
@@ -62,13 +57,18 @@
     "rename": "Rename",
     "keepOne": "Keep one",
     "merge": "Merge",
-    "mergeDeferred": "Merge Workbench — available in v0.1.5"
+    "mergeStart": "Merge as new Skill",
+    "mergeSelected": "Merge {{count}}",
+    "mergeCancel": "Cancel selection",
+    "mergedBadge": "merged",
+    "mergedFrom": "merged from {{names}}"
   },
   "exportPanel": {
-    "titleSimple": "Export To",
     "titleFull": "Export Targets",
     "deferred": "v0.2",
     "selectTarget": "Select target project…",
+    "recentTargets": "Recent targets",
+    "fromSourceProjects": "Loaded source projects",
     "preview": "Preview (Dry-run)",
     "previewing": "Building preview…",
     "previewNeedsCombo": "Add skills to the combo first (hover a skill, click +)",
@@ -86,12 +86,10 @@
     "exportDone": "Exported {{skills}} skill(s) — {{created}} created, {{overwritten}} overwritten",
     "openBackup": "Open backup folder",
     "executeFailed": "Export failed: {{error}}",
-    "emptyComboSimple": "Add skills to your combo first",
     "emptyComboFull": "No skills in Combo List.",
     "noTarget": "Choose a target project first"
   },
   "healthPanel": {
-    "titleSimple": "Skill Health",
     "titleFull": "Health Check",
     "backToWorkspace": "Back to Workspace",
     "rerun": "Re-run Health Check",
@@ -102,7 +100,6 @@
     "noResults": "No skills to check yet. Scan a project first."
   },
   "mainLayout": {
-    "selectSkillSimple": "Select a skill to preview",
     "selectSkillFull": "Select a skill to preview its content",
     "skillPreview": "Skill Preview",
     "healthCheck": "Health Check",
@@ -115,11 +112,16 @@
     "language": "Language",
     "langZh": "中文",
     "langEn": "English",
-    "simpleMode": "Simple Mode",
-    "simpleModeDesc": "Hides technical field names",
     "showInvalid": "Show invalid candidates",
     "showInvalidDesc": "List skills that fail validation in the source panel",
-    "footer": "AgentMix v0.1.0 — Local open-source tool.",
+    "autoCheckUpdates": "Check for updates automatically",
+    "autoCheckUpdatesDesc": "Checks GitHub Releases at launch, at most once a day",
+    "checkUpdates": "Check for updates",
+    "checkingUpdates": "Checking…",
+    "upToDate": "You're on the latest version",
+    "updateFound": "Version {{version}} is available",
+    "viewUpdate": "View update",
+    "footer": "AgentMix v0.1.5",
     "close": "Close"
   },
   "badge": {
@@ -166,6 +168,31 @@
       "dynamic-eval": "Dynamically executes a string",
       "reverse-shell-or-miner": "Reverse-shell / crypto-miner signature"
     }
+  },
+  "merge": {
+    "title": "Merge Workbench",
+    "append": "Append to draft",
+    "draftTitle": "Merged draft (SKILL.md)",
+    "draftPlaceholder": "Write the merged SKILL.md here, or splice paragraphs from the sources with →",
+    "validating": "Validating…",
+    "validationOk": "Draft is valid",
+    "nameCollision": "name conflicts with an existing item in the combo",
+    "nameUnsafe": "name cannot be used as a folder name",
+    "scriptsTitle": "Keep scripts:",
+    "scriptsNone": "None",
+    "scriptsFrom": "From {{project}}",
+    "confirm": "Add merged skill to Combo",
+    "cancel": "Cancel"
+  },
+  "update": {
+    "title": "Update to AgentMix {{version}}",
+    "notesEmpty": "No release notes for this version.",
+    "installNow": "Update now",
+    "later": "Later",
+    "skipVersion": "Skip this version",
+    "downloading": "Downloading update…",
+    "restartHint": "AgentMix will restart automatically to finish the update.",
+    "installFailed": "Update failed: {{error}}"
   },
   "notFound": {
     "message": "Oops! Page not found",

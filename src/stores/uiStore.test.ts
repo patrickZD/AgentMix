@@ -5,7 +5,6 @@ import { makeSkill, makeProject } from '@/test/fixtures';
 beforeEach(() =>
   useUiStore.setState({
     view: 'main',
-    simpleMode: false,
     showInvalid: false,
     leftCollapsed: false,
     selectedSkill: null,
@@ -17,12 +16,6 @@ describe('uiStore', () => {
   it('setView changes the active view', () => {
     useUiStore.getState().setView('health-check');
     expect(useUiStore.getState().view).toBe('health-check');
-  });
-
-  it('toggleSimpleMode flips simpleMode', () => {
-    expect(useUiStore.getState().simpleMode).toBe(false);
-    useUiStore.getState().toggleSimpleMode();
-    expect(useUiStore.getState().simpleMode).toBe(true);
   });
 
   it('toggleShowInvalid flips showInvalid', () => {

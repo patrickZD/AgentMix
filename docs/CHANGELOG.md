@@ -2,6 +2,49 @@
 
 本文件记录 AgentMix 的版本变更。格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.1.5] — Beta 过渡 — 2026-06-03
+
+alpha → beta 过渡，让产品进入长期使用可接受的状态。范围与边界以 `docs/DESIGN.md` 为准。
+
+### 新增
+
+- 自动更新：启动时检查 GitHub Releases（每天至多一次，结果缓存 24 小时；无网络时静默跳过，下次启动重试）。有新版本时标题栏出现红点，点开弹窗显示更新说明与三个选项——立即更新 / 稍后 / 跳过此版本；设置面板新增「自动检查更新」开关（默认开），可随时手动检查。更新包经签名校验后才安装，校验失败即终止。
+- 手动合并工作台：把多个 Skill 合并成一个新 Skill。多列并排显示各来源 `SKILL.md`，可逐段拼接到草稿或直接手写；底部实时校验 name / description / YAML（复用扫描时的同一套规则），有错时「合并入组合」按钮禁用；可单选保留某一来源的 `scripts/`。两个入口：冲突条目上的「合并」按钮，以及组合清单的「合并为新 Skill」（选 ≥2 个，不限是否同名）。合并产物经预览 → 确认 → 导出落盘，导出的 `SKILL.md` 与草稿逐字节一致。
+- 离线可用：Inter 字体改为本地打包（去掉 Google Fonts CDN），断网冷启动字体正常。
+- 导出目标选择器新增快捷项：最近用过的目标路径（持久化、去重）与已导入的源项目，一键设为目标。
+- 工作区左侧来源面板支持拖拽导入：常驻投放区（点击等同「+」），拖文件夹进窗口时面板高亮提示。
+- 加入组合的「+」按钮常显（不再仅 hover 出现）。
+
+### 变更
+
+- `zh.json` 与 `en.json` 的文案 key 完全一致，CI 强制校验（任一方缺 key 即失败）。
+- 收紧 webview 的内容安全策略 (Content Security Policy, CSP)：从不限制改为最小放行（同源 + IPC + 内联样式 + data 图片）。
+- 移除「简洁模式」：界面统一显示完整字段，去掉冗余的双模式切换。
+- 应用图标改为透明背景设计。
+- 发布改由 GitHub Actions 流水线产出：tag 触发，构建签名安装包并生成更新清单 `latest.json`，作为 draft 发布供人工核验。
+
+### 已知限制 / 不在 v0.1.5
+
+- 仍仅 Windows x64、仅 Claude Code 项目级导出。
+- 0.1.0 用户无自动更新能力，需手动下载 0.1.5 安装一次；0.1.5 起自动更新生效。
+- 合并工作台的 `scripts/` 保留为来源级单选（不逐文件挑选）；草稿区为纯文本，Markdown 实时预览随 v0.2 的 Skill 编辑器一起做。
+- 多目标导出、AI 辅助、来源更新检测、Skill 编辑器等仍在后续版本。
+
+### 测试
+
+- `pnpm check:all` 全绿（type-check、ESLint、4 个 lint 守卫含收紧后的 `lint:i18n:keys` 全等校验、Vitest、cargo fmt / clippy、cargo test 含合并路径的 headless e2e）。
+- WebDriver UI e2e（`pnpm test:e2e`）在收紧 CSP 后重跑通过。
+- 自动更新流、合并 golden path、断网冷启动均人工实测通过。
+
+### 安装包与校验
+
+> 由 GitHub Actions 流水线签名构建于 windows-latest。SHA-256 校验值由 CI 资产回填。
+
+| 文件 | 大小 | SHA-256 |
+|---|---|---|
+| `AgentMix_0.1.5_x64_en-US.msi` | 4.98 MB | `9220bc70bc51e2259ca2b419e2c5fdf1047c2519cf5b0db6601d0a5b0e5fc225` |
+| `AgentMix_0.1.5_x64-setup.exe` | 3.51 MB | `3a4dcff2fc20ce6551be0c882b2cde1802b8807cc7057b726d30ebba9e9c57e4` |
+
 ## [0.1.0] — Alpha — 2026-06-02
 
 首个 alpha。范围与边界以 `docs/DESIGN.md` 为准。
@@ -33,7 +76,7 @@
 ### 测试
 
 - 发布构建前 `pnpm check:all` 全绿（type-check、ESLint、4 个 lint 守卫、Vitest 50、cargo fmt / clippy、cargo test 66 单测 + 2 条 headless e2e）。
-- WebDriver UI e2e（`pnpm test:e2e`）在安全加固前的构建上通过；加固后未重跑（用例不涉及被移除的合并工作台）。UI e2e 需真实显示 + tauri-driver/msedgedriver，作独立手动 gate，不进 `check:all`（见 `e2e/README.md`）。
+- WebDriver UI e2e（`pnpm test:e2e`）在安全加固后的代码上重跑通过（2026-06-02，golden-path + conflict-path 2 spec 全过，Edge/WebView2 148.0.3967.96，tauri-driver 2.0.6）。UI e2e 需真实显示 + tauri-driver/msedgedriver，作独立手动 gate，不进 `check:all`（见 `e2e/README.md`）。
 
 ### 安装包与校验
 
@@ -52,7 +95,7 @@
 | 指标 | 目标 | 实测 | 结论 |
 |---|---|---|---|
 | 扫描 1000 个 SKILL.md（DoD-5） | < 5s | **0.105s** | 达标。`pnpm perf`（`agentmix-core` 的 `perf_scan` 基准，Release） |
-| 冷启动到欢迎屏可交互（DoD-6） | < 2s | 待手动实测 | GUI 指标，无法 headless 测量；需在 Release 安装包上人工计时 |
-| Golden path 全流程（DoD-1） | < 60s | 待手动实测 | 人机流程指标；需人工走完 扫描 → 组合 → 预览 → 导出 并计时 |
+| 冷启动到欢迎屏可交互（DoD-6） | < 2s | **< 0.5s** | 达标。Release 构建人工计时（2026-06-03，Windows 11） |
+| Golden path 全流程（DoD-1） | < 60s | **29s** | 达标。人工走完 扫描 → 组合（3 个 Skill）→ 预览 → 导出 并计时（2026-06-03，Windows 11） |
 
-> DoD-6 / DoD-1 依赖真实窗口与人工操作，无法在无头环境测量。T18 产出 Release 安装包后人工核验并回填实测值；在此之前不以推测值充数。
+> DoD-6 / DoD-1 依赖真实窗口与人工操作，无法在无头环境测量；上表为 Release 构建上的人工实测值。

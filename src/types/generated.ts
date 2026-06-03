@@ -93,6 +93,15 @@ export type ExportConflict = {
 };
 
 /**
+ *  Where an export item's files come from (T23). `Directory` copies a scanned
+ *  asset's whole directory. `Content` is a content-backed asset (a manual
+ *  merge, DESIGN.md §6.3): the primary file is written from the draft string,
+ *  and `scripts_from_dir` optionally names ONE source asset directory whose
+ *  `scripts/` subtree is kept (the user's single-choice in the workbench).
+ */
+export type ExportItemSource = { type: "directory"; dir: string } | { type: "content"; content: string; scriptsFromDir: string | null };
+
+/**
  *  The single object the Dry-run preview renders and execute consumes
  *  (DESIGN.md §8.2). v0.1 targets one directory (Claude Code project-level), so
  *  the multi-target / runtime-warning fields are omitted until v0.2.
@@ -116,31 +125,31 @@ export type ExportPlan = {
 };
 
 /**
- *  One selected asset to export: the source directory to copy and the name it
- *  will be written as. Asset-kind-agnostic — the planner copies directories and
- *  never inspects a concrete asset type.
+ *  One selected asset to export: where its files come from and the name it
+ *  will be written as. Asset-kind-agnostic — the planner copies directories or
+ *  writes provided content and never inspects a concrete asset type.
  */
 export type ExportRequestItem = {
 	assetId: string,
-	/**  Absolute path of the asset's source directory (a Skill's skillDirPath). */
-	sourceDir: string,
+	/**  The item's file source (a Skill's skillDirPath, or a merge draft). */
+	source: ExportItemSource,
 	exportedName: string,
 	/**  Source reference recorded in the manifest (e.g. sourceProjectId:relPath). */
 	sourceRef: string,
 };
 
 /**
- *  One planned file write (DESIGN.md §8.2 FileOperation). Carries the source
- *  file path so execute copies exactly what the plan listed — preview and
- *  execution can't diverge (DoD-3). `sourcePath` extends the design model,
- *  which named only the asset; the path is needed for plan-driven execution.
+ *  One planned file write (DESIGN.md §8.2 FileOperation). Carries the byte
+ *  source so execute writes exactly what the plan listed — preview and
+ *  execution can't diverge (DoD-3). `source` extends the design model, which
+ *  named only the asset; the source is needed for plan-driven execution.
  */
 export type FileOperation = {
 	kind: FileOperationKind,
 	/**  Absolute destination path. */
 	path: string,
-	/**  Absolute source file path to copy from. */
-	sourcePath: string,
+	/**  Where the written bytes come from (file copy or inline content). */
+	source: FileSource,
 	/**
 	 *  Bytes that will be written. Equals the source size for verbatim files;
 	 *  for the skill's SKILL.md it is the size after the `name:` rewrite.
@@ -157,6 +166,13 @@ export type FileOperation = {
  *  later reconciliation concern and is not modelled yet).
  */
 export type FileOperationKind = "create" | "overwrite";
+
+/**
+ *  Where a planned write's bytes come from (T23). `Path` copies a source
+ *  file; `Content` writes the provided string verbatim (a manually merged
+ *  asset's primary file is backed by its draft, not by a source file).
+ */
+export type FileSource = { type: "path"; path: string } | { type: "content"; content: string };
 
 /**  A single deterministic health finding (no AI involved). */
 export type HealthIssue = {
@@ -187,6 +203,29 @@ export type ManagedManifest = {
 	/**  e.g. <target>/.claude/skills/.agentmix-manifest.json. */
 	manifestPath: string,
 	managedAssets: ManagedAsset[],
+};
+
+/**
+ *  Live validation result for a merge-workbench draft (DESIGN.md §6.3, T24).
+ *  Reuses the parser/health single source of truth — the frontend renders
+ *  these and never re-implements the rules. `can_confirm` is the confirm-gate:
+ *  false on any blocking problem (error-level issue, name collision with the
+ *  composition, or a name unusable as the exported directory segment).
+ */
+export type MergeDraftValidation = {
+	healthStatus: HealthStatus,
+	/**  Findings with i18n-key messages, same shape the health report uses. */
+	issues: HealthIssue[],
+	/**  The draft's name clashes (case-insensitively) with a composition name. */
+	nameCollision: boolean,
+	/**
+	 *  The draft's name cannot be a single safe directory segment (empty,
+	 *  over the 64-char cap, traversal, or path separators).
+	 */
+	nameUnsafe: boolean,
+	/**  Frontmatter `name` — the merged asset's exported name once confirmed. */
+	parsedName: string | null,
+	canConfirm: boolean,
 };
 
 /**
@@ -275,4 +314,27 @@ export type SourceProject = {
 	/**  Timestamp (Unix epoch milliseconds, as a string) of the most recent update check, if any. */
 	lastCheckedAt: string | null,
 	skills: Skill[],
+};
+
+/**
+ *  Result of an update check against GitHub Releases (DESIGN.md §6.16).
+ *  `available == false` covers both "already up to date" and the silent
+ *  network-failure path (fail quiet, retry next launch).
+ */
+export type UpdateCheckResult = {
+	available: boolean,
+	/**  Latest release version, e.g. "0.1.5"; set only when `available`. */
+	version: string | null,
+	/**  Release notes (GitHub release body) for the update modal. */
+	notes: string | null,
+};
+
+/**
+ *  Payload of the `update-download-progress` event emitted while
+ *  `install_update` downloads the new package.
+ */
+export type UpdateDownloadProgress = {
+	downloadedBytes: number,
+	/**  Total size if the server reported a Content-Length. */
+	totalBytes: number | null,
 };

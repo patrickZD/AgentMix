@@ -13,7 +13,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import { exportGate } from '@/lib/exportGate';
-import type { ComboItem, ExecutionReport, ExportPlan } from '../types';
+import type {
+  ComboItem,
+  ExecutionReport,
+  ExportPlan,
+  MergedComboItem,
+  SourceProject,
+} from '../types';
 
 // v0.1 ships a single export target. The other tools are shown but deferred.
 const TARGET_TOOLS: ReadonlyArray<{ label: string; level: string; color: string; active: boolean }> = [
@@ -25,8 +31,13 @@ const TARGET_TOOLS: ReadonlyArray<{ label: string; level: string; color: string;
 
 interface ExportPanelProps {
   comboItems?: ComboItem[];
+  mergedItems?: MergedComboItem[];
   plan?: ExportPlan | null;
   targetPath?: string | null;
+  // Quick-pick targets (T26): persisted recents + the loaded source projects.
+  recentTargetPaths?: string[];
+  sourceProjects?: SourceProject[];
+  onSelectTarget?: (path: string) => void;
   building?: boolean;
   buildError?: string | null;
   overwriteConfirmed?: boolean;
@@ -40,7 +51,6 @@ interface ExportPanelProps {
   onAcknowledgeRisk?: (assetId: string, accepted: boolean) => void;
   onExport?: () => void;
   onOpenBackup?: () => void;
-  simpleMode?: boolean;
 }
 
 function formatBytes(n: number): string {
@@ -51,8 +61,12 @@ function formatBytes(n: number): string {
 
 export default function ExportPanel({
   comboItems = [],
+  mergedItems = [],
   plan = null,
   targetPath = null,
+  recentTargetPaths = [],
+  sourceProjects = [],
+  onSelectTarget = () => {},
   building = false,
   buildError = null,
   overwriteConfirmed = false,
@@ -66,15 +80,18 @@ export default function ExportPanel({
   onAcknowledgeRisk = () => {},
   onExport = () => {},
   onOpenBackup = () => {},
-  simpleMode = false,
 }: ExportPanelProps) {
   const { t } = useTranslation();
 
-  const canPreview = !!targetPath && comboItems.length > 0 && !building;
+  // Merged entries export alongside the regular items (T25).
+  const itemCount = comboItems.length + mergedItems.length;
+  const canPreview = !!targetPath && itemCount > 0 && !building;
   const gate = exportGate(plan, overwriteConfirmed, acknowledgedRiskIds);
   // Resolve an asset id to the name it exports as, for risk-card headings.
   const skillName = (assetId: string) =>
-    comboItems.find((c) => c.skill.id === assetId)?.exportedName ?? assetId;
+    comboItems.find((c) => c.skill.id === assetId)?.exportedName ??
+    mergedItems.find((m) => m.id === assetId)?.name ??
+    assetId;
   const riskReports = plan?.securityReports.filter((r) => r.requiresConfirmation) ?? [];
   const createCount = plan?.operations.filter((o) => o.kind === 'create').length ?? 0;
   const overwriteCount = plan?.operations.filter((o) => o.kind === 'overwrite').length ?? 0;
@@ -91,7 +108,7 @@ export default function ExportPanel({
       >
         <UploadIcon size={13} className="text-muted-foreground" />
         <span className="font-semibold text-foreground ml-1.5" style={{ fontSize: '12px' }}>
-          {t(simpleMode ? 'exportPanel.titleSimple' : 'exportPanel.titleFull')}
+          {t('exportPanel.titleFull')}
         </span>
       </div>
 
@@ -123,26 +140,77 @@ export default function ExportPanel({
 
             {/* Target project path picker (active tool only) */}
             {tool.active && (
-              <Tooltip title={targetPath ?? t('exportPanel.selectTarget')} placement="top">
-                <button
-                  onClick={onPickTarget}
-                  data-testid="export-target"
-                  className="flex items-center gap-1 mt-1.5 w-full text-left group/path"
-                >
-                  <FolderIcon size={11} className="text-muted-foreground flex-shrink-0" />
-                  <span
-                    className="truncate group-hover/path:text-foreground transition-colors"
-                    style={{
-                      minWidth: 0,
-                      fontSize: '10.5px',
-                      fontFamily: 'monospace',
-                      color: targetPath ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
-                    }}
+              <>
+                <Tooltip title={targetPath ?? t('exportPanel.selectTarget')} placement="top">
+                  <button
+                    onClick={onPickTarget}
+                    data-testid="export-target"
+                    className="flex items-center gap-1 mt-1.5 w-full text-left group/path"
                   >
-                    {targetPath ?? t('exportPanel.selectTarget')}
-                  </span>
-                </button>
-              </Tooltip>
+                    <FolderIcon size={11} className="text-muted-foreground flex-shrink-0" />
+                    <span
+                      className="truncate group-hover/path:text-foreground transition-colors"
+                      style={{
+                        minWidth: 0,
+                        fontSize: '10.5px',
+                        fontFamily: 'monospace',
+                        color: targetPath ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
+                      }}
+                    >
+                      {targetPath ?? t('exportPanel.selectTarget')}
+                    </span>
+                  </button>
+                </Tooltip>
+
+                {/* Quick picks: recent targets, then loaded source projects. */}
+                {(recentTargetPaths.length > 0 || sourceProjects.length > 0) && (
+                  <div className="mt-1.5 flex flex-col gap-0.5">
+                    {recentTargetPaths.length > 0 && (
+                      <p
+                        className="text-muted-foreground"
+                        style={{ fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase' }}
+                      >
+                        {t('exportPanel.recentTargets')}
+                      </p>
+                    )}
+                    {recentTargetPaths.map((path) => (
+                      <button
+                        key={path}
+                        onClick={() => onSelectTarget(path)}
+                        data-testid="export-target-recent"
+                        className="text-left truncate rounded px-1 py-0.5 hover:bg-secondary transition-colors"
+                        style={{ fontSize: '10px', fontFamily: 'monospace' }}
+                        title={path}
+                      >
+                        {path}
+                      </button>
+                    ))}
+                    {sourceProjects.length > 0 && (
+                      <p
+                        className="text-muted-foreground mt-0.5"
+                        style={{ fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase' }}
+                      >
+                        {t('exportPanel.fromSourceProjects')}
+                      </p>
+                    )}
+                    {sourceProjects.map((project) => (
+                      <button
+                        key={project.id}
+                        onClick={() => onSelectTarget(project.rootPath)}
+                        data-testid="export-target-source"
+                        className="text-left truncate rounded px-1 py-0.5 hover:bg-secondary transition-colors"
+                        style={{ fontSize: '10px' }}
+                        title={project.rootPath}
+                      >
+                        {project.name}
+                        <span className="text-muted-foreground ml-1" style={{ fontFamily: 'monospace' }}>
+                          {project.rootPath}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         ))}
@@ -162,7 +230,7 @@ export default function ExportPanel({
 
         {!canPreview && !building && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10px' }}>
-            {comboItems.length === 0
+            {itemCount === 0
               ? t('exportPanel.previewNeedsCombo')
               : t('exportPanel.noTarget')}
           </p>
@@ -353,17 +421,17 @@ export default function ExportPanel({
           {gate.canExport ? <CheckIcon size={13} /> : <XIcon size={13} />}
           {executing
             ? t('exportPanel.exporting')
-            : comboItems.length > 0
-              ? t('exportPanel.exportWithCount', { count: comboItems.length })
+            : itemCount > 0
+              ? t('exportPanel.exportWithCount', { count: itemCount })
               : t('exportPanel.export')}
         </button>
 
-        {comboItems.length === 0 && (
+        {itemCount === 0 && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10.5px' }}>
-            {t(simpleMode ? 'exportPanel.emptyComboSimple' : 'exportPanel.emptyComboFull')}
+            {t('exportPanel.emptyComboFull')}
           </p>
         )}
-        {comboItems.length > 0 && !targetPath && (
+        {itemCount > 0 && !targetPath && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10.5px' }}>
             {t('exportPanel.noTarget')}
           </p>

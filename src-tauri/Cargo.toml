@@ -1,6 +1,6 @@
 [package]
 name = "agentmix"
-version = "0.1.0"
+version = "0.1.5"
 description = "AgentMix — scan, mix and export Agent Skills to AI coding tools"
 authors = ["AgentMix"]
 edition = "2021"
@@ -33,3 +33,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
+# Auto-update via GitHub Releases latest.json with signature verification
+# (DESIGN.md §6.16, plan T20; dependency confirmed in plan decision 4).
+tauri-plugin-updater = "2"

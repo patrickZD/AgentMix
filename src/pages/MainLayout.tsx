@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   HeartPulseIcon,
   BookOpenIcon,
@@ -15,7 +15,9 @@ import ComboListPanel from '../components/ComboListPanel';
 import ExportPanel from '../components/ExportPanel';
 import HealthCheckPanel from '../components/HealthCheckPanel';
 import WelcomeScreen from '../components/WelcomeScreen';
-import { displayLabel, categoryLabelKey } from '@/lib/skillView';
+import UpdateModal from '../components/UpdateModal';
+import MergeWorkbench from '../components/MergeWorkbench';
+import { categoryLabelKey } from '@/lib/skillView';
 import { resolveView } from '@/lib/viewRouting';
 import { pickDirectory } from '@/lib/scan';
 import { openPath } from '@/lib/exporter';
@@ -25,30 +27,27 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useCompositionStore } from '@/stores/compositionStore';
 import { useExportStore } from '@/stores/exportStore';
 import { useUiStore } from '@/stores/uiStore';
+import { isBadgeVisible, useUpdateStore } from '@/stores/updateStore';
+import { useMergeStore } from '@/stores/mergeStore';
+import { onUpdateDownloadProgress } from '@/lib/updater';
 
 // Skill detail / preview panel
 function SkillPreviewPanel({
   skill,
   project,
-  simpleMode,
 }: {
   skill: Skill | null;
   project: SourceProject | null;
-  simpleMode: boolean;
 }) {
   const { t } = useTranslation();
   if (!skill || !project) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
         <BookOpenIcon size={28} className="opacity-30" />
-        <p style={{ fontSize: '12px' }}>
-          {t(simpleMode ? 'mainLayout.selectSkillSimple' : 'mainLayout.selectSkillFull')}
-        </p>
+        <p style={{ fontSize: '12px' }}>{t('mainLayout.selectSkillFull')}</p>
       </div>
     );
   }
-
-  const nameLabel = simpleMode ? displayLabel(skill.name) : skill.name;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -60,11 +59,11 @@ function SkillPreviewPanel({
               className="font-semibold text-foreground"
               style={{ fontSize: '14px', letterSpacing: '-0.01em' }}
             >
-              {nameLabel}
+              {skill.name}
             </h2>
             <p className="text-muted-foreground mt-0.5" style={{ fontSize: '11px' }}>
               {project.name}
-              {!simpleMode && skill.relativePathInProject && (
+              {skill.relativePathInProject && (
                 <span className="ml-1 opacity-60">· {skill.relativePathInProject}</span>
               )}
             </p>
@@ -77,19 +76,17 @@ function SkillPreviewPanel({
         )}
 
         {/* Category + compatibility (real v0.1 domain fields) */}
-        {!simpleMode && (
-          <div className="flex flex-wrap items-center gap-2 mt-2" style={{ fontSize: '10.5px' }}>
-            <span
-              className="rounded px-1.5 py-0.5 bg-secondary text-secondary-foreground"
-              style={{ fontWeight: 500 }}
-            >
-              {t(categoryLabelKey(skill.category))}
-            </span>
-            {skill.compatibility && (
-              <span style={{ color: '#94A3B8' }}>{skill.compatibility}</span>
-            )}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2 mt-2" style={{ fontSize: '10.5px' }}>
+          <span
+            className="rounded px-1.5 py-0.5 bg-secondary text-secondary-foreground"
+            style={{ fontWeight: 500 }}
+          >
+            {t(categoryLabelKey(skill.category))}
+          </span>
+          {skill.compatibility && (
+            <span style={{ color: '#94A3B8' }}>{skill.compatibility}</span>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -104,17 +101,28 @@ function SkillPreviewPanel({
 function SettingsDialog({
   open,
   onClose,
-  simpleMode,
-  onSimpleModeToggle,
   showInvalid,
   onShowInvalidToggle,
+  autoCheckUpdates,
+  onAutoCheckUpdatesToggle,
+  updateChecking,
+  updateUpToDate,
+  updateVersion,
+  onCheckUpdates,
+  onViewUpdate,
 }: {
   open: boolean;
   onClose: () => void;
-  simpleMode: boolean;
-  onSimpleModeToggle: () => void;
   showInvalid: boolean;
   onShowInvalidToggle: () => void;
+  autoCheckUpdates: boolean;
+  onAutoCheckUpdatesToggle: () => void;
+  updateChecking: boolean;
+  updateUpToDate: boolean;
+  // Badge-visible newer version, or null (none / skipped).
+  updateVersion: string | null;
+  onCheckUpdates: () => void;
+  onViewUpdate: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const activeLang: 'en' | 'zh' = i18n.language.startsWith('zh') ? 'zh' : 'en';
@@ -158,32 +166,6 @@ function SettingsDialog({
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-foreground font-medium" style={{ fontSize: '12.5px' }}>
-                {t('settings.simpleMode')}
-              </p>
-              <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
-                {t('settings.simpleModeDesc')}
-              </p>
-            </div>
-            <button
-              onClick={onSimpleModeToggle}
-              className={`w-10 h-5 rounded-full transition-colors flex-shrink-0 relative`}
-              style={{ background: simpleMode ? 'var(--am-blue)' : '#CBD5E1' }}
-            >
-              <span
-                className="absolute top-0.5 transition-all rounded-full bg-white"
-                style={{
-                  width: 16,
-                  height: 16,
-                  left: simpleMode ? '18px' : '2px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                }}
-              />
-            </button>
-          </div>
-
           {/* Show invalid candidates — bound to the same flag the source panel uses. */}
           <div className="flex items-center justify-between">
             <div>
@@ -213,6 +195,56 @@ function SettingsDialog({
 
           <hr className="border-border" />
 
+          {/* Software update (T21): the auto-check switch plus a manual check.
+              With a pending update the action becomes "view update". */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-foreground font-medium" style={{ fontSize: '12.5px' }}>
+                {t('settings.autoCheckUpdates')}
+              </p>
+              <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
+                {t('settings.autoCheckUpdatesDesc')}
+              </p>
+            </div>
+            <button
+              onClick={onAutoCheckUpdatesToggle}
+              className={`w-10 h-5 rounded-full transition-colors flex-shrink-0 relative`}
+              style={{ background: autoCheckUpdates ? 'var(--am-blue)' : '#CBD5E1' }}
+            >
+              <span
+                className="absolute top-0.5 transition-all rounded-full bg-white"
+                style={{
+                  width: 16,
+                  height: 16,
+                  left: autoCheckUpdates ? '18px' : '2px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
+              {updateChecking
+                ? t('settings.checkingUpdates')
+                : updateVersion
+                  ? t('settings.updateFound', { version: updateVersion })
+                  : updateUpToDate
+                    ? t('settings.upToDate')
+                    : ''}
+            </p>
+            <button
+              onClick={updateVersion ? onViewUpdate : onCheckUpdates}
+              disabled={updateChecking}
+              className="px-2.5 py-1 rounded-md border border-border text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
+              style={{ fontSize: '11.5px' }}
+            >
+              {updateVersion ? t('settings.viewUpdate') : t('settings.checkUpdates')}
+            </button>
+          </div>
+
+          <hr className="border-border" />
+
           <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
             {t('settings.footer')}
           </p>
@@ -236,9 +268,12 @@ export default function MainLayout() {
   const { projects, scanning, scanAndAdd, removeProject } = useProjectStore();
   const {
     comboItems,
+    mergedItems,
     conflicts,
     addToCombo,
+    addMergedItem,
     removeItem,
+    removeMergedItem,
     moveItem,
     removeItemsByProject,
     renameItem,
@@ -247,6 +282,7 @@ export default function MainLayout() {
   } = useCompositionStore();
   const {
     targetPath,
+    recentTargetPaths,
     plan,
     building,
     buildError,
@@ -266,17 +302,91 @@ export default function MainLayout() {
     view,
     selectedSkill,
     selectedProject,
-    simpleMode,
     showInvalid,
     settingsOpen,
     leftCollapsed,
     setView,
     selectSkill,
-    toggleSimpleMode,
     toggleShowInvalid,
     setSettingsOpen,
     toggleLeftCollapsed,
   } = useUiStore();
+  const {
+    availableVersion,
+    notes: updateNotes,
+    checking: updateChecking,
+    upToDate: updateUpToDate,
+    modalOpen: updateModalOpen,
+    skippedVersion,
+    autoCheckEnabled,
+    installing: updateInstalling,
+    progress: updateProgress,
+    installError: updateInstallError,
+    check: checkUpdate,
+    startupCheck,
+    openModal: openUpdateModal,
+    deferUpdate,
+    skipThisVersion,
+    setAutoCheck,
+    install: installUpdateNow,
+    setProgress: setUpdateProgress,
+  } = useUpdateStore();
+
+  // The red badge shows for a non-skipped newer release (T21).
+  const updateBadge = isBadgeVisible(availableVersion, skippedVersion);
+
+  const {
+    open: mergeOpen,
+    sourceItemIds: mergeSourceIds,
+    draft: mergeDraft,
+    scriptsFromItemId,
+    validation: mergeValidation,
+    validating: mergeValidating,
+    openWorkbench,
+    closeWorkbench,
+    setDraft: setMergeDraft,
+    appendToDraft,
+    setScriptsFrom,
+    validate: validateMerge,
+  } = useMergeStore();
+
+  // True while a folder is dragged over the window (T26b drop-target highlight).
+  const [dragging, setDragging] = useState(false);
+
+  // Source columns for the workbench, resolved from the live combo items.
+  const mergeSources = comboItems.filter((c) => mergeSourceIds.includes(c.id));
+
+  // Names the draft must not collide with: everything in the composition
+  // except the items being merged (they are replaced on confirm). Stable
+  // identity (useCallback) so the workbench's debounced-validate effect does
+  // not re-arm on validation state changes.
+  const handleValidateMerge = useCallback(
+    () =>
+      void validateMerge([
+        ...comboItems
+          .filter((c) => !mergeSourceIds.includes(c.id))
+          .map((c) => c.exportedName),
+        ...mergedItems.map((m) => m.name),
+      ]),
+    [comboItems, mergedItems, mergeSourceIds, validateMerge],
+  );
+
+  // Confirm: the validated draft becomes a merged entry; its sources leave the
+  // combo (restorable, T25) and the workbench closes.
+  const handleConfirmMerge = () => {
+    if (!mergeValidation?.canConfirm || !mergeValidation.parsedName) return;
+    const scriptsItem = mergeSources.find((c) => c.id === scriptsFromItemId);
+    addMergedItem(
+      {
+        name: mergeValidation.parsedName,
+        draft: mergeDraft,
+        scriptsFromDir: scriptsItem ? scriptsItem.skill.skillDirPath : null,
+        sourceSkillNames: mergeSources.map((s) => s.exportedName),
+      },
+      mergeSourceIds,
+    );
+    closeWorkbench();
+  };
 
   // Handler aliases so the JSX below reads naturally; store actions do the work.
   const handleNavigate = setView;
@@ -291,13 +401,26 @@ export default function MainLayout() {
     if (dir) setTargetPath(dir);
   };
 
-  const exportItems = () =>
-    comboItems.map((c) => ({
+  const exportItems = () => [
+    ...comboItems.map((c) => ({
       assetId: c.skill.id,
-      sourceDir: c.skill.skillDirPath,
+      source: { type: 'directory' as const, dir: c.skill.skillDirPath },
       exportedName: c.exportedName,
       sourceRef: `${c.skill.sourceProjectId}:${c.skill.relativePathInProject}`,
-    }));
+    })),
+    // Merged entries are content-backed: SKILL.md from the draft, scripts
+    // optionally from the chosen source directory (T23/T24).
+    ...mergedItems.map((m) => ({
+      assetId: m.id,
+      source: {
+        type: 'content' as const,
+        content: m.draft,
+        scriptsFromDir: m.scriptsFromDir,
+      },
+      exportedName: m.name,
+      sourceRef: `merged:${m.sourceSkillNames.join('+')}`,
+    })),
+  ];
 
   const handleBuildPlan = () => void buildPlan(exportItems());
   const handleExport = () => void execute(exportItems());
@@ -329,6 +452,8 @@ export default function MainLayout() {
 
   // Drag-drop entry, equivalent to the folder button. The webview API is only
   // available in the desktop runtime, so it is imported lazily and guarded.
+  // enter/over highlight the source panel as a drop target; drop imports and
+  // clears the highlight; leave clears it (T26b).
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     let cancelled = false;
@@ -336,7 +461,13 @@ export default function MainLayout() {
       try {
         const { getCurrentWebview } = await import('@tauri-apps/api/webview');
         const un = await getCurrentWebview().onDragDropEvent((event) => {
-          if (event.payload.type === 'drop') {
+          const kind = event.payload.type;
+          if (kind === 'enter' || kind === 'over') {
+            setDragging(true);
+          } else if (kind === 'leave') {
+            setDragging(false);
+          } else if (kind === 'drop') {
+            setDragging(false);
             for (const path of event.payload.paths) void scanAndAdd(path);
           }
         });
@@ -358,12 +489,28 @@ export default function MainLayout() {
     removeItemsByProject(projectId);
   };
 
+  // Launch-time update check (no-op while the auto-check switch is off) plus
+  // the download-progress subscription for the modal's progress bar (T21).
+  useEffect(() => {
+    void startupCheck();
+    let unlisten: (() => void) | undefined;
+    let cancelled = false;
+    void onUpdateDownloadProgress(setUpdateProgress).then((un) => {
+      if (cancelled) un();
+      else unlisten = un;
+    });
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [startupCheck, setUpdateProgress]);
+
   // Whenever the selection changes, re-detect conflicts via the Rust composer
   // (the authoritative single source) and drop any now-stale Dry-run preview.
   useEffect(() => {
     void refreshConflicts();
     resetPlan();
-  }, [comboItems, refreshConflicts, resetPlan]);
+  }, [comboItems, mergedItems, refreshConflicts, resetPlan]);
 
   const effectiveView = resolveView(projects.length, view);
 
@@ -379,8 +526,8 @@ export default function MainLayout() {
         onAboutClick={() => {}}
         onNavigate={handleNavigate}
         projectCount={projects.length}
-        simpleMode={simpleMode}
-        onSimpleModeToggle={toggleSimpleMode}
+        updateAvailable={updateBadge}
+        onUpdateClick={openUpdateModal}
       />
 
       {/* Main content area */}
@@ -390,7 +537,6 @@ export default function MainLayout() {
           <WelcomeScreen
             onAddProject={handleAddProject}
             onNavigate={handleNavigate}
-            simpleMode={simpleMode}
           />
         </div>
 
@@ -413,7 +559,7 @@ export default function MainLayout() {
                 onScanProject={handleScanProject}
                 onAddToCombo={handleAddToCombo}
                 onToggleShowInvalid={toggleShowInvalid}
-                simpleMode={simpleMode}
+                dragging={dragging}
               />
             </div>
 
@@ -458,7 +604,7 @@ export default function MainLayout() {
                   <>
                     <ChevronRightIcon size={11} className="text-muted-foreground" />
                     <span className="text-muted-foreground truncate" style={{ fontSize: '11px' }}>
-                      {simpleMode ? displayLabel(selectedSkill.name) : selectedSkill.name}
+                      {selectedSkill.name}
                     </span>
                   </>
                 )}
@@ -477,7 +623,6 @@ export default function MainLayout() {
                 <SkillPreviewPanel
                   skill={selectedSkill}
                   project={selectedProject}
-                  simpleMode={simpleMode}
                 />
               </div>
             </div>
@@ -487,18 +632,24 @@ export default function MainLayout() {
               <div className="flex-1 overflow-y-auto scrollbar-thin flex flex-col" style={{ minHeight: 0 }}>
                 <ComboListPanel
                   comboItems={comboItems}
+                  mergedItems={mergedItems}
                   conflicts={conflicts}
                   onRemoveItem={handleRemoveComboItem}
                   onMoveItem={handleMoveComboItem}
                   onRenameItem={renameItem}
                   onKeepOne={keepOne}
-                  simpleMode={simpleMode}
+                  onOpenMerge={openWorkbench}
+                  onRemoveMergedItem={removeMergedItem}
                 />
                 <div className="flex-1" style={{ minHeight: 0 }}>
                   <ExportPanel
                     comboItems={comboItems}
+                    mergedItems={mergedItems}
                     plan={plan}
                     targetPath={targetPath}
+                    recentTargetPaths={recentTargetPaths}
+                    sourceProjects={projects}
+                    onSelectTarget={setTargetPath}
                     building={building}
                     buildError={buildError}
                     overwriteConfirmed={overwriteConfirmed}
@@ -512,7 +663,6 @@ export default function MainLayout() {
                     onAcknowledgeRisk={acknowledgeRisk}
                     onExport={handleExport}
                     onOpenBackup={handleOpenBackup}
-                    simpleMode={simpleMode}
                   />
                 </div>
               </div>
@@ -527,7 +677,6 @@ export default function MainLayout() {
             onNavigate={handleNavigate}
             onRescan={handleRescanAll}
             scanning={scanning}
-            simpleMode={simpleMode}
           />
         </div>
       </div>
@@ -536,10 +685,47 @@ export default function MainLayout() {
       <SettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        simpleMode={simpleMode}
-        onSimpleModeToggle={toggleSimpleMode}
         showInvalid={showInvalid}
         onShowInvalidToggle={toggleShowInvalid}
+        autoCheckUpdates={autoCheckEnabled}
+        onAutoCheckUpdatesToggle={() => setAutoCheck(!autoCheckEnabled)}
+        updateChecking={updateChecking}
+        updateUpToDate={updateUpToDate}
+        updateVersion={updateBadge ? availableVersion : null}
+        onCheckUpdates={() => void checkUpdate(true)}
+        onViewUpdate={() => {
+          setSettingsOpen(false);
+          openUpdateModal();
+        }}
+      />
+
+      {/* Merge workbench overlay (T24) */}
+      <MergeWorkbench
+        open={mergeOpen}
+        sources={mergeSources}
+        draft={mergeDraft}
+        scriptsFromItemId={scriptsFromItemId}
+        validation={mergeValidation}
+        validating={mergeValidating}
+        onDraftChange={setMergeDraft}
+        onAppend={appendToDraft}
+        onScriptsFrom={setScriptsFrom}
+        onValidate={handleValidateMerge}
+        onConfirm={handleConfirmMerge}
+        onClose={closeWorkbench}
+      />
+
+      {/* Update prompt overlay (T21) */}
+      <UpdateModal
+        open={updateModalOpen}
+        version={availableVersion}
+        notes={updateNotes}
+        installing={updateInstalling}
+        progress={updateProgress}
+        installError={updateInstallError}
+        onInstall={() => void installUpdateNow()}
+        onDefer={deferUpdate}
+        onSkip={skipThisVersion}
       />
     </div>
   );

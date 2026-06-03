@@ -20,7 +20,10 @@ fn main() {
         .register::<agentmix_types::ExportPlan>()
         .register::<agentmix_types::ExportRequestItem>()
         .register::<agentmix_types::ExecutionReport>()
-        .register::<agentmix_types::SkillSecurityReport>();
+        .register::<agentmix_types::SkillSecurityReport>()
+        .register::<agentmix_types::MergeDraftValidation>()
+        .register::<agentmix_types::UpdateCheckResult>()
+        .register::<agentmix_types::UpdateDownloadProgress>();
 
     let rendered = Typescript::default()
         .header(

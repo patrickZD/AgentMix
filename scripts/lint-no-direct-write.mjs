@@ -29,9 +29,11 @@ const TS_WRITE_PATTERNS = [
 ];
 
 // The sole sanctioned writer of user files (exporter.rs), the dev-time codegen
-// binary (export_bindings.rs writes generated.ts, not user files), and
-// non-source dirs.
-const EXEMPT = ["exporter.rs", "export_bindings.rs", "node_modules", "target", "generated.ts"];
+// binary (export_bindings.rs writes generated.ts, not user files), the
+// update-check cache (update.rs writes only ~/.agentmix/update-check.json —
+// AgentMix's own data dir, same isolation as backups, never a user project;
+// T20), and non-source dirs.
+const EXEMPT = ["exporter.rs", "export_bindings.rs", "update.rs", "node_modules", "target", "generated.ts"];
 
 function walk(dir, exts, files = []) {
   for (const entry of readdirSync(dir)) {
