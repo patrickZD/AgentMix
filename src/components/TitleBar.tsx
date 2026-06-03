@@ -16,8 +16,6 @@ interface TitleBarProps {
   onAboutClick?: () => void;
   onNavigate?: (view: AppView) => void;
   projectCount?: number;
-  simpleMode?: boolean;
-  onSimpleModeToggle?: () => void;
   // Update badge (T21): shown only while a non-skipped newer release exists;
   // clicking it opens the update modal.
   updateAvailable?: boolean;
@@ -30,8 +28,6 @@ export default function TitleBar({
   onAboutClick = () => {},
   onNavigate = () => {},
   projectCount = 0,
-  simpleMode = false,
-  onSimpleModeToggle = () => {},
   updateAvailable = false,
   onUpdateClick = () => {},
 }: TitleBarProps) {
@@ -81,19 +77,6 @@ export default function TitleBar({
 
       {/* Right: actions */}
       <div className="flex items-center gap-0.5">
-        {/* Simple mode toggle */}
-        <button
-          onClick={onSimpleModeToggle}
-          className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-            simpleMode
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-          }`}
-          style={{ fontSize: '11px' }}
-        >
-          {t('titleBar.simple')}
-        </button>
-
         {updateAvailable && (
           <Tooltip title={t('titleBar.updateAvailable')} placement="bottom">
             <IconButton

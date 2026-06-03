@@ -5,15 +5,12 @@
   "titleBar": {
     "workspace": "工作区",
     "healthCheck": "健康检查",
-    "simple": "简洁",
     "settings": "设置",
     "about": "关于 AgentMix",
     "updateAvailable": "有新版本"
   },
   "welcome": {
-    "ctaSimple": "打开项目文件夹",
     "ctaFull": "添加来源项目",
-    "hintSimple": "选择一个包含 AI Skill 的文件夹",
     "hintFull": "打开包含 `.claude/skills/` 或 `skills/` 的目录",
     "docs": "文档",
     "github": "GitHub",
@@ -35,7 +32,6 @@
     "addProject": "添加来源项目",
     "rescan": "重新扫描",
     "removeProject": "移除项目",
-    "emptySimple": "还没有项目。\n点击 + 添加文件夹。",
     "emptyFull": "还没有来源项目。\n点击 + 打开一个目录。",
     "noSkills": "未发现 Skill",
     "noMatch": "没有符合筛选条件的 Skill",
@@ -51,11 +47,9 @@
     "addToCombo": "加入组合"
   },
   "comboPanel": {
-    "titleSimple": "我的组合",
     "titleFull": "组合清单",
     "conflicts_one": "{{count}} 个冲突",
     "conflicts_other": "{{count}} 个冲突",
-    "emptySimple": "从左侧面板添加 Skill",
     "emptyFull": "组合为空，请从来源项目添加。",
     "moveUp": "上移",
     "moveDown": "下移",
@@ -70,7 +64,6 @@
     "mergedFrom": "由 {{names}} 合并"
   },
   "exportPanel": {
-    "titleSimple": "导出到",
     "titleFull": "导出目标",
     "deferred": "v0.2",
     "selectTarget": "选择目标项目…",
@@ -93,12 +86,10 @@
     "exportDone": "已导出 {{skills}} 个 Skill —— 新建 {{created}}，覆盖 {{overwritten}}",
     "openBackup": "打开备份目录",
     "executeFailed": "导出失败：{{error}}",
-    "emptyComboSimple": "请先把 Skill 加入组合",
     "emptyComboFull": "组合清单为空。",
     "noTarget": "请先选择目标项目"
   },
   "healthPanel": {
-    "titleSimple": "Skill 健康",
     "titleFull": "健康检查",
     "backToWorkspace": "返回工作区",
     "rerun": "重新运行健康检查",
@@ -109,7 +100,6 @@
     "noResults": "还没有可检查的 Skill，请先扫描项目。"
   },
   "mainLayout": {
-    "selectSkillSimple": "选择一个 Skill 预览",
     "selectSkillFull": "选择一个 Skill 预览其内容",
     "skillPreview": "Skill 预览",
     "healthCheck": "健康检查",
@@ -122,8 +112,6 @@
     "language": "语言",
     "langZh": "中文",
     "langEn": "English",
-    "simpleMode": "简洁模式",
-    "simpleModeDesc": "隐藏技术字段名",
     "showInvalid": "显示无效候选",
     "showInvalidDesc": "在来源面板中列出未通过校验的 Skill",
     "autoCheckUpdates": "自动检查更新",
@@ -133,7 +121,7 @@
     "upToDate": "已是最新版本",
     "updateFound": "可更新到 {{version}}",
     "viewUpdate": "查看更新",
-    "footer": "AgentMix v0.1.0 —— 本地开源工具。",
+    "footer": "AgentMix v0.1.0",
     "close": "关闭"
   },
   "badge": {

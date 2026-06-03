@@ -32,7 +32,6 @@ interface SourceProjectPanelProps {
   // True while a folder is dragged over the window — highlights the panel as a
   // drop target (the drop itself is handled at the window level in MainLayout).
   dragging?: boolean;
-  simpleMode?: boolean;
 }
 
 const CATEGORY_CHIPS: ReadonlyArray<{ value: SkillFilter['category']; labelKey: string }> = [
@@ -67,7 +66,6 @@ export default function SourceProjectPanel({
   onAddToCombo = () => {},
   onToggleShowInvalid = () => {},
   dragging = false,
-  simpleMode = false,
 }: SourceProjectPanelProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -119,7 +117,6 @@ export default function SourceProjectPanel({
             selected={selectedSkill?.id === skill.id}
             onClick={(s) => onSelectSkill(s, project)}
             onAddToCombo={onAddToCombo}
-            simpleMode={simpleMode}
           />
         ))}
       </div>
@@ -239,7 +236,7 @@ export default function SourceProjectPanel({
         {projects.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 p-4">
             <p className="text-muted-foreground text-center" style={{ fontSize: '12px' }}>
-              {t(simpleMode ? 'sourcePanel.emptySimple' : 'sourcePanel.emptyFull')}
+              {t('sourcePanel.emptyFull')}
             </p>
             {dropZone}
           </div>
@@ -316,10 +313,13 @@ export default function SourceProjectPanel({
             </div>
           );
         })}
-
-        {/* Compact drop affordance below the list when projects already exist. */}
-        {projects.length > 0 && <div className="px-2 pt-1 pb-2">{dropZone}</div>}
       </div>
+
+      {/* Compact drop affordance pinned to the panel's bottom when projects
+          already exist, so it stays reachable without scrolling. */}
+      {projects.length > 0 && (
+        <div className="flex-shrink-0 border-t border-border px-2 py-2">{dropZone}</div>
+      )}
     </div>
   );
 }

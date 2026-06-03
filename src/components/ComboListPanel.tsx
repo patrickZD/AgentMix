@@ -14,7 +14,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
-import { displayLabel } from '@/lib/skillView';
 import { canMergeConflict, mergeSourceIdsForConflict, MERGE_MIN_SOURCES } from '@/lib/mergeSources';
 import Badge from './Badge';
 import type { ComboItem, ExportConflict, MergedComboItem } from '../types';
@@ -31,7 +30,6 @@ interface ComboListPanelProps {
   // conflict row's third button and the generic select-mode header action).
   onOpenMerge?: (sourceItemIds: string[]) => void;
   onRemoveMergedItem?: (mergedId: string) => void;
-  simpleMode?: boolean;
 }
 
 export default function ComboListPanel({
@@ -44,7 +42,6 @@ export default function ComboListPanel({
   onKeepOne = () => {},
   onOpenMerge = () => {},
   onRemoveMergedItem = () => {},
-  simpleMode = false,
 }: ComboListPanelProps) {
   const { t } = useTranslation();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -104,7 +101,7 @@ export default function ComboListPanel({
         <div className="flex items-center gap-1.5">
           <ListChecksIcon size={13} className="text-muted-foreground" />
           <span className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
-            {t(simpleMode ? 'comboPanel.titleSimple' : 'comboPanel.titleFull')}
+            {t('comboPanel.titleFull')}
           </span>
           {itemCount > 0 && (
             <span
@@ -170,7 +167,7 @@ export default function ComboListPanel({
           <div className="flex flex-col items-center justify-center py-6 gap-1.5">
             <ListChecksIcon size={24} className="text-muted-foreground opacity-30" />
             <p className="text-muted-foreground" style={{ fontSize: '11.5px' }}>
-              {t(simpleMode ? 'comboPanel.emptySimple' : 'comboPanel.emptyFull')}
+              {t('comboPanel.emptyFull')}
             </p>
           </div>
         )}
@@ -178,7 +175,7 @@ export default function ComboListPanel({
         {comboItems.map((item, idx) => {
           const isConflicting = conflictingIds.has(item.id);
           const isEditing = editingId === item.id;
-          const nameLabel = simpleMode ? displayLabel(item.exportedName) : item.exportedName;
+          const nameLabel = item.exportedName;
           const isFirst = idx === 0;
           const isLast = idx === comboItems.length - 1;
 
@@ -249,7 +246,7 @@ export default function ComboListPanel({
                         className="text-muted-foreground truncate"
                         style={{ fontSize: '10.5px' }}
                       >
-                        {simpleMode ? item.project.name : `${item.project.name} · ${item.skill.name}`}
+                        {`${item.project.name} · ${item.skill.name}`}
                       </div>
                     </>
                   )}
@@ -355,7 +352,7 @@ export default function ComboListPanel({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
                   <span className="text-foreground truncate" style={{ fontSize: '12px', fontWeight: 500 }}>
-                    {simpleMode ? displayLabel(merged.name) : merged.name}
+                    {merged.name}
                   </span>
                   <span
                     className="rounded px-1 flex-shrink-0"

@@ -5,15 +5,12 @@
   "titleBar": {
     "workspace": "Workspace",
     "healthCheck": "Health Check",
-    "simple": "Simple",
     "settings": "Settings",
     "about": "About AgentMix",
     "updateAvailable": "New version available"
   },
   "welcome": {
-    "ctaSimple": "Open a Project Folder",
     "ctaFull": "Add Source Project",
-    "hintSimple": "Choose a folder that contains AI skills",
     "hintFull": "Open a directory containing a `.claude/skills/` or `skills/` folder",
     "docs": "Docs",
     "github": "GitHub",
@@ -35,7 +32,6 @@
     "addProject": "Add Source Project",
     "rescan": "Re-scan",
     "removeProject": "Remove Project",
-    "emptySimple": "No projects yet.\nClick + to add a folder.",
     "emptyFull": "No source projects.\nClick + to open a directory.",
     "noSkills": "No skills found",
     "noMatch": "No skills match the filter",
@@ -51,11 +47,9 @@
     "addToCombo": "Add to Combo"
   },
   "comboPanel": {
-    "titleSimple": "My Combo",
     "titleFull": "Combo List",
     "conflicts_one": "{{count}} conflict",
     "conflicts_other": "{{count}} conflicts",
-    "emptySimple": "Add skills from the left panel",
     "emptyFull": "No skills in combo. Add from Source Projects.",
     "moveUp": "Move Up",
     "moveDown": "Move Down",
@@ -70,7 +64,6 @@
     "mergedFrom": "merged from {{names}}"
   },
   "exportPanel": {
-    "titleSimple": "Export To",
     "titleFull": "Export Targets",
     "deferred": "v0.2",
     "selectTarget": "Select target project…",
@@ -93,12 +86,10 @@
     "exportDone": "Exported {{skills}} skill(s) — {{created}} created, {{overwritten}} overwritten",
     "openBackup": "Open backup folder",
     "executeFailed": "Export failed: {{error}}",
-    "emptyComboSimple": "Add skills to your combo first",
     "emptyComboFull": "No skills in Combo List.",
     "noTarget": "Choose a target project first"
   },
   "healthPanel": {
-    "titleSimple": "Skill Health",
     "titleFull": "Health Check",
     "backToWorkspace": "Back to Workspace",
     "rerun": "Re-run Health Check",
@@ -109,7 +100,6 @@
     "noResults": "No skills to check yet. Scan a project first."
   },
   "mainLayout": {
-    "selectSkillSimple": "Select a skill to preview",
     "selectSkillFull": "Select a skill to preview its content",
     "skillPreview": "Skill Preview",
     "healthCheck": "Health Check",
@@ -122,8 +112,6 @@
     "language": "Language",
     "langZh": "中文",
     "langEn": "English",
-    "simpleMode": "Simple Mode",
-    "simpleModeDesc": "Hides technical field names",
     "showInvalid": "Show invalid candidates",
     "showInvalidDesc": "List skills that fail validation in the source panel",
     "autoCheckUpdates": "Check for updates automatically",
@@ -133,7 +121,7 @@
     "upToDate": "You're on the latest version",
     "updateFound": "Version {{version}} is available",
     "viewUpdate": "View update",
-    "footer": "AgentMix v0.1.0 — Local open-source tool.",
+    "footer": "AgentMix v0.1.0",
     "close": "Close"
   },
   "badge": {

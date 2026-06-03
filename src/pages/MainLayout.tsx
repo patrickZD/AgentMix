@@ -17,7 +17,7 @@ import HealthCheckPanel from '../components/HealthCheckPanel';
 import WelcomeScreen from '../components/WelcomeScreen';
 import UpdateModal from '../components/UpdateModal';
 import MergeWorkbench from '../components/MergeWorkbench';
-import { displayLabel, categoryLabelKey } from '@/lib/skillView';
+import { categoryLabelKey } from '@/lib/skillView';
 import { resolveView } from '@/lib/viewRouting';
 import { pickDirectory } from '@/lib/scan';
 import { openPath } from '@/lib/exporter';
@@ -35,25 +35,19 @@ import { onUpdateDownloadProgress } from '@/lib/updater';
 function SkillPreviewPanel({
   skill,
   project,
-  simpleMode,
 }: {
   skill: Skill | null;
   project: SourceProject | null;
-  simpleMode: boolean;
 }) {
   const { t } = useTranslation();
   if (!skill || !project) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
         <BookOpenIcon size={28} className="opacity-30" />
-        <p style={{ fontSize: '12px' }}>
-          {t(simpleMode ? 'mainLayout.selectSkillSimple' : 'mainLayout.selectSkillFull')}
-        </p>
+        <p style={{ fontSize: '12px' }}>{t('mainLayout.selectSkillFull')}</p>
       </div>
     );
   }
-
-  const nameLabel = simpleMode ? displayLabel(skill.name) : skill.name;
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -65,11 +59,11 @@ function SkillPreviewPanel({
               className="font-semibold text-foreground"
               style={{ fontSize: '14px', letterSpacing: '-0.01em' }}
             >
-              {nameLabel}
+              {skill.name}
             </h2>
             <p className="text-muted-foreground mt-0.5" style={{ fontSize: '11px' }}>
               {project.name}
-              {!simpleMode && skill.relativePathInProject && (
+              {skill.relativePathInProject && (
                 <span className="ml-1 opacity-60">· {skill.relativePathInProject}</span>
               )}
             </p>
@@ -82,19 +76,17 @@ function SkillPreviewPanel({
         )}
 
         {/* Category + compatibility (real v0.1 domain fields) */}
-        {!simpleMode && (
-          <div className="flex flex-wrap items-center gap-2 mt-2" style={{ fontSize: '10.5px' }}>
-            <span
-              className="rounded px-1.5 py-0.5 bg-secondary text-secondary-foreground"
-              style={{ fontWeight: 500 }}
-            >
-              {t(categoryLabelKey(skill.category))}
-            </span>
-            {skill.compatibility && (
-              <span style={{ color: '#94A3B8' }}>{skill.compatibility}</span>
-            )}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2 mt-2" style={{ fontSize: '10.5px' }}>
+          <span
+            className="rounded px-1.5 py-0.5 bg-secondary text-secondary-foreground"
+            style={{ fontWeight: 500 }}
+          >
+            {t(categoryLabelKey(skill.category))}
+          </span>
+          {skill.compatibility && (
+            <span style={{ color: '#94A3B8' }}>{skill.compatibility}</span>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -109,8 +101,6 @@ function SkillPreviewPanel({
 function SettingsDialog({
   open,
   onClose,
-  simpleMode,
-  onSimpleModeToggle,
   showInvalid,
   onShowInvalidToggle,
   autoCheckUpdates,
@@ -123,8 +113,6 @@ function SettingsDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  simpleMode: boolean;
-  onSimpleModeToggle: () => void;
   showInvalid: boolean;
   onShowInvalidToggle: () => void;
   autoCheckUpdates: boolean;
@@ -176,32 +164,6 @@ function SettingsDialog({
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-foreground font-medium" style={{ fontSize: '12.5px' }}>
-                {t('settings.simpleMode')}
-              </p>
-              <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
-                {t('settings.simpleModeDesc')}
-              </p>
-            </div>
-            <button
-              onClick={onSimpleModeToggle}
-              className={`w-10 h-5 rounded-full transition-colors flex-shrink-0 relative`}
-              style={{ background: simpleMode ? 'var(--am-blue)' : '#CBD5E1' }}
-            >
-              <span
-                className="absolute top-0.5 transition-all rounded-full bg-white"
-                style={{
-                  width: 16,
-                  height: 16,
-                  left: simpleMode ? '18px' : '2px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                }}
-              />
-            </button>
           </div>
 
           {/* Show invalid candidates — bound to the same flag the source panel uses. */}
@@ -340,13 +302,11 @@ export default function MainLayout() {
     view,
     selectedSkill,
     selectedProject,
-    simpleMode,
     showInvalid,
     settingsOpen,
     leftCollapsed,
     setView,
     selectSkill,
-    toggleSimpleMode,
     toggleShowInvalid,
     setSettingsOpen,
     toggleLeftCollapsed,
@@ -566,8 +526,6 @@ export default function MainLayout() {
         onAboutClick={() => {}}
         onNavigate={handleNavigate}
         projectCount={projects.length}
-        simpleMode={simpleMode}
-        onSimpleModeToggle={toggleSimpleMode}
         updateAvailable={updateBadge}
         onUpdateClick={openUpdateModal}
       />
@@ -579,7 +537,6 @@ export default function MainLayout() {
           <WelcomeScreen
             onAddProject={handleAddProject}
             onNavigate={handleNavigate}
-            simpleMode={simpleMode}
           />
         </div>
 
@@ -603,7 +560,6 @@ export default function MainLayout() {
                 onAddToCombo={handleAddToCombo}
                 onToggleShowInvalid={toggleShowInvalid}
                 dragging={dragging}
-                simpleMode={simpleMode}
               />
             </div>
 
@@ -648,7 +604,7 @@ export default function MainLayout() {
                   <>
                     <ChevronRightIcon size={11} className="text-muted-foreground" />
                     <span className="text-muted-foreground truncate" style={{ fontSize: '11px' }}>
-                      {simpleMode ? displayLabel(selectedSkill.name) : selectedSkill.name}
+                      {selectedSkill.name}
                     </span>
                   </>
                 )}
@@ -667,7 +623,6 @@ export default function MainLayout() {
                 <SkillPreviewPanel
                   skill={selectedSkill}
                   project={selectedProject}
-                  simpleMode={simpleMode}
                 />
               </div>
             </div>
@@ -685,7 +640,6 @@ export default function MainLayout() {
                   onKeepOne={keepOne}
                   onOpenMerge={openWorkbench}
                   onRemoveMergedItem={removeMergedItem}
-                  simpleMode={simpleMode}
                 />
                 <div className="flex-1" style={{ minHeight: 0 }}>
                   <ExportPanel
@@ -709,7 +663,6 @@ export default function MainLayout() {
                     onAcknowledgeRisk={acknowledgeRisk}
                     onExport={handleExport}
                     onOpenBackup={handleOpenBackup}
-                    simpleMode={simpleMode}
                   />
                 </div>
               </div>
@@ -724,7 +677,6 @@ export default function MainLayout() {
             onNavigate={handleNavigate}
             onRescan={handleRescanAll}
             scanning={scanning}
-            simpleMode={simpleMode}
           />
         </div>
       </div>
@@ -733,8 +685,6 @@ export default function MainLayout() {
       <SettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        simpleMode={simpleMode}
-        onSimpleModeToggle={toggleSimpleMode}
         showInvalid={showInvalid}
         onShowInvalidToggle={toggleShowInvalid}
         autoCheckUpdates={autoCheckEnabled}

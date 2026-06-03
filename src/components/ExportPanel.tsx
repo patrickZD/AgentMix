@@ -51,7 +51,6 @@ interface ExportPanelProps {
   onAcknowledgeRisk?: (assetId: string, accepted: boolean) => void;
   onExport?: () => void;
   onOpenBackup?: () => void;
-  simpleMode?: boolean;
 }
 
 function formatBytes(n: number): string {
@@ -81,7 +80,6 @@ export default function ExportPanel({
   onAcknowledgeRisk = () => {},
   onExport = () => {},
   onOpenBackup = () => {},
-  simpleMode = false,
 }: ExportPanelProps) {
   const { t } = useTranslation();
 
@@ -110,7 +108,7 @@ export default function ExportPanel({
       >
         <UploadIcon size={13} className="text-muted-foreground" />
         <span className="font-semibold text-foreground ml-1.5" style={{ fontSize: '12px' }}>
-          {t(simpleMode ? 'exportPanel.titleSimple' : 'exportPanel.titleFull')}
+          {t('exportPanel.titleFull')}
         </span>
       </div>
 
@@ -430,7 +428,7 @@ export default function ExportPanel({
 
         {itemCount === 0 && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10.5px' }}>
-            {t(simpleMode ? 'exportPanel.emptyComboSimple' : 'exportPanel.emptyComboFull')}
+            {t('exportPanel.emptyComboFull')}
           </p>
         )}
         {itemCount > 0 && !targetPath && (

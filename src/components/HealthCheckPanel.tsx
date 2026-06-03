@@ -13,14 +13,12 @@ import {
 import { useTranslation } from 'react-i18next';
 import Tooltip from '@/components/ui/Tooltip';
 import IconButton from '@/components/ui/IconButton';
-import { displayLabel } from '@/lib/skillView';
 import type { AppView, HealthStatus, SourceProject } from '../types';
 
 interface HealthCheckPanelProps {
   projects?: SourceProject[];
   onNavigate?: (view: AppView) => void;
   onRescan?: () => void;
-  simpleMode?: boolean;
   scanning?: boolean;
 }
 
@@ -40,7 +38,6 @@ export default function HealthCheckPanel({
   projects = [],
   onNavigate = () => {},
   onRescan = () => {},
-  simpleMode = false,
   scanning = false,
 }: HealthCheckPanelProps) {
   const { t } = useTranslation();
@@ -73,7 +70,7 @@ export default function HealthCheckPanel({
         </Tooltip>
         <HeartPulseIcon size={13} className="text-muted-foreground" />
         <span className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
-          {t(simpleMode ? 'healthPanel.titleSimple' : 'healthPanel.titleFull')}
+          {t('healthPanel.titleFull')}
         </span>
 
         <div className="flex-1" />
@@ -121,7 +118,7 @@ export default function HealthCheckPanel({
           const isCollapsed = collapsed[skill.id];
           const StatusIcon = STATUS_ICON[skill.healthStatus];
           const statusColor = STATUS_COLOR[skill.healthStatus];
-          const skillLabel = simpleMode ? displayLabel(skill.name) : skill.name;
+          const skillLabel = skill.name;
 
           return (
             <div
