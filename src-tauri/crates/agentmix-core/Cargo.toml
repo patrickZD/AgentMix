@@ -1,6 +1,6 @@
 [package]
 name = "agentmix-core"
-version = "0.1.0"
+version = "0.1.5"
 edition = "2021"
 description = "AgentMix business logic (scan, parse, health, compose, export) — tauri-free so it tests headlessly"
 

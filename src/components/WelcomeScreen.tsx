@@ -155,7 +155,7 @@ export default function WelcomeScreen({
             onClick={(e) => e.preventDefault()}
           >
             <ZapIcon size={11} />
-            v0.1.0
+            v0.1.5
           </a>
         </div>
       </div>
