@@ -42,7 +42,9 @@
     "search": "Search skills",
     "filterAll": "All",
     "showInvalid": "Show invalid candidates",
-    "hideInvalid": "Hide invalid candidates"
+    "hideInvalid": "Hide invalid candidates",
+    "dropHint": "Drag a folder here, or click +",
+    "dropActive": "Drop to import"
   },
   "skillItem": {
     "alreadyInCombo": "Already in Combo",

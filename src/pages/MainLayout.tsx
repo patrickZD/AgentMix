@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   HeartPulseIcon,
   BookOpenIcon,
@@ -390,6 +390,9 @@ export default function MainLayout() {
     validate: validateMerge,
   } = useMergeStore();
 
+  // True while a folder is dragged over the window (T26b drop-target highlight).
+  const [dragging, setDragging] = useState(false);
+
   // Source columns for the workbench, resolved from the live combo items.
   const mergeSources = comboItems.filter((c) => mergeSourceIds.includes(c.id));
 
@@ -489,6 +492,8 @@ export default function MainLayout() {
 
   // Drag-drop entry, equivalent to the folder button. The webview API is only
   // available in the desktop runtime, so it is imported lazily and guarded.
+  // enter/over highlight the source panel as a drop target; drop imports and
+  // clears the highlight; leave clears it (T26b).
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     let cancelled = false;
@@ -496,7 +501,13 @@ export default function MainLayout() {
       try {
         const { getCurrentWebview } = await import('@tauri-apps/api/webview');
         const un = await getCurrentWebview().onDragDropEvent((event) => {
-          if (event.payload.type === 'drop') {
+          const kind = event.payload.type;
+          if (kind === 'enter' || kind === 'over') {
+            setDragging(true);
+          } else if (kind === 'leave') {
+            setDragging(false);
+          } else if (kind === 'drop') {
+            setDragging(false);
             for (const path of event.payload.paths) void scanAndAdd(path);
           }
         });
@@ -591,6 +602,7 @@ export default function MainLayout() {
                 onScanProject={handleScanProject}
                 onAddToCombo={handleAddToCombo}
                 onToggleShowInvalid={toggleShowInvalid}
+                dragging={dragging}
                 simpleMode={simpleMode}
               />
             </div>

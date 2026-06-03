@@ -42,7 +42,9 @@
     "search": "搜索 Skill",
     "filterAll": "全部",
     "showInvalid": "显示无效候选",
-    "hideInvalid": "隐藏无效候选"
+    "hideInvalid": "隐藏无效候选",
+    "dropHint": "拖拽文件夹到此，或点击 +",
+    "dropActive": "松手即导入"
   },
   "skillItem": {
     "alreadyInCombo": "已在组合中",
