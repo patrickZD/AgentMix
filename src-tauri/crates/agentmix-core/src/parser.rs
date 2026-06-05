@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use agentmix_types::AssetCategory;
 
-/// Max lengths from the SKILL.md spec (DESIGN.md §核心概念). Over-limit is a
+/// Max lengths from the SKILL.md spec (PRD.md "核心概念"). Over-limit is a
 /// health warning (computed in the health module, T9), not an `invalid`
 /// classification — `invalid` is reserved for the criteria in `classify`.
 pub const NAME_MAX_LEN: usize = 64;

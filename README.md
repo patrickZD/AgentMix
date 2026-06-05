@@ -51,7 +51,7 @@ target-project/
 
 ## 贡献
 
-见 `docs/CONTRIBUTING.md`（命令速查、架构红线、类型生成、测试约定）。改动前先读 `docs/DESIGN.md` 确认 v0.1 范围。变更记录见 `docs/CHANGELOG.md`。
+见 `docs/CONTRIBUTING.md`（命令速查、架构红线、类型生成、测试约定）。产品定位见 `docs/PRD.md`，工程设计见 `docs/DESIGN.md`，版本路线图见 `docs/ROADMAP.md`，关键设计决策见 `docs/decisions/`。变更记录见 `docs/CHANGELOG.md`。
 
 ## 许可
 
