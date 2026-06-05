@@ -1,4 +1,4 @@
-# AgentMix v0.1 Alpha 开发任务拆分
+# AgentMix v0.1.0 Alpha 开发任务拆分
 
 ## Context
 

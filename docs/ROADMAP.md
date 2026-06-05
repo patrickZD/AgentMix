@@ -39,25 +39,41 @@ v0.1 明确**不**包含：手动合并工作台、自动更新、i18n 翻译完
 
 ## Phase 2：v0.2——跨平台与 AI 生态
 
-跨平台 + 把整套 AI 增强能力以"统一密钥入口 + 强制 diff 预览"为契约一次性铺开，同时把"复现"与"可发现"的能力做完整。
+v0.2 拆成五个子里程碑顺序交付（详见 `tasks/v0.2.0/plan.md` 文末大纲），不再一次性铺开。
 
-- macOS / Linux 平台支持，**原生菜单栏**（macOS 文化要求）
-- 多目标导出：Cursor / Codex CLI / OpenCode / Gemini CLI（按 ToolAdapter 配置，DESIGN.md §6.4）
-- 全局路径导出（作用范围选择「项目级 / 全局」，选「全局」时路径由 AgentMix 自动解析为 `~/.claude/skills/`，用户无需知道该路径）+ 配置集（Lock-only / Bundle 两种格式，DESIGN.md §6.7）
+### v0.2.0 多目标导出引擎（进行中）
+
+- 多目标导出：Claude Code / Cursor / Codex CLI / OpenCode / Gemini CLI + custom（按 ToolAdapter 配置，DESIGN.md §6.4）
+- 全局路径导出（作用范围选「项目级 / 全局」，选「全局」时路径由 AgentMix 自动解析，用户无需知道该路径）
+- **RuntimeConflict 显化**（多目标导出后才真正显化，警告级不阻断，DESIGN.md §6.2）
+- **跨工具兼容性预检**（Capability Linter，内嵌 compatibility-matrix 逐字段校验，DESIGN.md §6.10）
+
+### v0.2.1 复现与来源生态
+
+- **Git URL 导入**（DESIGN.md §6.8 配套）
+- **Source Tracking + 来源仓库更新检测**（DESIGN.md §6.8）
+- **`.agentmix.lock` 版本锁**（DESIGN.md §6.9）
+- 配置集 Preset / Bundle（DESIGN.md §6.7）
+- tool-adapters / compatibility-matrix 远程刷新与新鲜度提示
+
+### v0.2.2 AI 增强套件
+
 - **OS keychain 密钥管理**（`keyring` crate，DESIGN.md §9.7）——所有 AI 功能的统一入口
 - **AI 合并工作台 AI 辅助模式**（DESIGN.md §6.3）
 - **AI 增强健康检查**：语义重合度、内容质量、脚本行为分析（DESIGN.md §6.5）
 - **AI 一键修复**：每条健康问题旁按钮，**强制 diff 预览**（DESIGN.md §6.5）
 - **语义聚类与颜色高亮**：Voyage embedding API + HDBSCAN（DESIGN.md §6.18）
-- **Skill 脚手架（内嵌 skill-creator 方法论）**（DESIGN.md §6.13）
-- **`.agentmix.lock` 版本锁**（DESIGN.md §6.9）
-- **Source Tracking + 来源仓库更新检测**（DESIGN.md §6.8）
-- **Git URL 导入**（DESIGN.md §6.8 配套）
-- **跨工具兼容性预检**（Capability Linter，DESIGN.md §6.10）
-- **Skill 引用关系检测**（DESIGN.md §6.14）
-- **RuntimeConflict 显化**（多目标导出后才真正显化，DESIGN.md §6.2）
+
+### v0.2.3 跨平台
+
+- macOS / Linux 平台支持，**原生菜单栏**（macOS 文化要求）
+
+### v0.2.4 散件
+
 - Skill 编辑器（内置 CodeMirror 实时预览与 frontmatter 校验，DESIGN.md §6.6）
-- **`scripts/` 安全规则误报白名单**（DESIGN.md §6.11）：v0.1 的"每次都强制确认"在长期使用中会让用户麻木点同意，v0.2 引入按 `(source_uri, subpath, rule_id, content_hash)` 粒度的本地白名单，文件内容变化即失效；不随 lock / Bundle 分发
+- **Skill 脚手架（内嵌 skill-creator 方法论）**（DESIGN.md §6.13）
+- **Skill 引用关系检测**（DESIGN.md §6.14）
+- **`scripts/` 安全规则误报白名单**（DESIGN.md §6.11）：v0.1 的"每次都强制确认"在长期使用中会让用户麻木点同意，v0.2.4 引入按 `(source_uri, subpath, rule_id, content_hash)` 粒度的本地白名单，文件内容变化即失效；不随 lock / Bundle 分发
 
 ## Phase 3：v0.3——体验扩展与生态打通
 

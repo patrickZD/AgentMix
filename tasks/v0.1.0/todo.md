@@ -1,4 +1,4 @@
-# AgentMix v0.1 Alpha — TODO
+# AgentMix v0.1.0 Alpha — TODO
 
 任务详情见同目录 `plan.md`。每个任务含验收标准与验证命令；checkpoint 处人工复核后再继续。
 
