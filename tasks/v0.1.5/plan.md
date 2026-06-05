@@ -2,7 +2,7 @@
 
 ## Context
 
-v0.1.0 alpha 已于 2026-06-02 发布（`pnpm check:all` 全绿，安装包上 GitHub Releases）。下一阶段按 `docs/DESIGN.md` §12 Phase 1.5 执行：**alpha → beta 过渡**，让产品进入"长期使用可以接受"的状态。范围五块：
+v0.1.0 alpha 已于 2026-06-02 发布（`pnpm check:all` 全绿，安装包上 GitHub Releases）。下一阶段按 `docs/ROADMAP.md` Phase 1.5 执行：**alpha → beta 过渡**，让产品进入"长期使用可以接受"的状态。范围五块：
 
 1. **自动更新机制**（§6.16，决策 17 / 19）：tauri-plugin-updater + GitHub Releases，CI 签名
 2. **手动合并工作台**（§6.3，流程 3）：多列布局 + 实时校验 + frontmatter 重组，冲突入口 + 通用入口
@@ -24,7 +24,7 @@ v0.1.0 alpha 已于 2026-06-02 发布（`pnpm check:all` 全绿，安装包上 G
 
 1. **发布管道**：搭 GitHub Actions release workflow（按决策 17：CI 签名，私钥存 Actions secret，secret 由用户在 repo settings 配置，私钥不入库）。
 2. **合并工作台入口**：冲突解决第三按钮 + 组合清单通用"合并为新 Skill"入口都做（完整对齐决策 5）。
-3. **计划文件**：v0.1 的 `tasks/plan.md` / `tasks/todo.md` 保留为历史记录；本阶段使用 `plan-v0.1.5.md` / `todo-v0.1.5.md`，任务编号从 T19 续排（CHANGELOG 已引用 T18，避免编号歧义）。
+3. **计划文件**：v0.1 的计划保留为历史记录（现位于 `tasks/v0.1.0/`）；本阶段计划位于 `tasks/v0.1.5/`，任务编号从 T19 续排（CHANGELOG 已引用 T18，避免编号歧义）。（v0.2.0 起统一改为按版本分目录 `tasks/<version>/{spec,plan,todo}.md`，本文件已随迁移。）
 4. **新增依赖**（按禁止清单需用户确认后引入，沿用 T13 zip crate 先确认惯例）：Rust crate `tauri-plugin-updater`、`tauri-plugin-process`（重启用）。**零新 npm 依赖**——updater 走 Rust 命令 + typed invoke（沿用 T8 惯例）。Inter 字体文件为静态资产（OFL 许可证文件随附），不算依赖。
 
 ## 架构红线

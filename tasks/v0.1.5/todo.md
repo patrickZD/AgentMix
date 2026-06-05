@@ -1,6 +1,6 @@
 # AgentMix v0.1.5 — TODO
 
-任务详情见 `tasks/plan-v0.1.5.md`。每个任务含验收标准与验证命令；checkpoint 处人工复核后再继续。编号续接 v0.1（T1–T18 见 `tasks/todo.md`）。
+任务详情见同目录 `plan.md`。每个任务含验收标准与验证命令；checkpoint 处人工复核后再继续。编号续接 v0.1（T1–T18 见 `tasks/v0.1.0/todo.md`）。
 
 ## Phase 0：v0.1 收尾
 - [x] **T19** v0.1 遗留核验收口（DoD-1 / DoD-6 人工实测回填 CHANGELOG【待用户实测报数】；WebDriver UI e2e 加固后重跑 ✔ 2026-06-02 2 spec 全过，已回填 CHANGELOG）— 依赖：无 — S
