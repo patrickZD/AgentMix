@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { validateMergeDraft } from '@/lib/merge';
 import type { MergeDraftValidation } from '@/types';
 
-// Merge-workbench session state (DESIGN.md §6.3, T24): the source combo items
+// Merge-workbench session state (DESIGN.md §1.3, T24): the source combo items
 // being merged, the draft text, the single-choice scripts source, and the live
 // validation result from the Rust command. The confirm gate is
 // `validation?.canConfirm === true` — a missing validation keeps it shut.

@@ -1,4 +1,4 @@
-//! Recursive directory scanning and SKILL.md discovery (DESIGN.md §6.1).
+//! Recursive directory scanning and SKILL.md discovery (DESIGN.md §1.1).
 
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -19,7 +19,7 @@ const SKIP_DIRS: &[&str] = &[".git", "node_modules", "target"];
 /// Largest SKILL.md read into memory during a scan. A SKILL.md is markdown text
 /// with frontmatter at the top; 1 MiB is far above any legitimate file. Bounding
 /// the read keeps a hostile directory of huge files from exhausting memory; an
-/// over-cap file is classified invalid rather than parsed (DESIGN.md §6.11).
+/// over-cap file is classified invalid rather than parsed (DESIGN.md §1.11).
 const MAX_SKILL_MD_BYTES: u64 = 1024 * 1024;
 
 /// Scan a project directory at the default depth.

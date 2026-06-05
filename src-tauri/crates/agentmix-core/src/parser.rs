@@ -1,4 +1,4 @@
-//! SKILL.md frontmatter parsing and three-way classification (DESIGN.md §6.1).
+//! SKILL.md frontmatter parsing and three-way classification (DESIGN.md §1.1).
 
 use std::collections::HashMap;
 

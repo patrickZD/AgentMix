@@ -175,7 +175,7 @@ fn merged_path_conflict_merge_resolves_and_exports_draft() {
 
     // Resolve via the merge workbench (v0.1.5 manual merge): the two colliding
     // items are replaced by ONE content-backed merged item whose SKILL.md is
-    // the user's draft, keeping repo-b's scripts (single-choice, §6.3).
+    // the user's draft, keeping repo-b's scripts (single-choice, §1.3).
     let draft = "---\nname: code-review\ndescription: Use when reviewing code (merged from A and B).\n---\n## Merged guidance\nA body + B body\n";
     let merged = ExportRequestItem {
         asset_id: "merged-code-review".to_string(),

@@ -19,7 +19,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [features]
 # Exposes a test-only command so the WebDriver e2e suite can feed folder paths
 # past the native picker (which WebDriver cannot drive). Off by default, so it is
-# never compiled into a production build (DESIGN.md §8 / no production bypass).
+# never compiled into a production build (DESIGN.md §3 / no production bypass).
 e2e = []
 
 [build-dependencies]
@@ -34,5 +34,5 @@ serde_json = "1"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 # Auto-update via GitHub Releases latest.json with signature verification
-# (DESIGN.md §6.16, plan T20; dependency confirmed in plan decision 4).
+# (DESIGN.md §1.16, plan T20; dependency confirmed in plan decision 4).
 tauri-plugin-updater = "2"

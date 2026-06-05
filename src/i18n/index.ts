@@ -5,7 +5,7 @@ import zh from "./zh.json";
 
 export type Lang = "en" | "zh";
 
-// Where a manual language choice is persisted (DESIGN.md §7: the selection is
+// Where a manual language choice is persisted (DESIGN.md §2: the selection is
 // remembered across launches). localStorage survives in the Tauri WebView.
 const LANG_STORAGE_KEY = "agentmix.lang";
 

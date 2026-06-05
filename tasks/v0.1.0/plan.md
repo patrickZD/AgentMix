@@ -25,7 +25,7 @@ AgentMix 是本地开源桌面工具，从任意项目扫描 / 挑选 / 组合 A
 
 ## 类型契约来源
 
-DESIGN.md 第 716 行：**Rust struct/enum 经 `tauri-specta` 生成 TS 类型**，是跨端单一来源。现有手写的 `react/src/types.ts` 是 Pixso 草稿（`SkillStatus='healthy'|...`、`Skill` 无 Asset 抽象），与 DESIGN.md 模型不一致——按红线作废，仅保留纯 UI 类型（如 `AppView`）。后端权威模型：`Asset` / `Skill` / `SourceProject` / `HealthIssue` / `Composition` / `ExportConflict` / `ExportPlan` / `FileOperation` / `BackupPlan` / `ManagedManifest` / `ExecutionReport`（定义见 DESIGN.md §8）。
+DESIGN.md 第 716 行：**Rust struct/enum 经 `tauri-specta` 生成 TS 类型**，是跨端单一来源。现有手写的 `react/src/types.ts` 是 Pixso 草稿（`SkillStatus='healthy'|...`、`Skill` 无 Asset 抽象），与 DESIGN.md 模型不一致——按红线作废，仅保留纯 UI 类型（如 `AppView`）。后端权威模型：`Asset` / `Skill` / `SourceProject` / `HealthIssue` / `Composition` / `ExportConflict` / `ExportPlan` / `FileOperation` / `BackupPlan` / `ManagedManifest` / `ExecutionReport`（定义见 DESIGN.md §3）。
 
 ## 依赖图
 

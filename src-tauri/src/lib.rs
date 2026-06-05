@@ -78,7 +78,7 @@ fn detect_conflicts(candidates: Vec<ConflictCandidate>) -> Vec<ExportConflict> {
 /// Live validation for the merge workbench draft (T24). Thin wrapper over the
 /// tauri-free merge logic, which reuses parser/health and the exporter's
 /// safe-segment rule — the frontend renders the result and never re-implements
-/// a second rule set (DESIGN.md §6.3).
+/// a second rule set (DESIGN.md §1.3).
 #[tauri::command]
 fn validate_merge_draft(
     draft: String,
@@ -98,14 +98,14 @@ fn agentmix_root() -> Result<PathBuf, String> {
 }
 
 /// Resolve the per-user backups root: ~/.agentmix/backups (never inside a target
-/// project). Backups are isolated here per DESIGN.md §6.2 / the architecture red
+/// project). Backups are isolated here per DESIGN.md §1.2 / the architecture red
 /// lines.
 fn backups_root() -> Result<PathBuf, String> {
     Ok(agentmix_root()?.join("backups"))
 }
 
 /// Build the Dry-run ExportPlan for the selected assets into the target project.
-/// Only produces the plan; no user files are written (DESIGN.md §6.12).
+/// Only produces the plan; no user files are written (DESIGN.md §1.12).
 #[tauri::command]
 fn build_export_plan(
     items: Vec<ExportRequestItem>,
@@ -124,11 +124,11 @@ fn build_export_plan(
 
 /// Execute the plan: back up, write the selected skills to `.claude/skills/`,
 /// then the manifest. The only command allowed to modify user files; it
-/// delegates to the single writer in agentmix-core (DESIGN.md §8.2).
+/// delegates to the single writer in agentmix-core (DESIGN.md §3.2).
 /// `acknowledged_asset_ids` are the assets whose security risk the user
-/// explicitly accepted in the preview (per-skill, no bulk bypass, §6.11).
+/// explicitly accepted in the preview (per-skill, no bulk bypass, §1.11).
 /// `overwrite_confirmed` is the user's explicit consent to overwrite files that
-/// already exist at the target (§6.2); execute refuses an unconfirmed overwrite.
+/// already exist at the target (§1.2); execute refuses an unconfirmed overwrite.
 #[tauri::command]
 fn execute_export(
     plan: ExportPlan,
@@ -140,7 +140,7 @@ fn execute_export(
 }
 
 /// Update-check network timeout; past this the check silently reports
-/// no-update and the next call retries (§6.16 fail-quiet contract).
+/// no-update and the next call retries (§1.16 fail-quiet contract).
 const UPDATE_CHECK_TIMEOUT_SECS: u64 = 10;
 /// Download timeout for install_update; package downloads are MB-sized, so
 /// this is far looser than the check timeout.
@@ -179,7 +179,7 @@ fn update_result_from(latest: Option<CachedUpdate>) -> UpdateCheckResult {
     }
 }
 
-/// Check GitHub Releases for a newer version (DESIGN.md §6.16). A successful
+/// Check GitHub Releases for a newer version (DESIGN.md §1.16). A successful
 /// result is cached to ~/.agentmix/update-check.json for
 /// UPDATE_CHECK_CACHE_TTL_HOURS; within the TTL the cache answers without a
 /// network request. Network failure / timeout silently reports no-update and

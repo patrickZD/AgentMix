@@ -18,7 +18,7 @@ pub enum AssetKind {
     Skill,
 }
 
-/// Three-way scan classification (DESIGN.md §6.1).
+/// Three-way scan classification (DESIGN.md §1.1).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "kebab-case")]
 pub enum AssetCategory {
@@ -94,7 +94,7 @@ pub struct ConflictCandidate {
     pub exported_name: String,
 }
 
-/// Why an export conflict was raised (DESIGN.md §6.2). Both block export.
+/// Why an export conflict was raised (DESIGN.md §1.2). Both block export.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub enum ConflictKind {
@@ -104,7 +104,7 @@ pub enum ConflictKind {
     TargetExists,
     /// A selected asset's exported name is unsafe as a directory segment (empty,
     /// `.`/`..`, or contains a path separator / drive prefix). It must be renamed
-    /// before export so every write stays inside `.claude/skills/` (§6.11).
+    /// before export so every write stays inside `.claude/skills/` (§1.11).
     InvalidName,
 }
 
@@ -144,7 +144,7 @@ pub enum FileSource {
     Content { content: String },
 }
 
-/// One planned file write (DESIGN.md §8.2 FileOperation). Carries the byte
+/// One planned file write (DESIGN.md §3.2 FileOperation). Carries the byte
 /// source so execute writes exactly what the plan listed — preview and
 /// execution can't diverge (DoD-3). `source` extends the design model, which
 /// named only the asset; the source is needed for plan-driven execution.
@@ -200,7 +200,7 @@ pub struct ManagedManifest {
 
 /// Where an export item's files come from (T23). `Directory` copies a scanned
 /// asset's whole directory. `Content` is a content-backed asset (a manual
-/// merge, DESIGN.md §6.3): the primary file is written from the draft string,
+/// merge, DESIGN.md §1.3): the primary file is written from the draft string,
 /// and `scripts_from_dir` optionally names ONE source asset directory whose
 /// `scripts/` subtree is kept (the user's single-choice in the workbench).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
@@ -230,7 +230,7 @@ pub struct ExportRequestItem {
 }
 
 /// The single object the Dry-run preview renders and execute consumes
-/// (DESIGN.md §8.2). v0.1 targets one directory (Claude Code project-level), so
+/// (DESIGN.md §3.2). v0.1 targets one directory (Claude Code project-level), so
 /// the multi-target / runtime-warning fields are omitted until v0.2.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -238,10 +238,10 @@ pub struct ExportPlan {
     /// Resolved target directory: <project>/.claude/skills.
     pub target_dir: String,
     pub operations: Vec<FileOperation>,
-    /// Must be empty before execute is allowed (DESIGN.md §8.2).
+    /// Must be empty before execute is allowed (DESIGN.md §3.2).
     pub conflicts: Vec<ExportConflict>,
     pub backups: Vec<BackupPlan>,
-    /// Per-asset security pre-check (DESIGN.md §6.11). A report with
+    /// Per-asset security pre-check (DESIGN.md §1.11). A report with
     /// `requiresConfirmation` must be acknowledged before execute will write
     /// that asset; the preview renders these and the user accepts per-skill.
     pub security_reports: Vec<SkillSecurityReport>,
@@ -264,7 +264,7 @@ pub struct ExecutionReport {
 }
 
 /// Static-scan rule categories for suspicious script operations (DESIGN.md
-/// §6.11). Serialized as the canonical rule id shown in the UI, e.g.
+/// §1.11). Serialized as the canonical rule id shown in the UI, e.g.
 /// "network-download-execute". AgentMix surfaces these; it does not certify safety.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "kebab-case")]
@@ -279,7 +279,7 @@ pub enum SecurityRule {
     ReverseShellOrMiner,
 }
 
-/// One high-risk line found in a script (DESIGN.md §6.11). Carries the rule, the
+/// One high-risk line found in a script (DESIGN.md §1.11). Carries the rule, the
 /// script path relative to the skill directory, the 1-based line number, and the
 /// line text so the UI can highlight exactly what matched.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
@@ -295,7 +295,7 @@ pub struct SecurityFinding {
 }
 
 /// A non-text asset carried by a skill, listed so the user knows what is inside
-/// (DESIGN.md §6.11). Shown but not judged — AgentMix cannot rule on a binary's
+/// (DESIGN.md §1.11). Shown but not judged — AgentMix cannot rule on a binary's
 /// behavior without executing it, so binaries never gate export by themselves.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -306,7 +306,7 @@ pub struct BinaryAsset {
     pub size_bytes: u64,
 }
 
-/// Deterministic security pre-check result for one skill (DESIGN.md §6.11).
+/// Deterministic security pre-check result for one skill (DESIGN.md §1.11).
 /// AgentMix promises "risk visible", not "safe": findings / oversize / binaries
 /// are surfaced. `requiresConfirmation` means the skill is denied import/export
 /// until the user explicitly accepts its risk (no bulk bypass).
@@ -326,7 +326,7 @@ pub struct SkillSecurityReport {
     pub requires_confirmation: bool,
 }
 
-/// Live validation result for a merge-workbench draft (DESIGN.md §6.3, T24).
+/// Live validation result for a merge-workbench draft (DESIGN.md §1.3, T24).
 /// Reuses the parser/health single source of truth — the frontend renders
 /// these and never re-implements the rules. `can_confirm` is the confirm-gate:
 /// false on any blocking problem (error-level issue, name collision with the
@@ -347,7 +347,7 @@ pub struct MergeDraftValidation {
     pub can_confirm: bool,
 }
 
-/// Result of an update check against GitHub Releases (DESIGN.md §6.16).
+/// Result of an update check against GitHub Releases (DESIGN.md §1.16).
 /// `available == false` covers both "already up to date" and the silent
 /// network-failure path (fail quiet, retry next launch).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]

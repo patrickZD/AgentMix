@@ -315,7 +315,7 @@ export default function ExportPanel({
             )}
 
             {/* Security pre-check — per-skill risk, acknowledged individually
-                (DESIGN.md §6.11, no bulk bypass). */}
+                (DESIGN.md §1.11, no bulk bypass). */}
             {riskReports.map((r) => (
               <div
                 key={r.assetId}

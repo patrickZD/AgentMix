@@ -2,15 +2,15 @@ import type { ExportPlan } from '@/types';
 
 // Whether a built ExportPlan may be executed, and why not. NameCollision must be
 // resolved in the combo (rename / keep one); TargetExists is cleared by an
-// explicit overwrite confirmation in the preview (DESIGN.md §6.2); each
+// explicit overwrite confirmation in the preview (DESIGN.md §1.2); each
 // high-risk security report must be acknowledged per-skill, no bulk bypass
-// (DESIGN.md §6.11).
+// (DESIGN.md §1.11).
 export interface ExportGate {
   canExport: boolean;
   nameCollisions: number;
   targetExists: number;
   // Exported names that are unsafe as a directory segment; must be renamed
-  // (the Rust execute gate refuses them too — DESIGN.md §6.11).
+  // (the Rust execute gate refuses them too — DESIGN.md §1.11).
   invalidNames: number;
   needsOverwriteConfirm: boolean;
   // High-risk reports still awaiting their per-skill acknowledgment.

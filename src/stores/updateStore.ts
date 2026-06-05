@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { checkForUpdate, installUpdate } from '@/lib/updater';
 import type { UpdateDownloadProgress } from '@/types';
 
-// Update-check UI state (DESIGN.md §6.16, T21): badge, modal, the persisted
+// Update-check UI state (DESIGN.md §1.16, T21): badge, modal, the persisted
 // "skip this version" choice and the auto-check switch. Persistence uses the
 // same mechanism as the language choice (localStorage, see i18n/index.ts).
 const SKIPPED_VERSION_KEY = 'agentmix.skippedUpdateVersion';
@@ -78,7 +78,7 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
         upToDate: !result.available,
       });
     } catch {
-      // Fail quiet (§6.16): the backend already reports network failure as
+      // Fail quiet (§1.16): the backend already reports network failure as
       // no-update; an IPC error must not surface an error dialog either.
       set({ checking: false });
     }

@@ -2,7 +2,7 @@ import { DownloadIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { UpdateDownloadProgress } from '@/types';
 
-// Update prompt (DESIGN.md §6.16, T21): release notes plus the three choices —
+// Update prompt (DESIGN.md §1.16, T21): release notes plus the three choices —
 // install now / later / skip this version. While installing it shows download
 // progress and the restart hint; the backend restarts the app on success.
 interface UpdateModalProps {

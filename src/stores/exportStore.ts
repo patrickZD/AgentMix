@@ -39,7 +39,7 @@ interface ExportState {
   buildError: string | null;
   overwriteConfirmed: boolean;
   // Asset ids whose security risk the user explicitly accepted (per-skill, no
-  // bulk bypass — DESIGN.md §6.11). Passed to execute, which refuses any
+  // bulk bypass — DESIGN.md §1.11). Passed to execute, which refuses any
   // high-risk asset not listed here.
   acknowledgedRiskIds: string[];
   executing: boolean;

@@ -22,7 +22,7 @@ const features = [
   { icon: `❤️`, titleKey: `welcome.featureHealthTitle`, descKey: `welcome.featureHealthDesc` },
 ];
 
-// The two non-folder entry points from the design (DESIGN.md §7): both are
+// The two non-folder entry points from the design (DESIGN.md §2): both are
 // deferred to v0.2, shown disabled so the entry exists but cannot be used yet.
 const deferredEntries = [
   { icon: GlobeIcon, labelKey: `welcome.importGitUrl` },

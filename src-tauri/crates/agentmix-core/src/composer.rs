@@ -1,4 +1,4 @@
-//! Composition + export-conflict detection (DESIGN.md §6.2, §8.3).
+//! Composition + export-conflict detection (DESIGN.md §1.2, §3.3).
 //!
 //! v0.1 targets a single directory (Claude Code project-level `.claude/skills/`),
 //! so the four-dimension ExportConflict key (tool, scope, path, exported_name)
@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use agentmix_types::{ConflictCandidate, ConflictKind, ExportConflict};
 
 /// Detect v0.1 export conflicts: candidates whose exported name collides
-/// case-insensitively (Windows rule, DESIGN.md §9.8). Returns one
+/// case-insensitively (Windows rule, DESIGN.md §4.8). Returns one
 /// `ExportConflict` per colliding name (>= 2 candidates), in first-seen order.
 pub fn detect_export_conflicts(candidates: &[ConflictCandidate]) -> Vec<ExportConflict> {
     // Group ids by the normalized (lowercased) name, preserving first-seen order

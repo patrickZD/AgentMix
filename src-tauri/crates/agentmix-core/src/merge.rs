@@ -1,4 +1,4 @@
-//! Merge-workbench draft validation (DESIGN.md §6.3, T24).
+//! Merge-workbench draft validation (DESIGN.md §1.3, T24).
 //!
 //! One function the `validate_merge_draft` command wraps. It reuses the
 //! parser + health single source of truth and the exporter's safe-segment

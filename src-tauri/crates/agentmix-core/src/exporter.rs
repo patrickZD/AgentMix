@@ -1,4 +1,4 @@
-//! Export-plan construction and execution (DESIGN.md §6.12, §8.2).
+//! Export-plan construction and execution (DESIGN.md §1.12, §3.2).
 //!
 //! `build_export_plan` builds an `ExportPlan` and writes nothing. `execute` is
 //! the ONLY place that writes user files, and it consumes the same plan object
@@ -24,7 +24,7 @@ use crate::security::scan_skill_security;
 
 const MANIFEST_FILE: &str = ".agentmix-manifest.json";
 const SKILL_FILE: &str = "SKILL.md";
-/// Subdirectory of a source asset kept for a content-backed item (§6.3).
+/// Subdirectory of a source asset kept for a content-backed item (§1.3).
 const SCRIPTS_DIR: &str = "scripts";
 
 /// The directory the security pre-check scans for an item: a directory-backed
@@ -44,7 +44,7 @@ fn item_scan_dir(item: &ExportRequestItem) -> Option<&str> {
 /// target skills dir: non-empty, within the SKILL.md `name` length, and free of
 /// `.`/`..` traversal, path separators, or a drive prefix. This is the security
 /// boundary that keeps every export write confined to `.claude/skills/`
-/// (DESIGN.md §6.11). Enforced in `execute` (the single writer) and surfaced in
+/// (DESIGN.md §1.11). Enforced in `execute` (the single writer) and surfaced in
 /// the preview, so a renamed asset can never steer a write outside the target.
 /// Also consulted by the merge-draft validation (crate::merge) so the
 /// workbench's confirm gate matches the export gate exactly.
@@ -76,7 +76,7 @@ fn lexical_parts(path: &str) -> Option<Vec<&str>> {
 /// True when `candidate` lexically resolves to `base` or a path inside it. Both
 /// are forward-slashed (path_string form) and compared case-insensitively
 /// (Windows). This is the write-time containment gate: even a tampered plan
-/// cannot direct a write outside the target dir (DESIGN.md §6.11, §8.2).
+/// cannot direct a write outside the target dir (DESIGN.md §1.11, §3.2).
 fn is_within(base: &str, candidate: &str) -> bool {
     let (Some(base_parts), Some(cand_parts)) = (lexical_parts(base), lexical_parts(candidate))
     else {
@@ -129,7 +129,7 @@ pub fn build_export_plan(
         }
         let skill_target = target_dir.join(&item.exported_name);
 
-        // Static security pre-check (DESIGN.md §6.11); same scan runs at import.
+        // Static security pre-check (DESIGN.md §1.11); same scan runs at import.
         // A report with requiresConfirmation gates this asset in execute below.
         // A content-backed item without kept scripts has no script tree to scan,
         // so it carries no report and nothing to confirm.
@@ -138,7 +138,7 @@ pub fn build_export_plan(
         }
 
         // A directory with this name already at the target blocks export until
-        // the user confirms overwrite in the preview (DESIGN.md §6.2).
+        // the user confirms overwrite in the preview (DESIGN.md §1.2).
         if skill_target.exists() {
             conflicts.push(ExportConflict {
                 kind: ConflictKind::TargetExists,
@@ -197,7 +197,7 @@ pub fn build_export_plan(
                 }
                 content_hash_of(source_dir)
             }
-            // Content-backed item (manual merge, §6.3): the primary file is
+            // Content-backed item (manual merge, §1.3): the primary file is
             // written verbatim from the draft — execute must produce it
             // byte-identical (DoD-3). Kept scripts are copied from the chosen
             // source directory.
@@ -277,7 +277,7 @@ pub fn build_export_plan(
     }
 }
 
-/// Execute the plan. The ONLY place that writes user files (DESIGN.md §8.2).
+/// Execute the plan. The ONLY place that writes user files (DESIGN.md §3.2).
 /// Consumes the same `ExportPlan` the preview rendered, so the files written
 /// match the previewed operations exactly (DoD-3). Order: refuse on an
 /// unresolved NameCollision or an unacknowledged security risk, write the backup
@@ -286,7 +286,7 @@ pub fn build_export_plan(
 /// SKILL.md `name:` field. `acknowledged_asset_ids` are the assets whose security
 /// risk the user explicitly accepted in the preview (per-skill, no bulk bypass);
 /// the gate is enforced here too so a high-risk asset can never be written
-/// silently (DESIGN.md §6.11). `overwrite_confirmed` is the user's explicit
+/// silently (DESIGN.md §1.11). `overwrite_confirmed` is the user's explicit
 /// consent (given in the preview) to overwrite files that already exist at the
 /// target; without it, a `TargetExists` conflict refuses the write here too, so
 /// the preview→confirm→execute guarantee holds even on a stale or tampered plan.
@@ -306,7 +306,7 @@ pub fn execute(
 
     // Overwriting files already at the target needs the user's explicit consent
     // from the preview; refuse here too so a stale or tampered plan can't
-    // overwrite without it (the frontend gate is not authoritative, DESIGN.md §6.2).
+    // overwrite without it (the frontend gate is not authoritative, DESIGN.md §1.2).
     if !overwrite_confirmed
         && plan
             .conflicts
@@ -317,7 +317,7 @@ pub fn execute(
     }
 
     // The plan must target a `.claude/skills` directory; refuse a tampered plan
-    // that points the writes elsewhere (DESIGN.md §6.11, §8.2).
+    // that points the writes elsewhere (DESIGN.md §1.11, §3.2).
     if !plan.target_dir.ends_with("/.claude/skills") {
         return Err("invalid target directory in plan".to_string());
     }
@@ -325,7 +325,7 @@ pub fn execute(
     // Reject unsafe export names before anything touches the filesystem: a name
     // with a path separator, drive prefix, or `..` could steer a write outside
     // `.claude/skills/`. Enforced here (the single writer) so a tampered plan or
-    // a direct IPC call cannot bypass the preview's check (DESIGN.md §6.11).
+    // a direct IPC call cannot bypass the preview's check (DESIGN.md §1.11).
     for item in items {
         if !is_safe_segment(&item.exported_name) {
             return Err(format!(
@@ -353,7 +353,7 @@ pub fn execute(
     // stale or tampered plan can't relax it (the plan's security_reports are for
     // the preview only). A high-risk asset is refused unless explicitly accepted.
     // For a content-backed item the scanned dir is the one its kept scripts come
-    // from — same write-time-rescan semantics (§6.3, T23).
+    // from — same write-time-rescan semantics (§1.3, T23).
     for item in items {
         let Some(scan_dir) = item_scan_dir(item) else {
             continue;
@@ -440,7 +440,7 @@ pub fn execute(
     })
 }
 
-/// Store/compare paths with forward slashes (DESIGN.md §9.8).
+/// Store/compare paths with forward slashes (DESIGN.md §4.8).
 fn path_string(p: &Path) -> String {
     p.to_string_lossy().replace('\\', "/")
 }
@@ -461,7 +461,7 @@ fn is_skill_md_rel(rel: &Path) -> bool {
 /// exported name. Used by both the planner (for the operation size) and execute
 /// (for the actual write), so the two agree. Returns an error if the source is
 /// unreadable, so execute fails loudly instead of writing an empty file
-/// (DESIGN.md §7.12); the planner treats an unreadable source as size 0.
+/// (DESIGN.md §2.12); the planner treats an unreadable source as size 0.
 fn exported_skill_md(skill_md: &Path, exported_name: &str) -> Result<Vec<u8>, String> {
     let content = std::fs::read_to_string(skill_md)
         .map_err(|e| format!("cannot read {}: {e}", skill_md.to_string_lossy()))?;
@@ -1152,7 +1152,7 @@ mod tests {
         let items = vec![content_item("m", draft, "merged-risky", Some(&src))];
 
         let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
-        // The kept-scripts source is scanned like any asset dir (§6.3).
+        // The kept-scripts source is scanned like any asset dir (§1.3).
         let report = plan
             .security_reports
             .iter()

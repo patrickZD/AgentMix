@@ -41,6 +41,6 @@
 - [x] 人工复核后执行 T29
 
 ## 开放问题（见 plan §开放问题）
-1. 草稿区 Markdown 实时预览：默认纯文本 + 校验状态，预览并入 v0.2；接受则需修订 DESIGN.md §6.3【需确认】
+1. 草稿区 Markdown 实时预览：默认纯文本 + 校验状态，预览并入 v0.2；接受则需修订 DESIGN.md §1.3【需确认】
 2. PR CI：默认不做，仅 release workflow
 3. Actions secrets（TAURI_SIGNING_PRIVATE_KEY 等）由用户配置

@@ -1,4 +1,4 @@
-//! Deterministic health checks (no AI). DESIGN.md §6.5.
+//! Deterministic health checks (no AI). DESIGN.md §1.5.
 //!
 //! Each finding's `message` / `suggestion` carries a stable i18n key (not raw
 //! prose); the frontend localizes via t(key). This keeps user-visible health
@@ -10,7 +10,7 @@ use agentmix_types::{HealthIssue, HealthLevel, HealthStatus};
 use crate::parser::{ParsedFrontmatter, DESCRIPTION_MAX_LEN, NAME_MAX_LEN};
 
 /// Trigger-phrase keywords (multi-lingual). A description matching none of these
-/// gets a warning to add a "when to use" trigger (DESIGN.md §6.5, §9.3).
+/// gets a warning to add a "when to use" trigger (DESIGN.md §1.5, §4.3).
 const TRIGGER_KEYWORDS: &[&str] = &["when", "trigger", "用于", "当", "使用时", "需要", "适用"];
 
 fn issue(level: HealthLevel, field: &str, message: &str, suggestion: &str) -> HealthIssue {

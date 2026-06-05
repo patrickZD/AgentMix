@@ -72,7 +72,7 @@ export default function SourceProjectPanel({
   const [filter, setFilter] = useState<SkillFilter>(EMPTY_FILTER);
 
   // Persistent dashed affordance: doubles as the drag-drop hint and a click
-  // entry equivalent to the "+" button (DESIGN.md §7: drag and button parity).
+  // entry equivalent to the "+" button (DESIGN.md §2: drag and button parity).
   const dropZone = (
     <button
       onClick={onAddProject}

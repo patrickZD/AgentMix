@@ -1,5 +1,5 @@
 //! Update-check pure logic: version comparison, cache freshness and the
-//! cache-file (de)serialization (plan T20, DESIGN.md §6.16). Tauri-free — the
+//! cache-file (de)serialization (plan T20, DESIGN.md §1.16). Tauri-free — the
 //! actual network check / download / install live in the app crate's commands;
 //! everything decidable without the network lives here so it tests headlessly.
 

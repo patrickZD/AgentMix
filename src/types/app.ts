@@ -53,7 +53,7 @@ export interface ComboItem {
   exportedName: string;
 }
 
-// A manually merged entry in the composition (T24, DESIGN.md §6.3). Exported
+// A manually merged entry in the composition (T24, DESIGN.md §1.3). Exported
 // content-backed: SKILL.md comes from `draft`, scripts optionally from one
 // source directory. `replacedItems` are the combo items the merge consumed,
 // kept so removing the merged entry restores them (T25).

@@ -32,7 +32,7 @@ v0.1.0 实际交付 11 项：
 - DoD-5 扫描 1000 个 SKILL.md < 5s（实测 0.105s）
 - DoD-6 冷启动到欢迎屏可交互 < 2s（实测 < 0.5s）
 - DoD-7 已知高危脚本零漏报
-- 完整 DoD 见 `docs/DESIGN.md` §10 与 `docs/CHANGELOG.md` [0.1.0] 性能核验表
+- 完整 DoD 见 `docs/DESIGN.md` §5 与 `docs/CHANGELOG.md` [0.1.0] 性能核验表
 
 ## 工程约定
 

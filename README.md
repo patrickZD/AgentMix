@@ -47,7 +47,7 @@ target-project/
 
 - 平台仅 Windows x64；导出目标仅 Claude Code 项目级 `.claude/skills/`；自动更新从 v0.1.5 起生效（v0.1.0 用户需手动下载安装一次）。
 - 暂不支持（v0.2）：多目标 / 全局路径导出、Git URL 导入、Skill 脚手架、Skill 编辑器、AI 辅助合并、来源更新检测。
-- 安全预检只承诺「风险可见」，不判定 SKILL.md 正文里的自然语言恶意指令、脚本引用的外部 URL、混淆脚本（契约边界见 `docs/DESIGN.md` §6.11）。
+- 安全预检只承诺「风险可见」，不判定 SKILL.md 正文里的自然语言恶意指令、脚本引用的外部 URL、混淆脚本（契约边界见 `docs/DESIGN.md` §1.11）。
 
 ## 贡献
 

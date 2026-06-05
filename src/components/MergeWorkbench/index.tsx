@@ -5,7 +5,7 @@ import IconButton from '@/components/ui/IconButton';
 import Tooltip from '@/components/ui/Tooltip';
 import type { ComboItem, MergeDraftValidation } from '@/types';
 
-// Manual merge workbench (DESIGN.md §6.3, T24): >= 2 source columns showing
+// Manual merge workbench (DESIGN.md §1.3, T24): >= 2 source columns showing
 // each SKILL.md in full, a draft editor on the right (plain textarea — the
 // CodeMirror editor and Markdown preview are v0.2), live validation via the
 // Rust command, and the single-choice kept-scripts selector. Confirm is gated

@@ -1,6 +1,6 @@
 # AgentMix 路线图
 
-本文是 AgentMix 从 v0.1 到 v1.0+ 的版本路线图。各版本引用的功能小节（`§6` 起）在工程设计文档 [`DESIGN.md`](DESIGN.md)；产品背景与定位见 [`PRD.md`](PRD.md)；关键设计决策见 [`decisions/`](decisions/)。每个版本的具体交付范围以 `tasks/` 下对应的 plan / todo 文件为准。
+本文是 AgentMix 从 v0.1 到 v1.0+ 的版本路线图。各版本引用的功能小节（`§1` 起）在工程设计文档 [`DESIGN.md`](DESIGN.md)；产品背景与定位见 [`PRD.md`](PRD.md)；关键设计决策见 [`decisions/`](decisions/)。每个版本的具体交付范围以 `tasks/` 下对应的 plan / todo 文件为准。
 
 ## Phase 1：v0.1 (Alpha)——信任边界 + 单工具闭环
 
@@ -9,16 +9,16 @@
 v0.1 范围：
 
 - Tauri + React + TypeScript 应用框架
-- 欢迎屏（空状态） + 主界面两栏布局 + Toolbar（DESIGN.md §7.1）
-- 本地目录拖入 + 递归 SKILL.md 扫描 + 三分类（portable / tool-specific / invalid，DESIGN.md §6.1）
-- 复选框选择 + **ExportConflict 检测** + "重命名 / 保留一个"冲突解决（DESIGN.md §6.2）
-- Dry-run 两阶段提交：preview → confirmation → execution，**消费同一 `ExportPlan` 对象**（DESIGN.md §6.12、§8.2）
-- 基础备份到 `~/.agentmix/backups/<project-hash>/`（DESIGN.md §6.4）
+- 欢迎屏（空状态） + 主界面两栏布局 + Toolbar（DESIGN.md §2.1）
+- 本地目录拖入 + 递归 SKILL.md 扫描 + 三分类（portable / tool-specific / invalid，DESIGN.md §1.1）
+- 复选框选择 + **ExportConflict 检测** + "重命名 / 保留一个"冲突解决（DESIGN.md §1.2）
+- Dry-run 两阶段提交：preview → confirmation → execution，**消费同一 `ExportPlan` 对象**（DESIGN.md §1.12、§3.2）
+- 基础备份到 `~/.agentmix/backups/<project-hash>/`（DESIGN.md §1.4）
 - 单目标导出：**Claude Code 项目级**（仅 `.claude/skills/`）
-- `scripts/` 安全预检（完整威胁模型：symlink 不跟随 / 2MB 体积上限 / 二进制资产清单 / 高危脚本规则，DESIGN.md §6.11）
-- 健康检查确定性部分（frontmatter 合规、name 一致、触发动词存在、脚本依赖，DESIGN.md §6.5）
-- **i18n 架构红线**：`react-i18next` + `t()` lookup 全覆盖；`en.json` 完整 + `zh.json` 关键 key stub（DESIGN.md §6.17）
-- **Asset 抽象 + ExportPlan 数据模型作为架构红线**落地（DESIGN.md §8.2、§9.6）
+- `scripts/` 安全预检（完整威胁模型：symlink 不跟随 / 2MB 体积上限 / 二进制资产清单 / 高危脚本规则，DESIGN.md §1.11）
+- 健康检查确定性部分（frontmatter 合规、name 一致、触发动词存在、脚本依赖，DESIGN.md §1.5）
+- **i18n 架构红线**：`react-i18next` + `t()` lookup 全覆盖；`en.json` 完整 + `zh.json` 关键 key stub（DESIGN.md §1.17）
+- **Asset 抽象 + ExportPlan 数据模型作为架构红线**落地（DESIGN.md §3.2、§4.6）
 - 静态发布到 GitHub Releases。**无自动更新机制**——alpha 阶段用户手动升级
 
 v0.1 明确**不**包含：手动合并工作台、自动更新、i18n 翻译完整化、多目标导出、AI 全家桶、OS keychain、`.agentmix.lock`、Source Tracking、Git URL 导入、颜色聚类、Skill 脚手架、兼容性预检、引用检测、Skill 编辑器、安全规则误报白名单、反向同步、本地 embedding。
@@ -27,8 +27,8 @@ v0.1 明确**不**包含：手动合并工作台、自动更新、i18n 翻译完
 
 补上 alpha 阶段最痛的几个 UX 短板，进入"长期使用可以接受"的状态。
 
-- **自动更新机制**：GitHub Releases + Tauri Updater，签名密钥就位（DESIGN.md §6.16）
-- **手动合并工作台**（3 列布局 + 实时校验 + frontmatter 重组，DESIGN.md §6.3）
+- **自动更新机制**：GitHub Releases + Tauri Updater，签名密钥就位（DESIGN.md §1.16）
+- **手动合并工作台**（3 列布局 + 实时校验 + frontmatter 重组，DESIGN.md §1.3）
 - **i18n 翻译完整化**：`zh.json` 与 `en.json` key 集合 100% 对齐，CI 强制校验
 - **alpha 测试反馈的体验与离线可用性优化**：
   - 加入组合的"＋"按钮提升可发现性——v0.1 仅在 hover 时显形，新用户找不到；改为常显或更明显的入口
@@ -43,26 +43,26 @@ v0.2 拆成五个子里程碑顺序交付（详见 `tasks/v0.2.0/plan.md` 文末
 
 ### v0.2.0 多目标导出引擎（进行中）
 
-- 多目标导出：Claude Code / Cursor / Codex CLI / OpenCode / Gemini CLI + custom（按 ToolAdapter 配置，DESIGN.md §6.4）
+- 多目标导出：Claude Code / Cursor / Codex CLI / OpenCode / Gemini CLI + custom（按 ToolAdapter 配置，DESIGN.md §1.4）
 - 全局路径导出（作用范围选「项目级 / 全局」，选「全局」时路径由 AgentMix 自动解析，用户无需知道该路径）
-- **RuntimeConflict 显化**（多目标导出后才真正显化，警告级不阻断，DESIGN.md §6.2）
-- **跨工具兼容性预检**（Capability Linter，内嵌 compatibility-matrix 逐字段校验，DESIGN.md §6.10）
+- **RuntimeConflict 显化**（多目标导出后才真正显化，警告级不阻断，DESIGN.md §1.2）
+- **跨工具兼容性预检**（Capability Linter，内嵌 compatibility-matrix 逐字段校验，DESIGN.md §1.10）
 
 ### v0.2.1 复现与来源生态
 
-- **Git URL 导入**（DESIGN.md §6.8 配套）
-- **Source Tracking + 来源仓库更新检测**（DESIGN.md §6.8）
-- **`.agentmix.lock` 版本锁**（DESIGN.md §6.9）
-- 配置集 Preset / Bundle（DESIGN.md §6.7）
+- **Git URL 导入**（DESIGN.md §1.8 配套）
+- **Source Tracking + 来源仓库更新检测**（DESIGN.md §1.8）
+- **`.agentmix.lock` 版本锁**（DESIGN.md §1.9）
+- 配置集 Preset / Bundle（DESIGN.md §1.7）
 - tool-adapters / compatibility-matrix 远程刷新与新鲜度提示
 
 ### v0.2.2 AI 增强套件
 
-- **OS keychain 密钥管理**（`keyring` crate，DESIGN.md §9.7）——所有 AI 功能的统一入口
-- **AI 合并工作台 AI 辅助模式**（DESIGN.md §6.3）
-- **AI 增强健康检查**：语义重合度、内容质量、脚本行为分析（DESIGN.md §6.5）
-- **AI 一键修复**：每条健康问题旁按钮，**强制 diff 预览**（DESIGN.md §6.5）
-- **语义聚类与颜色高亮**：Voyage embedding API + HDBSCAN（DESIGN.md §6.18）
+- **OS keychain 密钥管理**（`keyring` crate，DESIGN.md §4.7）——所有 AI 功能的统一入口
+- **AI 合并工作台 AI 辅助模式**（DESIGN.md §1.3）
+- **AI 增强健康检查**：语义重合度、内容质量、脚本行为分析（DESIGN.md §1.5）
+- **AI 一键修复**：每条健康问题旁按钮，**强制 diff 预览**（DESIGN.md §1.5）
+- **语义聚类与颜色高亮**：Voyage embedding API + HDBSCAN（DESIGN.md §1.18）
 
 ### v0.2.3 跨平台
 
@@ -70,17 +70,17 @@ v0.2 拆成五个子里程碑顺序交付（详见 `tasks/v0.2.0/plan.md` 文末
 
 ### v0.2.4 散件
 
-- Skill 编辑器（内置 CodeMirror 实时预览与 frontmatter 校验，DESIGN.md §6.6）
-- **Skill 脚手架（内嵌 skill-creator 方法论）**（DESIGN.md §6.13）
-- **Skill 引用关系检测**（DESIGN.md §6.14）
-- **`scripts/` 安全规则误报白名单**（DESIGN.md §6.11）：v0.1 的"每次都强制确认"在长期使用中会让用户麻木点同意，v0.2.4 引入按 `(source_uri, subpath, rule_id, content_hash)` 粒度的本地白名单，文件内容变化即失效；不随 lock / Bundle 分发
+- Skill 编辑器（内置 CodeMirror 实时预览与 frontmatter 校验，DESIGN.md §1.6）
+- **Skill 脚手架（内嵌 skill-creator 方法论）**（DESIGN.md §1.13）
+- **Skill 引用关系检测**（DESIGN.md §1.14）
+- **`scripts/` 安全规则误报白名单**（DESIGN.md §1.11）：v0.1 的"每次都强制确认"在长期使用中会让用户麻木点同意，v0.2.4 引入按 `(source_uri, subpath, rule_id, content_hash)` 粒度的本地白名单，文件内容变化即失效；不随 lock / Bundle 分发
 
 ## Phase 3：v0.3——体验扩展与生态打通
 
 把 v0.2 没顾上的"长尾用户场景"覆盖：隐私敏感离线场景、跨机器漫游。
 
-- **反向同步**（Source ← Target，DESIGN.md §6.15）
-- **加密文件 + 主密码**密钥 fallback——覆盖无 secret service 的 Linux 环境（DESIGN.md §9.7）
+- **反向同步**（Source ← Target，DESIGN.md §1.15）
+- **加密文件 + 主密码**密钥 fallback——覆盖无 secret service 的 Linux 环境（DESIGN.md §4.7）
 - **本地 embedding 模型** opt-in——隐私敏感 / 离线场景，仍不开放 provider 切换
 - `compatibility` 字段解析与依赖标签展示
 - 增量扫描缓存（SQLite）
@@ -88,7 +88,7 @@ v0.2 拆成五个子里程碑顺序交付（详见 `tasks/v0.2.0/plan.md` 文末
 
 ## Phase 4：v1.0——Asset 范围扩展与在线生态
 
-`Asset` 抽象的首次真实回报：扩展到 SKILL 之外的资产类型，验证 DESIGN.md §8.2 的抽象设计是否站得住。
+`Asset` 抽象的首次真实回报：扩展到 SKILL 之外的资产类型，验证 DESIGN.md §3.2 的抽象设计是否站得住。
 
 - **Asset 扩展首发：Slash Command**——形态最简单（单 `.md` 文件），适合做第一个非 Skill provider
 - Skills 在线搜索（集成 skillsllm.com / awesomeskill.ai）

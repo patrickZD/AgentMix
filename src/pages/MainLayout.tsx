@@ -143,7 +143,7 @@ function SettingsDialog({
           {t('settings.title')}
         </h3>
         <div className="flex flex-col gap-3">
-          {/* Language — switches immediately and is persisted (DESIGN.md §7). */}
+          {/* Language — switches immediately and is persisted (DESIGN.md §2). */}
           <div className="flex items-center justify-between">
             <p className="text-foreground font-medium" style={{ fontSize: '12.5px' }}>
               {t('settings.language')}

@@ -46,7 +46,7 @@ v0.2.0 仅交付以下：
 
 ## 边界
 
-全局 Always / Ask first / Never 见 `CLAUDE.md` §5 / §6 / §8。本版新增或强调：
+全局 Always / Ask first / Never 见 `CLAUDE.md` §5 / §1 / §3。本版新增或强调：
 
 - **Always**：工具行为差异全部来自 ToolAdapter 数据；execute 写入前校验每个 path canonical-confined 于本次 plan 的 destination roots 之内。
 - **Ask first**：改 `docs/DESIGN.md`（加注矩阵远程刷新延后）、改 `README.md`（边界更新）、引入任何新依赖（本版目标零新依赖，若发现必须引入先确认）。
@@ -56,7 +56,7 @@ v0.2.0 仅交付以下：
 
 2026-06-03 确认，原为开放问题：
 
-1. 矩阵远程刷新延后到 v0.2.1，本版只内嵌 baseline 并标注数据日期；需在 DESIGN.md §6.4 / §6.10 加注，改前确认（T37）。
+1. 矩阵远程刷新延后到 v0.2.1，本版只内嵌 baseline 并标注数据日期；需在 DESIGN.md §1.4 / §1.10 加注，改前确认（T37）。
 2. 多路径工具只写各工具原生主路径：OpenCode 写 `.opencode/skills/`，Gemini 写 `.gemini/skills/`，不写共享的 `.claude/` 或 `.agents/`。
 3. custom 适配器纳入最小形态：用户自填路径，默认 last-wins 覆盖、同名报错。
 4. 全局备份用 destination-root-hash，目录仍为 `~/.agentmix/backups/<hash>/`。
@@ -68,11 +68,11 @@ v0.2.0 仅交付以下：
 
 ## 工程约定
 
-本 spec 只记录版本特定的目标、范围、验收（DoD）、边界增量与开放问题；Commands / 目录结构 / 代码风格 / 测试策略不随版本变，以 `CLAUDE.md` §3–§5（及 `docs/DESIGN.md` §8）为准。
+本 spec 只记录版本特定的目标、范围、验收（DoD）、边界增量与开放问题；Commands / 目录结构 / 代码风格 / 测试策略不随版本变，以 `CLAUDE.md` §3–§5（及 `docs/DESIGN.md` §3）为准。
 
 ## 关联
 
 - 技术实现计划：同目录 `plan.md`
 - 任务清单：同目录 `todo.md`
-- 设计依据：`docs/DESIGN.md` §6.2 / §6.4 / §6.10 / §8.2；路线图见 `docs/ROADMAP.md`
+- 设计依据：`docs/DESIGN.md` §1.2 / §1.4 / §1.10 / §3.2；路线图见 `docs/ROADMAP.md`
 - 决策依据（见 `docs/decisions/`）：决策 9（Asset 抽象）、22（双冲突模型）、13（兼容性矩阵社区维护）

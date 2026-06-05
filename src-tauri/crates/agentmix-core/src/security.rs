@@ -1,4 +1,4 @@
-//! Static security pre-checks for skills (DESIGN.md §6.11).
+//! Static security pre-checks for skills (DESIGN.md §1.11).
 //!
 //! AgentMix does not promise "safe"; it promises "risk visible". This module
 //! deterministically surfaces known risk: the per-skill 2MB size cap, the binary
@@ -16,7 +16,7 @@
 //! one line, an interpreter on another — the two-step installer form).
 //!
 //! Scope note: only files under a `scripts/` subtree with a known script
-//! extension are scanned for operations (DESIGN.md §6.11). A script placed
+//! extension are scanned for operations (DESIGN.md §1.11). A script placed
 //! elsewhere is an accepted, documented boundary, not covered here.
 
 use std::io::Read;
@@ -26,7 +26,7 @@ use agentmix_types::{BinaryAsset, SecurityFinding, SecurityRule, SkillSecurityRe
 use walkdir::WalkDir;
 
 /// Per-skill size cap; above this the skill is flagged and needs confirmation
-/// (DESIGN.md §6.11: guards against zip bombs / accidental large binaries).
+/// (DESIGN.md §1.11: guards against zip bombs / accidental large binaries).
 pub const MAX_SKILL_SIZE_BYTES: u64 = 2 * 1024 * 1024;
 
 /// File extensions scanned for suspicious script operations.
@@ -77,7 +77,7 @@ const DOWNLOAD_CRADLE: &[&str] = &[
 ];
 
 /// Run the deterministic security pre-check for a single skill directory.
-/// Walks the directory without following symlinks (DESIGN.md §6.11), totals its
+/// Walks the directory without following symlinks (DESIGN.md §1.11), totals its
 /// size, inventories binary assets, and scans every script under a `scripts/`
 /// subtree. `requiresConfirmation` is set when anything gates export.
 pub fn scan_skill_security(skill_dir: &Path, asset_id: &str) -> SkillSecurityReport {
