@@ -21,7 +21,7 @@ v0.1 范围：
 - **Asset 抽象 + ExportPlan 数据模型作为架构红线**落地（DESIGN.md §8.2、§9.6）
 - 静态发布到 GitHub Releases。**无自动更新机制**——alpha 阶段用户手动升级
 
-v0.1 明确**不**包含：手动合并工作台、自动更新、i18n 翻译完整化、多目标导出、AI 全家桶、OS keychain、`.agentmix.lock`、Source Tracking、Git URL 导入、颜色聚类、Skill 脚手架、兼容性预检、引用检测、Skill 编辑器、安全规则误报白名单、反向同步、非技术用户简化模式、本地 embedding。
+v0.1 明确**不**包含：手动合并工作台、自动更新、i18n 翻译完整化、多目标导出、AI 全家桶、OS keychain、`.agentmix.lock`、Source Tracking、Git URL 导入、颜色聚类、Skill 脚手架、兼容性预检、引用检测、Skill 编辑器、安全规则误报白名单、反向同步、本地 embedding。
 
 ## Phase 1.5：v0.1.5——alpha → beta 过渡
 
@@ -61,12 +61,11 @@ v0.1 明确**不**包含：手动合并工作台、自动更新、i18n 翻译完
 
 ## Phase 3：v0.3——体验扩展与生态打通
 
-把 v0.2 没顾上的"长尾用户场景"覆盖：非技术用户、隐私敏感离线场景、跨机器漫游。
+把 v0.2 没顾上的"长尾用户场景"覆盖：隐私敏感离线场景、跨机器漫游。
 
 - **反向同步**（Source ← Target，DESIGN.md §6.15）
 - **加密文件 + 主密码**密钥 fallback——覆盖无 secret service 的 Linux 环境（DESIGN.md §9.7）
 - **本地 embedding 模型** opt-in——隐私敏感 / 离线场景，仍不开放 provider 切换
-- **非技术用户简化模式**——隐藏路径、术语翻译、一键应用到检测到的工具
 - `compatibility` 字段解析与依赖标签展示
 - 增量扫描缓存（SQLite）
 - 已安装 AI 工具自动检测与推荐
