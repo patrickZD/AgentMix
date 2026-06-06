@@ -461,7 +461,7 @@ fn is_skill_md_rel(rel: &Path) -> bool {
 /// exported name. Used by both the planner (for the operation size) and execute
 /// (for the actual write), so the two agree. Returns an error if the source is
 /// unreadable, so execute fails loudly instead of writing an empty file
-/// (DESIGN.md §2.12); the planner treats an unreadable source as size 0.
+/// (DESIGN.md §3.2); the planner treats an unreadable source as size 0.
 fn exported_skill_md(skill_md: &Path, exported_name: &str) -> Result<Vec<u8>, String> {
     let content = std::fs::read_to_string(skill_md)
         .map_err(|e| format!("cannot read {}: {e}", skill_md.to_string_lossy()))?;
