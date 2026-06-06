@@ -123,9 +123,9 @@ fn custom_adapter(path: &str) -> ToolAdapter {
 /// land in. Built-in tools resolve via the baseline adapter + scope paths; a
 /// `Custom` target uses the user-supplied absolute path verbatim with a
 /// synthesized adapter (decision 3). `None` when a built-in tool has no baseline
-/// or a custom target carries no path. v0.2.0 writes the primary (first) root;
-/// multi-path tools surface their other paths here but write only the primary
-/// (T34).
+/// or a custom target carries no path. The exporter writes the primary (first)
+/// root; multi-path tools surface their other paths here but get a single copy
+/// in the native path, never silent duplicates (decision 2).
 pub fn resolve_target(
     target: &ExportTarget,
     target_project_path: &Path,
@@ -338,6 +338,33 @@ mod tests {
             custom_path: None,
         };
         assert!(resolve_target(&target, Path::new("C:/proj"), Path::new("C:/home")).is_none());
+    }
+
+    #[test]
+    fn every_builtin_resolves_project_under_project_and_global_under_home() {
+        // Each built-in adapter must put project-scope roots under the project and
+        // global-scope roots under home — no adapter resolves to the wrong base.
+        // Cursor has no user scope, so its global resolution is simply empty.
+        let project = Path::new("C:/proj");
+        let home = Path::new("C:/Users/dev");
+        for adapter in builtin_adapters() {
+            for root in resolve_destination_roots(adapter, ExportScope::Project, project, home) {
+                assert!(
+                    fwd(&root).starts_with("C:/proj/"),
+                    "{:?} project root must be under the project, got {}",
+                    adapter.id,
+                    fwd(&root)
+                );
+            }
+            for root in resolve_destination_roots(adapter, ExportScope::Global, project, home) {
+                assert!(
+                    fwd(&root).starts_with("C:/Users/dev/"),
+                    "{:?} global root must be under home, got {}",
+                    adapter.id,
+                    fwd(&root)
+                );
+            }
+        }
     }
 
     #[test]

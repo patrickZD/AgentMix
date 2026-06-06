@@ -296,10 +296,11 @@ pub fn build_export_plan(
 
     for (ti, (scope, adapter, roots)) in resolved.into_iter().enumerate() {
         let ti = ti as u32;
-        // v0.2.0 writes the primary (first) resolved root; multi-path tools keep
-        // their other paths in the adapter but write only the primary (T34). A
-        // scope with no path (e.g. Cursor has no user scope) yields no root, so
-        // the target is recorded but contributes no operations.
+        // Write only the primary (first) resolved root; multi-path tools keep
+        // their other paths in the adapter but get a single copy in the native
+        // path, never silent duplicates (decision 2). A scope with no path (e.g.
+        // Cursor has no user scope) yields no root, so the target is recorded but
+        // contributes no operations.
         let Some(root) = roots.first().cloned() else {
             plan_targets.push(ExportPlanTarget {
                 adapter,

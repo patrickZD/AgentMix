@@ -364,3 +364,148 @@ fn multi_target_target_exists_is_evaluated_per_root() {
     let cc = std::fs::read_to_string(target.join(".claude/skills/code-review/SKILL.md")).unwrap();
     assert!(cc.contains("name: code-review") && !cc.contains("stale content"));
 }
+
+/// Scan one skill and build the export request items, the way every adapter test
+/// below starts. Returns the items plus the tempdir they live under.
+fn one_skill_items(tmp: &Path) -> Vec<ExportRequestItem> {
+    let source = tmp.join("source-repo");
+    write_skill(&source, "code-review", "code-review", "reviewing code");
+    let project = scanner::scan_project(&source);
+    project
+        .skills
+        .iter()
+        .map(|s| item_from(s, &s.name))
+        .collect()
+}
+
+#[test]
+fn codex_exports_to_its_agents_project_root() {
+    // Codex is a single-path tool whose native skills location is `.agents/skills`
+    // (baseline §1.4). End-to-end: the third built-in adapter resolves and writes
+    // with no per-tool branch in the pipeline.
+    let tmp = tempfile::tempdir().unwrap();
+    let items = one_skill_items(tmp.path());
+    let target = tmp.path().join("target-project");
+    let backups = tmp.path().join("backups");
+
+    let targets = vec![ExportTarget {
+        tool: ToolId::Codex,
+        scope: ExportScope::Project,
+        custom_path: None,
+    }];
+    let plan =
+        exporter::build_export_plan(&items, &targets, &target, Path::new("C:/home"), &backups);
+    assert_eq!(plan.targets.len(), 1);
+    assert!(plan.targets[0].destination_roots[0].ends_with("/.agents/skills"));
+
+    exporter::execute(&plan, &items, &[], false).unwrap();
+    assert!(target.join(".agents/skills/code-review/SKILL.md").is_file());
+    assert!(target
+        .join(".agents/skills/.agentmix-manifest.json")
+        .is_file());
+}
+
+#[test]
+fn multi_path_tools_write_only_their_primary_project_root() {
+    // OpenCode and Gemini list several project paths a tool reads from, but a
+    // single export writes only the FIRST (native) one — never silent copies in
+    // the others (decision 2). Each case pairs the primary path with the
+    // secondary paths the tool also reads but we must leave untouched.
+    let tmp = tempfile::tempdir().unwrap();
+    let items = one_skill_items(tmp.path());
+    let backups = tmp.path().join("backups");
+
+    let cases: [(ToolId, &str, &[&str]); 2] = [
+        (
+            ToolId::OpenCode,
+            ".opencode/skills",
+            &[".claude/skills", ".agents/skills"],
+        ),
+        (ToolId::GeminiCli, ".gemini/skills", &[".agents/skills"]),
+    ];
+    for (tool, primary, secondaries) in cases {
+        let target = tmp.path().join(format!("target-{tool:?}"));
+        let targets = vec![ExportTarget {
+            tool,
+            scope: ExportScope::Project,
+            custom_path: None,
+        }];
+        let plan =
+            exporter::build_export_plan(&items, &targets, &target, Path::new("C:/home"), &backups);
+
+        // The plan advertises exactly the primary root, so the preview can't imply
+        // copies land in the secondary paths.
+        assert_eq!(
+            plan.targets[0].destination_roots.len(),
+            1,
+            "{tool:?} must plan only its primary root"
+        );
+        assert!(plan.targets[0].destination_roots[0].ends_with(&format!("/{primary}")));
+
+        exporter::execute(&plan, &items, &[], false).unwrap();
+        assert!(
+            target.join(primary).join("code-review/SKILL.md").is_file(),
+            "{tool:?} must write its primary path {primary}"
+        );
+        for secondary in secondaries {
+            assert!(
+                !target.join(secondary).exists(),
+                "{tool:?} must NOT write the secondary path {secondary}"
+            );
+        }
+    }
+}
+
+#[test]
+fn global_scope_export_writes_under_home_and_requires_confirm_to_overwrite() {
+    // A global-scope target resolves under the user's home, not the project. The
+    // global location carries higher overwrite risk, so a pre-existing skill there
+    // is backed up (destination-root hash) and execute refuses without explicit
+    // consent — same gate as project scope, enforced backend-side (decision 9).
+    let tmp = tempfile::tempdir().unwrap();
+    let items = one_skill_items(tmp.path());
+    let backups = tmp.path().join("backups");
+
+    // A temp HOME isolates the global location from the real user home.
+    let home = tmp.path().join("home");
+    let global_skill = home.join(".claude/skills/code-review");
+    std::fs::create_dir_all(&global_skill).unwrap();
+    std::fs::write(global_skill.join("SKILL.md"), "stale global content").unwrap();
+
+    let targets = vec![ExportTarget {
+        tool: ToolId::ClaudeCode,
+        scope: ExportScope::Global,
+        custom_path: None,
+    }];
+    // The project path is irrelevant for a global-scope target.
+    let plan =
+        exporter::build_export_plan(&items, &targets, Path::new("C:/unused"), &home, &backups);
+
+    // The preview shows the global location under home (decision 9:明示位置).
+    let home_fwd = home.to_string_lossy().replace('\\', "/");
+    assert!(plan.targets[0].destination_roots[0].starts_with(&home_fwd));
+    assert!(plan.targets[0].destination_roots[0].ends_with("/.claude/skills"));
+
+    // Overwriting the existing global skill is gated: a backup is planned and an
+    // unconfirmed execute refuses, leaving the stale content in place.
+    assert!(plan
+        .conflicts
+        .iter()
+        .any(|c| c.kind == ConflictKind::TargetExists));
+    assert_eq!(plan.backups.len(), 1, "global overwrite must be backed up");
+    assert!(exporter::execute(&plan, &items, &[], false).is_err());
+    assert_eq!(
+        std::fs::read_to_string(global_skill.join("SKILL.md")).unwrap(),
+        "stale global content"
+    );
+
+    // With consent the global skill is archived, then overwritten.
+    let report = exporter::execute(&plan, &items, &[], true).unwrap();
+    let archive = report
+        .backup_archive
+        .expect("global overwrite must produce a backup archive");
+    assert!(Path::new(&archive).exists());
+    let written =
+        std::fs::read_to_string(home.join(".claude/skills/code-review/SKILL.md")).unwrap();
+    assert!(written.contains("name: code-review") && !written.contains("stale global content"));
+}
