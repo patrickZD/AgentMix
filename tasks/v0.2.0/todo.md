@@ -22,7 +22,7 @@
 - [x] **T33** 目标选择器 UI（多选 + project/global scope）+ exportStore 多目标 + Dry-run 分目标渲染 + en/zh 文案 — 依赖：T32 — M
 
 ### Checkpoint L（T32–T33）— 多目标 golden path
-- [ ] 人工跑通：1 skill → 选 CC + Cursor → 分目标预览 → 导出 → 两目标内容一致；多目标 headless e2e + 全门禁绿；人工复核
+- [x] 人工跑通：1 skill → 选 CC + Cursor → 分目标预览 → 导出 → 两目标内容一致；多目标 headless e2e + 全门禁绿；人工复核（2026-06-06 通过；预览 header 过紧已修，240d4be）
 
 ## Phase 3：scope 与其余适配器
 - [ ] **T34** 其余适配器（Codex / OpenCode / Gemini）+ 多路径工具默认只写主路径 + 全局 scope 解析（`~/.<tool>/skills/`）+ 全局备份（destination-root-hash）+ 覆盖显式确认 — 依赖：T33 — M
