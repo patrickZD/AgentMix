@@ -1,10 +1,14 @@
 //! Composition + export-conflict detection (DESIGN.md §1.2, §3.3).
 //!
-//! v0.1 targets a single directory (Claude Code project-level `.claude/skills/`),
-//! so the four-dimension ExportConflict key (tool, scope, path, exported_name)
-//! collapses to the exported name alone. Detection works on `ConflictCandidate`
-//! (id + exported name) and never branches on a concrete asset type, keeping the
-//! pipeline asset-kind-agnostic.
+//! `detect_export_conflicts` finds NameCollision: two or more selected assets
+//! that share an exported name. This is selection-level and target-independent —
+//! such assets would collide at every destination root they are both written to,
+//! so the same skill exported to several tools never self-collides while two
+//! different skills sharing a name do (§1.2 decision 22). The other dimensions of
+//! the conflict key — TargetExists (per destination root) — are evaluated in the
+//! exporter, which knows each target's resolved root. Detection works on
+//! `ConflictCandidate` (id + exported name) and never branches on a concrete
+//! asset type, keeping the pipeline asset-kind-agnostic.
 
 use std::collections::HashMap;
 

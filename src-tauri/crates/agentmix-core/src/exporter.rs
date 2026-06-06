@@ -13,8 +13,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use agentmix_types::{
     BackupPlan, ConflictCandidate, ConflictKind, ExecutionReport, ExportConflict, ExportItemSource,
-    ExportPlan, ExportRequestItem, FileOperation, FileOperationKind, FileSource, ManagedAsset,
-    ManagedManifest, SkillSecurityReport,
+    ExportPlan, ExportPlanTarget, ExportRequestItem, ExportScope, ExportTarget, FileOperation,
+    FileOperationKind, FileSource, ManagedAsset, ManagedManifest, SkillSecurityReport, ToolAdapter,
 };
 use walkdir::WalkDir;
 
@@ -127,108 +127,94 @@ fn is_confined(base: &str, candidate: &str) -> bool {
     }
 }
 
-/// Build the export plan for `items` into `target_project_path`'s
-/// `.claude/skills/` directory. Produces operations, conflicts, the backup plan
-/// and the managed manifest; writes nothing.
-pub fn build_export_plan(
-    items: &[ExportRequestItem],
-    target_project_path: &Path,
-    backups_root: &Path,
-) -> ExportPlan {
-    // Resolve the destination through the Claude Code project adapter (T31): the
-    // single-target default until the target selector (T33) lets the user choose
-    // tools and scopes. The pipeline asks the adapter provider for the root and
-    // never names a concrete tool, so it stays adapter-pure.
-    let target_dir = crate::tool_adapters::default_destination_root(target_project_path);
-
-    let mut operations: Vec<FileOperation> = Vec::new();
-    let mut conflicts: Vec<ExportConflict> = Vec::new();
-    let mut managed_assets: Vec<ManagedAsset> = Vec::new();
-    let mut security_reports: Vec<SkillSecurityReport> = Vec::new();
+/// Build the file operations that write `item` into `skill_target` (its
+/// destination directory under one target's root), tagging each with
+/// `target_index`. Returns the ops, the item's content hash (for the manifest),
+/// and whether any op overwrites an existing file. Asset-kind-agnostic: copies a
+/// scanned directory or writes a content-backed draft, never inspecting a
+/// concrete asset type.
+fn build_item_operations(
+    item: &ExportRequestItem,
+    skill_target: &Path,
+    target_index: u32,
+) -> (Vec<FileOperation>, String, bool) {
+    let mut ops: Vec<FileOperation> = Vec::new();
     let mut has_overwrite = false;
-
-    // Intra-selection name collisions (case-insensitive), via the shared composer.
-    let candidates: Vec<ConflictCandidate> = items
-        .iter()
-        .map(|i| ConflictCandidate {
-            id: i.asset_id.clone(),
-            exported_name: i.exported_name.clone(),
-        })
-        .collect();
-    conflicts.extend(detect_export_conflicts(&candidates));
-
-    for item in items {
-        // An unsafe export name cannot be a directory segment under the target;
-        // surface it as a blocking conflict and build no operations for it. The
-        // same name is refused authoritatively in execute (the single writer).
-        if !is_safe_segment(&item.exported_name) {
-            conflicts.push(ExportConflict {
-                kind: ConflictKind::InvalidName,
-                exported_name: item.exported_name.clone(),
-                asset_ids: vec![item.asset_id.clone()],
-            });
-            continue;
-        }
-        let skill_target = target_dir.join(&item.exported_name);
-
-        // Static security pre-check (DESIGN.md §1.11); same scan runs at import.
-        // A report with requiresConfirmation gates this asset in execute below.
-        // A content-backed item without kept scripts has no script tree to scan,
-        // so it carries no report and nothing to confirm.
-        if let Some(scan_dir) = item_scan_dir(item) {
-            security_reports.push(scan_skill_security(Path::new(scan_dir), &item.asset_id));
-        }
-
-        // A directory with this name already at the target blocks export until
-        // the user confirms overwrite in the preview (DESIGN.md §1.2).
-        if skill_target.exists() {
-            conflicts.push(ExportConflict {
-                kind: ConflictKind::TargetExists,
-                exported_name: item.exported_name.clone(),
-                asset_ids: vec![item.asset_id.clone()],
-            });
-        }
-
-        let mut push_op = |dest: &Path, source: FileSource, size: u64| {
-            let kind = if dest.exists() {
-                has_overwrite = true;
-                FileOperationKind::Overwrite
-            } else {
-                FileOperationKind::Create
-            };
-            operations.push(FileOperation {
-                kind,
-                path: path_string(dest),
-                source,
-                size,
-                source_asset: item.asset_id.clone(),
-            });
+    let mut push_op = |dest: &Path, source: FileSource, size: u64| {
+        let kind = if dest.exists() {
+            has_overwrite = true;
+            FileOperationKind::Overwrite
+        } else {
+            FileOperationKind::Create
         };
+        ops.push(FileOperation {
+            kind,
+            path: path_string(dest),
+            source,
+            size,
+            source_asset: item.asset_id.clone(),
+            target_index,
+        });
+    };
 
-        let content_hash = match &item.source {
-            // One operation per source file; the whole asset directory is copied.
-            ExportItemSource::Directory { dir } => {
-                let source_dir = Path::new(dir);
-                for entry in WalkDir::new(source_dir)
+    let content_hash = match &item.source {
+        // One operation per source file; the whole asset directory is copied.
+        ExportItemSource::Directory { dir } => {
+            let source_dir = Path::new(dir);
+            for entry in WalkDir::new(source_dir)
+                .follow_links(false)
+                .into_iter()
+                .filter_map(Result::ok)
+                .filter(|e| e.file_type().is_file())
+            {
+                let rel = entry.path().strip_prefix(source_dir).unwrap_or(entry.path());
+                // The asset's own SKILL.md is written with its `name:` normalized
+                // to the exported name, so its planned size is the rewritten size.
+                let size = if is_skill_md_rel(rel) {
+                    exported_skill_md(entry.path(), &item.exported_name)
+                        .map(|b| b.len() as u64)
+                        .unwrap_or(0)
+                } else {
+                    entry.metadata().map(|m| m.len()).unwrap_or(0)
+                };
+                push_op(
+                    &skill_target.join(rel),
+                    FileSource::Path {
+                        path: path_string(entry.path()),
+                    },
+                    size,
+                );
+            }
+            content_hash_of(source_dir)
+        }
+        // Content-backed item (manual merge, §1.3): the primary file is written
+        // verbatim from the draft — execute must produce it byte-identical
+        // (DoD-3). Kept scripts are copied from the chosen source directory.
+        ExportItemSource::Content {
+            content,
+            scripts_from_dir,
+        } => {
+            push_op(
+                &skill_target.join(SKILL_FILE),
+                FileSource::Content {
+                    content: content.clone(),
+                },
+                content.len() as u64,
+            );
+            if let Some(scripts_source) = scripts_from_dir {
+                let scripts_owner = Path::new(scripts_source);
+                for entry in WalkDir::new(scripts_owner.join(SCRIPTS_DIR))
                     .follow_links(false)
                     .into_iter()
                     .filter_map(Result::ok)
                     .filter(|e| e.file_type().is_file())
                 {
+                    // Keep the `scripts/...` prefix in the destination.
                     let rel = entry
                         .path()
-                        .strip_prefix(source_dir)
+                        .strip_prefix(scripts_owner)
                         .unwrap_or(entry.path());
-                    // The asset's own SKILL.md is written with its `name:`
-                    // normalized to the exported name, so its planned size is
-                    // the rewritten size.
-                    let size = if is_skill_md_rel(rel) {
-                        exported_skill_md(entry.path(), &item.exported_name)
-                            .map(|b| b.len() as u64)
-                            .unwrap_or(0)
-                    } else {
-                        entry.metadata().map(|m| m.len()).unwrap_or(0)
-                    };
+                    let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
                     push_op(
                         &skill_target.join(rel),
                         FileSource::Path {
@@ -237,84 +223,157 @@ pub fn build_export_plan(
                         size,
                     );
                 }
-                content_hash_of(source_dir)
             }
-            // Content-backed item (manual merge, §1.3): the primary file is
-            // written verbatim from the draft — execute must produce it
-            // byte-identical (DoD-3). Kept scripts are copied from the chosen
-            // source directory.
-            ExportItemSource::Content {
-                content,
-                scripts_from_dir,
-            } => {
-                push_op(
-                    &skill_target.join(SKILL_FILE),
-                    FileSource::Content {
-                        content: content.clone(),
-                    },
-                    content.len() as u64,
-                );
-                if let Some(scripts_source) = scripts_from_dir {
-                    let scripts_owner = Path::new(scripts_source);
-                    for entry in WalkDir::new(scripts_owner.join(SCRIPTS_DIR))
-                        .follow_links(false)
-                        .into_iter()
-                        .filter_map(Result::ok)
-                        .filter(|e| e.file_type().is_file())
-                    {
-                        // Keep the `scripts/...` prefix in the destination.
-                        let rel = entry
-                            .path()
-                            .strip_prefix(scripts_owner)
-                            .unwrap_or(entry.path());
-                        let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
-                        push_op(
-                            &skill_target.join(rel),
-                            FileSource::Path {
-                                path: path_string(entry.path()),
-                            },
-                            size,
-                        );
-                    }
-                }
-                fnv1a_hex(content.as_bytes())
-            }
+            fnv1a_hex(content.as_bytes())
+        }
+    };
+
+    (ops, content_hash, has_overwrite)
+}
+
+/// Build the multi-target export plan: write `items` to each of `targets`
+/// (resolved via the adapter provider), producing per-target operations,
+/// backups and managed manifests; writes nothing. NameCollision / InvalidName
+/// are selection-level; TargetExists is checked per target root (target-aware,
+/// §1.2 decision 22). `target_project_path` resolves project scope, `home_dir`
+/// resolves global scope. The pipeline reads each target's root from adapter
+/// data and never names a concrete tool, so it stays adapter-pure.
+pub fn build_export_plan(
+    items: &[ExportRequestItem],
+    targets: &[ExportTarget],
+    target_project_path: &Path,
+    home_dir: &Path,
+    backups_root: &Path,
+) -> ExportPlan {
+    let mut operations: Vec<FileOperation> = Vec::new();
+    let mut conflicts: Vec<ExportConflict> = Vec::new();
+    let mut backups: Vec<BackupPlan> = Vec::new();
+    let mut security_reports: Vec<SkillSecurityReport> = Vec::new();
+    let mut plan_targets: Vec<ExportPlanTarget> = Vec::new();
+
+    // Selection-level conflicts (independent of target): intra-selection name
+    // collisions (shared composer) and names unusable as a directory segment.
+    let candidates: Vec<ConflictCandidate> = items
+        .iter()
+        .map(|i| ConflictCandidate {
+            id: i.asset_id.clone(),
+            exported_name: i.exported_name.clone(),
+        })
+        .collect();
+    conflicts.extend(detect_export_conflicts(&candidates));
+    for item in items {
+        if !is_safe_segment(&item.exported_name) {
+            conflicts.push(ExportConflict {
+                kind: ConflictKind::InvalidName,
+                exported_name: item.exported_name.clone(),
+                asset_ids: vec![item.asset_id.clone()],
+            });
+        }
+    }
+
+    // Security pre-check: scan each item's source once — the source is the same
+    // regardless of how many targets it is written to (DESIGN.md §1.11). A
+    // content-backed item without kept scripts has no script tree to scan.
+    for item in items {
+        if let Some(scan_dir) = item_scan_dir(item) {
+            security_reports.push(scan_skill_security(Path::new(scan_dir), &item.asset_id));
+        }
+    }
+
+    // Resolve every target up front, dropping any that cannot resolve (a custom
+    // target with no path). The kept order is the `target_index` space that the
+    // operations reference.
+    let resolved: Vec<(ExportScope, ToolAdapter, Vec<PathBuf>)> = targets
+        .iter()
+        .filter_map(|t| {
+            crate::tool_adapters::resolve_target(t, target_project_path, home_dir)
+                .map(|(adapter, roots)| (t.scope, adapter, roots))
+        })
+        .collect();
+
+    for (ti, (scope, adapter, roots)) in resolved.into_iter().enumerate() {
+        let ti = ti as u32;
+        // v0.2.0 writes the primary (first) resolved root; multi-path tools keep
+        // their other paths in the adapter but write only the primary (T34). A
+        // scope with no path (e.g. Cursor has no user scope) yields no root, so
+        // the target is recorded but contributes no operations.
+        let Some(root) = roots.first().cloned() else {
+            plan_targets.push(ExportPlanTarget {
+                adapter,
+                scope,
+                destination_roots: Vec::new(),
+                managed_manifest: ManagedManifest {
+                    manifest_path: String::new(),
+                    managed_assets: Vec::new(),
+                },
+            });
+            continue;
         };
 
-        managed_assets.push(ManagedAsset {
-            name: item.exported_name.clone(),
-            source_ref: item.source_ref.clone(),
-            content_hash,
+        let mut managed_assets: Vec<ManagedAsset> = Vec::new();
+        let mut target_has_overwrite = false;
+        for item in items {
+            // Unsafe names are flagged selection-level above and produce no ops.
+            if !is_safe_segment(&item.exported_name) {
+                continue;
+            }
+            let skill_target = root.join(&item.exported_name);
+            // TargetExists is per target root: the same name conflicts only where
+            // it already exists, so the same skill may go to several tools without
+            // colliding (§1.2 decision 22).
+            if skill_target.exists() {
+                conflicts.push(ExportConflict {
+                    kind: ConflictKind::TargetExists,
+                    exported_name: item.exported_name.clone(),
+                    asset_ids: vec![item.asset_id.clone()],
+                });
+            }
+            let (item_ops, content_hash, had_overwrite) =
+                build_item_operations(item, &skill_target, ti);
+            target_has_overwrite |= had_overwrite;
+            operations.extend(item_ops);
+            managed_assets.push(ManagedAsset {
+                name: item.exported_name.clone(),
+                source_ref: item.source_ref.clone(),
+                content_hash,
+            });
+        }
+
+        // Back up this target's root only when something will be overwritten.
+        // The backup sub-directory keys on the destination root (decision 4), so
+        // each target's existing content is archived separately.
+        if target_has_overwrite && root.exists() {
+            backups.push(BackupPlan {
+                target_path: path_string(&root),
+                backup_archive: path_string(
+                    &backups_root
+                        .join(path_hash(&path_string(&root)))
+                        .join(format!("{}.zip", now_stamp())),
+                ),
+                size_bytes: dir_size(&root),
+                target_index: ti,
+            });
+        }
+
+        plan_targets.push(ExportPlanTarget {
+            adapter,
+            scope,
+            destination_roots: vec![path_string(&root)],
+            managed_manifest: ManagedManifest {
+                manifest_path: path_string(&root.join(MANIFEST_FILE)),
+                managed_assets,
+            },
         });
     }
 
     let total_bytes = operations.iter().map(|o| o.size).sum();
 
-    // Back up the existing target directory only when something will be overwritten.
-    let backups = if has_overwrite && target_dir.exists() {
-        vec![BackupPlan {
-            target_path: path_string(&target_dir),
-            backup_archive: path_string(
-                &backups_root
-                    .join(path_hash(&path_string(target_project_path)))
-                    .join(format!("{}.zip", now_stamp())),
-            ),
-            size_bytes: dir_size(&target_dir),
-        }]
-    } else {
-        Vec::new()
-    };
-
     ExportPlan {
-        target_dir: path_string(&target_dir),
+        targets: plan_targets,
         operations,
         conflicts,
         backups,
         security_reports,
-        managed_manifest: ManagedManifest {
-            manifest_path: path_string(&target_dir.join(MANIFEST_FILE)),
-            managed_assets,
-        },
         total_bytes,
     }
 }
@@ -371,15 +430,20 @@ pub fn execute(
         }
     }
 
-    // Pre-flight: every planned write must land inside the plan's destination
-    // root, the tool-agnostic generalization of the old `.claude/skills` check
+    // Pre-flight: every planned write must land inside ITS target's destination
+    // root(s), the tool-agnostic generalization of the old `.claude/skills` check
     // (T31). Even a tampered plan (the whole object crosses the IPC boundary)
-    // cannot redirect a write outside that root — `is_confined` rejects `..`
-    // traversal, absolute paths, cross-root injection, and symlink/junction
-    // escape. Checked before any write so a later bad op cannot leave earlier
-    // files on disk (DESIGN.md §1.11, §3.2).
+    // cannot redirect a write outside its target root — `is_confined` rejects
+    // `..` traversal, absolute paths, cross-root injection, and symlink/junction
+    // escape. An op whose `target_index` has no resolved root is refused too.
+    // Checked before any write so a later bad op cannot leave earlier files on
+    // disk (DESIGN.md §1.11, §3.2).
     for op in &plan.operations {
-        if !is_confined(&plan.target_dir, &op.path) {
+        let confined = plan
+            .targets
+            .get(op.target_index as usize)
+            .is_some_and(|t| t.destination_roots.iter().any(|root| is_confined(root, &op.path)));
+        if !confined {
             return Err(format!(
                 "operation path `{}` escapes the target directory",
                 op.path
@@ -409,15 +473,17 @@ pub fn execute(
     let by_id: HashMap<&str, &ExportRequestItem> =
         items.iter().map(|i| (i.asset_id.as_str(), i)).collect();
 
-    // 1. Back up the existing target content before any write (DoD-8).
-    let mut backup_archive = None;
+    // 1. Back up each target's existing content before any write (DoD-8). Every
+    // target with overwrites is archived separately under its own root hash.
     for backup in &plan.backups {
         write_backup_zip(
             Path::new(&backup.target_path),
             Path::new(&backup.backup_archive),
         )?;
-        backup_archive = Some(backup.backup_archive.clone());
     }
+    // The report carries the first backup for the "open backup folder" action;
+    // all archives live under ~/.agentmix/backups/<root-hash>/.
+    let backup_archive = plan.backups.first().map(|b| b.backup_archive.clone());
 
     // 2. Apply each planned operation exactly (DoD-3).
     let mut files_created = 0u32;
@@ -461,17 +527,32 @@ pub fn execute(
         }
     }
 
-    // 3. Write the managed manifest alongside the exported skills.
-    let manifest_path = Path::new(&plan.managed_manifest.manifest_path);
-    if let Some(parent) = manifest_path.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    // 3. Write each target's managed manifest alongside its exported skills. A
+    // target that resolved to no root (empty manifest path) wrote no files and
+    // has no manifest to write.
+    for target in &plan.targets {
+        if target.managed_manifest.manifest_path.is_empty() {
+            continue;
+        }
+        let manifest_path = Path::new(&target.managed_manifest.manifest_path);
+        if let Some(parent) = manifest_path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+        let manifest =
+            serde_json::to_string_pretty(&target.managed_manifest).map_err(|e| e.to_string())?;
+        std::fs::write(manifest_path, manifest).map_err(|e| e.to_string())?;
     }
-    let manifest =
-        serde_json::to_string_pretty(&plan.managed_manifest).map_err(|e| e.to_string())?;
-    std::fs::write(manifest_path, manifest).map_err(|e| e.to_string())?;
 
     Ok(ExecutionReport {
-        target_dir: plan.target_dir.clone(),
+        // Representative root for the report header; all targets' roots are in
+        // the plan. skills_exported counts distinct skills (not skill x target),
+        // while the file counts sum every write across all targets.
+        target_dir: plan
+            .targets
+            .first()
+            .and_then(|t| t.destination_roots.first())
+            .cloned()
+            .unwrap_or_default(),
         skills_exported: items.len() as u32,
         files_created,
         files_overwritten,
@@ -648,6 +729,19 @@ mod tests {
         }
     }
 
+    /// Build a single-target plan for the Claude Code project default (the
+    /// v0.1-compat path), so the existing single-destination assertions hold.
+    /// `target` is the project root; the home dir is unused for project scope.
+    fn build_plan(items: &[ExportRequestItem], target: &Path, backups: &Path) -> ExportPlan {
+        build_export_plan(
+            items,
+            &crate::tool_adapters::default_targets(),
+            target,
+            Path::new("C:/home"),
+            backups,
+        )
+    }
+
     /// Create a Windows directory junction (`link` -> `target`). Junctions are
     /// reparse points that `canonicalize` resolves like symlinks but, unlike
     /// symlinks, need no admin privilege — so the symlink-escape defense is
@@ -672,7 +766,7 @@ mod tests {
         let target = tmp.path().join("target");
         let backups = tmp.path().join("backups");
 
-        let plan = build_export_plan(&[item("a", &src, "code-review")], &target, &backups);
+        let plan = build_plan(&[item("a", &src, "code-review")], &target, &backups);
 
         assert!(plan.conflicts.is_empty());
         assert!(plan.backups.is_empty());
@@ -691,12 +785,13 @@ mod tests {
             .unwrap();
         assert_eq!(ref_op.size, 3);
         // Manifest + target paths use forward slashes and the expected location.
-        assert!(plan.target_dir.ends_with("/.claude/skills"));
-        assert!(plan
+        let target = &plan.targets[0];
+        assert!(target.destination_roots[0].ends_with("/.claude/skills"));
+        assert!(target
             .managed_manifest
             .manifest_path
             .ends_with("/.claude/skills/.agentmix-manifest.json"));
-        assert_eq!(plan.managed_manifest.managed_assets[0].name, "code-review");
+        assert_eq!(target.managed_manifest.managed_assets[0].name, "code-review");
     }
 
     #[test]
@@ -706,7 +801,7 @@ mod tests {
         write_file(&src.join("SKILL.md"), "---\nname: code-review\n---\n");
         let target = tmp.path().join("target");
 
-        build_export_plan(
+        build_plan(
             &[item("a", &src, "code-review")],
             &target,
             &tmp.path().join("backups"),
@@ -729,7 +824,7 @@ mod tests {
             "old content",
         );
 
-        let plan = build_export_plan(
+        let plan = build_plan(
             &[item("a", &src, "code-review")],
             &target,
             &tmp.path().join("backups"),
@@ -769,7 +864,7 @@ mod tests {
         write_file(&b.join("SKILL.md"), "---\nname: dup\n---\n");
         let target = tmp.path().join("target");
 
-        let plan = build_export_plan(
+        let plan = build_plan(
             &[item("a", &a, "dup"), item("b", &b, "dup")],
             &target,
             &tmp.path().join("backups"),
@@ -793,7 +888,7 @@ mod tests {
         let target = tmp.path().join("target");
         let items = vec![item("a", &src, "code-review")];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         let report = execute(&plan, &items, &[], false).unwrap();
 
         // DoD-3: every planned op produced a file of exactly the planned size.
@@ -826,7 +921,7 @@ mod tests {
         // Export under a different name (conflict resolution rename).
         let items = vec![item("a", &src, "code-review-vercel")];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         execute(&plan, &items, &[], false).unwrap();
 
         let written =
@@ -860,7 +955,7 @@ mod tests {
         let backups = tmp.path().join("backups");
         let items = vec![item("a", &src, "code-review")];
 
-        let plan = build_export_plan(&items, &target, &backups);
+        let plan = build_plan(&items, &target, &backups);
         assert!(!plan.backups.is_empty());
         // Overwriting the existing target requires explicit user consent.
         let report = execute(&plan, &items, &[], true).unwrap();
@@ -891,7 +986,7 @@ mod tests {
         let target = tmp.path().join("target");
         let items = vec![item("a", &a, "dup"), item("b", &b, "dup")];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         let err = execute(&plan, &items, &[], false).unwrap_err();
 
         assert!(err.contains("name collision"));
@@ -926,7 +1021,7 @@ mod tests {
         );
         let target = tmp.path().join("target");
 
-        let plan = build_export_plan(
+        let plan = build_plan(
             &[item("safe", &safe, "safe"), item("risky", &risky, "risky")],
             &target,
             &tmp.path().join("backups"),
@@ -959,7 +1054,7 @@ mod tests {
         let target = tmp.path().join("target");
         let items = vec![item("risky", &src, "risky")];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         let err = execute(&plan, &items, &[], false).unwrap_err();
 
         assert!(err.contains("security risk"));
@@ -978,7 +1073,7 @@ mod tests {
         let target = tmp.path().join("target");
         let items = vec![item("risky", &src, "risky")];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         // The user accepted the risk for this specific asset.
         let report = execute(&plan, &items, &["risky".to_string()], false).unwrap();
 
@@ -1027,7 +1122,7 @@ mod tests {
         // A conflict-resolution rename that tries to climb out of .claude/skills/.
         let items = vec![item("a", &src, "../../../evil")];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         let err = execute(&plan, &items, &[], false).unwrap_err();
 
         assert!(err.contains("export name"), "got: {err}");
@@ -1046,7 +1141,7 @@ mod tests {
         let abs_name = path_string(&escape);
         let items = vec![item("a", &src, &abs_name)];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         let err = execute(&plan, &items, &[], false).unwrap_err();
 
         assert!(err.contains("export name"), "got: {err}");
@@ -1061,7 +1156,7 @@ mod tests {
         let target = tmp.path().join("target");
         let items = vec![item("a", &src, "code-review")];
 
-        let mut plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let mut plan = build_plan(&items, &target, &tmp.path().join("backups"));
         // Simulate a tampered plan crossing the IPC boundary: redirect a write
         // outside the target dir. execute must refuse rather than trust op.path.
         let escaped = tmp.path().join("escaped.md");
@@ -1087,7 +1182,7 @@ mod tests {
         let target = tmp.path().join("target");
         let items = vec![item("a", &src, "code-review")];
 
-        let mut plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let mut plan = build_plan(&items, &target, &tmp.path().join("backups"));
         let cross = target
             .join(".cursor")
             .join("skills")
@@ -1112,7 +1207,7 @@ mod tests {
         let target = tmp.path().join("target");
         let items = vec![item("a", &src, "code-review")];
 
-        let mut plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let mut plan = build_plan(&items, &target, &tmp.path().join("backups"));
 
         // The skills dir holds a junction pointing OUTSIDE the project.
         let skills_dir = target.join(".claude").join("skills");
@@ -1147,7 +1242,7 @@ mod tests {
         );
         let items = vec![item("a", &src, "code-review")];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         // The target exists but the user has not confirmed the overwrite.
         let err = execute(&plan, &items, &[], false).unwrap_err();
 
@@ -1167,7 +1262,7 @@ mod tests {
         let target = tmp.path().join("target");
         let items = vec![item("a", &src, "code-review")];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         // The source SKILL.md disappears between plan and execute.
         std::fs::remove_file(src.join("SKILL.md")).unwrap();
         let err = execute(&plan, &items, &[], false).unwrap_err();
@@ -1184,7 +1279,7 @@ mod tests {
         let draft = "---\nname: merged-review\ndescription: Use when reviewing.\n---\n## Merged\nbody from two sources\n";
         let items = vec![content_item("m", draft, "merged-review", None)];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         assert!(plan.conflicts.is_empty());
         let report = execute(&plan, &items, &[], false).unwrap();
 
@@ -1210,7 +1305,7 @@ mod tests {
             content_item("m", "---\nname: Code-Review\n---\n", "Code-Review", None),
         ];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         assert!(plan
             .conflicts
             .iter()
@@ -1232,7 +1327,7 @@ mod tests {
         let draft = "---\nname: merged-review\n---\nmerged body\n";
         let items = vec![content_item("m", draft, "merged-review", Some(&src))];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         execute(&plan, &items, &[], false).unwrap();
 
         let out = target.join(".claude/skills/merged-review");
@@ -1265,7 +1360,7 @@ mod tests {
         let draft = "---\nname: merged-risky\n---\n";
         let items = vec![content_item("m", draft, "merged-risky", Some(&src))];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         // The kept-scripts source is scanned like any asset dir (§1.3).
         let report = plan
             .security_reports
@@ -1291,7 +1386,7 @@ mod tests {
         let target = tmp.path().join("target");
         let items = vec![content_item("m", "---\nname: m\n---\n", "m", None)];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
         // No script tree -> no security report, nothing to confirm.
         assert!(plan.security_reports.iter().all(|r| r.asset_id != "m"));
         execute(&plan, &items, &[], false).unwrap();
@@ -1306,7 +1401,7 @@ mod tests {
         let target = tmp.path().join("target");
         let items = vec![item("a", &src, "../evil")];
 
-        let plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let plan = build_plan(&items, &target, &tmp.path().join("backups"));
 
         // The preview surfaces the bad name as a blocking conflict (no silent
         // skip) and builds no file operations for it.

@@ -8,8 +8,10 @@
 
 use std::path::Path;
 
-use agentmix_core::{exporter, scanner};
-use agentmix_types::{ConflictKind, ExportItemSource, ExportRequestItem, FileOperationKind, Skill};
+use agentmix_core::{exporter, scanner, tool_adapters};
+use agentmix_types::{
+    ConflictKind, ExportItemSource, ExportPlan, ExportRequestItem, FileOperationKind, Skill,
+};
 
 /// Write a minimal valid skill (name matches its directory) under `root/dir`.
 fn write_skill(root: &Path, dir: &str, name: &str, topic: &str) {
@@ -39,6 +41,19 @@ fn item_from(skill: &Skill, exported_name: &str) -> ExportRequestItem {
     }
 }
 
+/// Build a single-target (Claude Code project) plan the way the v0.1-compat
+/// command does, so the golden/conflict/merged assertions read one destination.
+/// The home dir is unused for project scope.
+fn cc_plan(items: &[ExportRequestItem], target_project: &Path, backups: &Path) -> ExportPlan {
+    exporter::build_export_plan(
+        items,
+        &tool_adapters::default_targets(),
+        target_project,
+        Path::new("C:/home"),
+        backups,
+    )
+}
+
 #[test]
 fn golden_path_scan_select_preview_export() {
     let tmp = tempfile::tempdir().unwrap();
@@ -60,7 +75,7 @@ fn golden_path_scan_select_preview_export() {
     let backups = tmp.path().join("backups");
 
     // Dry-run preview: all create, no conflicts, nothing gated.
-    let plan = exporter::build_export_plan(&items, &target, &backups);
+    let plan = cc_plan(&items, &target, &backups);
     assert!(plan.conflicts.is_empty());
     assert!(plan.backups.is_empty());
     assert!(plan
@@ -109,7 +124,7 @@ fn conflict_path_rename_resolves_and_syncs_frontmatter() {
         item_from(skill_a, "code-review"),
         item_from(skill_b, "code-review"),
     ];
-    let plan = exporter::build_export_plan(&colliding, &target, &backups);
+    let plan = cc_plan(&colliding, &target, &backups);
     assert!(plan
         .conflicts
         .iter()
@@ -125,7 +140,7 @@ fn conflict_path_rename_resolves_and_syncs_frontmatter() {
         item_from(skill_a, "code-review"),
         item_from(skill_b, "code-review-b"),
     ];
-    let plan = exporter::build_export_plan(&resolved, &target, &backups);
+    let plan = cc_plan(&resolved, &target, &backups);
     assert!(plan.conflicts.is_empty());
     exporter::execute(&plan, &resolved, &[], false).unwrap();
 
@@ -167,7 +182,7 @@ fn merged_path_conflict_merge_resolves_and_exports_draft() {
         item_from(skill_a, "code-review"),
         item_from(skill_b, "code-review"),
     ];
-    let plan = exporter::build_export_plan(&colliding, &target, &backups);
+    let plan = cc_plan(&colliding, &target, &backups);
     assert!(plan
         .conflicts
         .iter()
@@ -189,7 +204,7 @@ fn merged_path_conflict_merge_resolves_and_exports_draft() {
     let resolved = vec![merged];
 
     // The conflict is gone and the same plan object drives execution.
-    let plan = exporter::build_export_plan(&resolved, &target, &backups);
+    let plan = cc_plan(&resolved, &target, &backups);
     assert!(plan.conflicts.is_empty());
     let report = exporter::execute(&plan, &resolved, &[], false).unwrap();
     assert_eq!(report.skills_exported, 1);

@@ -96,8 +96,14 @@ export default function ExportPanel({
   const createCount = plan?.operations.filter((o) => o.kind === 'create').length ?? 0;
   const overwriteCount = plan?.operations.filter((o) => o.kind === 'overwrite').length ?? 0;
   const affectedSkills = plan ? new Set(plan.operations.map((o) => o.sourceAsset)).size : 0;
-  const relPath = (p: string) =>
-    plan && p.startsWith(`${plan.targetDir}/`) ? p.slice(plan.targetDir.length + 1) : p;
+  // Strip whichever target's destination root prefixes the op path, for a
+  // compact display. Per-target grouping of the operations list lands in T33.
+  const relPath = (p: string) => {
+    const root = plan?.targets
+      .flatMap((tg) => tg.destinationRoots)
+      .find((r) => p.startsWith(`${r}/`));
+    return root ? p.slice(root.length + 1) : p;
+  };
 
   return (
     <div data-cmp="ExportPanel" className="flex flex-col bg-card" style={{ minHeight: 0 }}>

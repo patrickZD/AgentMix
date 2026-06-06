@@ -8,18 +8,18 @@ function plan(
   securityReports: SkillSecurityReport[] = [],
 ): ExportPlan {
   return {
-    targetDir: 'C:/proj/.claude/skills',
+    targets: [],
     operations: Array.from({ length: opCount }, (_, i) => ({
       kind: 'create',
       path: `C:/proj/.claude/skills/s/file${i}.md`,
       source: { type: 'path', path: `C:/src/s/file${i}.md` },
       size: 10,
       sourceAsset: 's',
+      targetIndex: 0,
     })),
     conflicts,
     backups: [],
     securityReports,
-    managedManifest: { manifestPath: 'x', managedAssets: [] },
     totalBytes: 20,
   };
 }

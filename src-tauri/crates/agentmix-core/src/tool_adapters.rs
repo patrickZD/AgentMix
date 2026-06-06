@@ -13,7 +13,10 @@
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
-use agentmix_types::{ExportScope, ToolAdapter, ToolId};
+use agentmix_types::{
+    DuplicateNameBehavior, ExportScope, ExportTarget, Precedence, ReloadBehavior, ToolAdapter,
+    ToolId,
+};
 use serde::Deserialize;
 
 /// The embedded baseline source (the single source of truth for built-in tools).
@@ -88,19 +91,58 @@ pub fn resolve_destination_roots(
         .collect()
 }
 
-/// The v0.1-compatibility default export destination: Claude Code, project
-/// scope. The single-target export pipeline is wired here until the target
-/// selector (T33) lets the user choose tools and scopes. It lives in the
-/// (tool-aware) adapter provider so the export pipeline and the command layer
-/// never name a concrete tool — keeping them adapter-pure.
-pub fn default_destination_root(target_project_path: &Path) -> PathBuf {
-    let adapter =
-        builtin_adapter(ToolId::ClaudeCode).expect("claude-code is a built-in baseline adapter");
-    // Project scope ignores the home dir; pass an empty path for it.
-    resolve_destination_roots(adapter, ExportScope::Project, target_project_path, Path::new(""))
-        .into_iter()
-        .next()
-        .expect("claude-code defines a project path")
+/// The v0.1-compatibility default target set: Claude Code, project scope. The
+/// command layer uses this until the target selector (T33) lets the user pick
+/// tools and scopes. It lives in the (tool-aware) adapter provider so the
+/// pipeline and command never name a concrete tool — keeping them adapter-pure.
+pub fn default_targets() -> Vec<ExportTarget> {
+    vec![ExportTarget {
+        tool: ToolId::ClaudeCode,
+        scope: ExportScope::Project,
+        custom_path: None,
+    }]
+}
+
+/// A synthesized adapter for a `Custom` target: the user-supplied path is the
+/// only location, with last-wins / error-on-duplicate defaults (decision 3).
+fn custom_adapter(path: &str) -> ToolAdapter {
+    ToolAdapter {
+        id: ToolId::Custom,
+        display_name: "Custom".to_string(),
+        project_paths: vec![path.to_string()],
+        user_paths: vec![path.to_string()],
+        admin_paths: Vec::new(),
+        // Single user-defined location: precedence is behavior-neutral.
+        precedence: Precedence::ProjectFirst,
+        duplicate_name_behavior: DuplicateNameBehavior::Error,
+        reload_behavior: ReloadBehavior::RestartRequired,
+    }
+}
+
+/// Resolve an export target to its adapter and the destination root(s) writes
+/// land in. Built-in tools resolve via the baseline adapter + scope paths; a
+/// `Custom` target uses the user-supplied absolute path verbatim with a
+/// synthesized adapter (decision 3). `None` when a built-in tool has no baseline
+/// or a custom target carries no path. v0.2.0 writes the primary (first) root;
+/// multi-path tools surface their other paths here but write only the primary
+/// (T34).
+pub fn resolve_target(
+    target: &ExportTarget,
+    target_project_path: &Path,
+    home_dir: &Path,
+) -> Option<(ToolAdapter, Vec<PathBuf>)> {
+    match target.tool {
+        ToolId::Custom => {
+            let path = target.custom_path.as_ref()?;
+            Some((custom_adapter(path), vec![PathBuf::from(path)]))
+        }
+        _ => {
+            let adapter = builtin_adapter(target.tool)?;
+            let roots =
+                resolve_destination_roots(adapter, target.scope, target_project_path, home_dir);
+            Some((adapter.clone(), roots))
+        }
+    }
 }
 
 #[cfg(test)]
@@ -245,10 +287,50 @@ mod tests {
     }
 
     #[test]
-    fn default_destination_root_is_claude_code_project_skills() {
-        // The v0.1-compat single-target default resolves to <project>/.claude/skills.
-        let root = default_destination_root(Path::new("C:/proj"));
-        assert_eq!(fwd(&root), "C:/proj/.claude/skills");
+    fn default_targets_is_claude_code_project() {
+        let targets = default_targets();
+        assert_eq!(targets.len(), 1);
+        assert_eq!(targets[0].tool, ToolId::ClaudeCode);
+        assert_eq!(targets[0].scope, ExportScope::Project);
+        assert!(targets[0].custom_path.is_none());
+    }
+
+    #[test]
+    fn resolve_target_built_in_uses_adapter_paths() {
+        let target = ExportTarget {
+            tool: ToolId::Cursor,
+            scope: ExportScope::Project,
+            custom_path: None,
+        };
+        let (adapter, roots) =
+            resolve_target(&target, Path::new("C:/proj"), Path::new("C:/home")).unwrap();
+        assert_eq!(adapter.id, ToolId::Cursor);
+        assert_eq!(roots.len(), 1);
+        assert_eq!(fwd(&roots[0]), "C:/proj/.cursor/skills");
+    }
+
+    #[test]
+    fn resolve_target_custom_uses_the_user_path() {
+        let target = ExportTarget {
+            tool: ToolId::Custom,
+            scope: ExportScope::Project,
+            custom_path: Some("C:/tools/my-skills".to_string()),
+        };
+        let (adapter, roots) =
+            resolve_target(&target, Path::new("C:/proj"), Path::new("C:/home")).unwrap();
+        assert_eq!(adapter.id, ToolId::Custom);
+        assert_eq!(adapter.duplicate_name_behavior, DuplicateNameBehavior::Error);
+        assert_eq!(roots, vec![PathBuf::from("C:/tools/my-skills")]);
+    }
+
+    #[test]
+    fn resolve_target_custom_without_path_is_none() {
+        let target = ExportTarget {
+            tool: ToolId::Custom,
+            scope: ExportScope::Project,
+            custom_path: None,
+        };
+        assert!(resolve_target(&target, Path::new("C:/proj"), Path::new("C:/home")).is_none());
     }
 
     #[test]

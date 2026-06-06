@@ -25,14 +25,20 @@ function stubLocalStorage(): Map<string, string> {
 }
 
 const emptyPlan: ExportPlan = {
-  targetDir: 'C:/proj/.claude/skills',
+  targets: [],
   operations: [
-    { kind: 'create', path: 'x', source: { type: 'path', path: 'src/x' }, size: 1, sourceAsset: 'a' },
+    {
+      kind: 'create',
+      path: 'x',
+      source: { type: 'path', path: 'src/x' },
+      size: 1,
+      sourceAsset: 'a',
+      targetIndex: 0,
+    },
   ],
   conflicts: [],
   backups: [],
   securityReports: [],
-  managedManifest: { manifestPath: 'm', managedAssets: [] },
   totalBytes: 1,
 };
 

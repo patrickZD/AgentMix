@@ -163,6 +163,9 @@ pub struct FileOperation {
     pub size: u64,
     /// Id of the asset this operation belongs to.
     pub source_asset: String,
+    /// Index into `ExportPlan.targets` of the target this write belongs to, so
+    /// the preview can group operations per tool / scope (multi-target, T32).
+    pub target_index: u32,
 }
 
 /// Where the pre-export backup archive will be written, and how big the content
@@ -172,10 +175,12 @@ pub struct FileOperation {
 pub struct BackupPlan {
     /// The target directory whose existing content is backed up before writes.
     pub target_path: String,
-    /// Destination archive: ~/.agentmix/backups/<project-hash>/<timestamp>.zip.
+    /// Destination archive: ~/.agentmix/backups/<root-hash>/<timestamp>.zip.
     pub backup_archive: String,
     #[specta(type = u32)]
     pub size_bytes: u64,
+    /// Index into `ExportPlan.targets` of the target whose root is backed up.
+    pub target_index: u32,
 }
 
 /// One entry in the target-side ledger of AgentMix-managed assets.
@@ -325,14 +330,31 @@ pub struct ExportTarget {
     pub custom_path: Option<String>,
 }
 
+/// One resolved export target in a plan (DESIGN.md §3.2 `ExportPlan.targets`):
+/// the tool's adapter, the chosen scope, the destination root(s) the writes
+/// land in, and the AgentMix-managed ledger written at that root. v0.2.0 writes
+/// one root per target (multi-path tools write only their primary path, T34),
+/// so `destination_roots` usually holds one entry.
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportPlanTarget {
+    pub adapter: ToolAdapter,
+    pub scope: ExportScope,
+    /// Resolved absolute destination root(s), forward-slashed (DESIGN.md §4.8).
+    pub destination_roots: Vec<String>,
+    /// The managed-asset ledger written alongside this target's exported skills.
+    pub managed_manifest: ManagedManifest,
+}
+
 /// The single object the Dry-run preview renders and execute consumes
-/// (DESIGN.md §3.2). v0.1 targets one directory (Claude Code project-level), so
-/// the multi-target / runtime-warning fields are omitted until v0.2.
+/// (DESIGN.md §3.2). v0.2.0 supports multiple targets: one composition exported
+/// to several tools / scopes at once. Each `FileOperation` / `BackupPlan` links
+/// back to its target via `target_index`.
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ExportPlan {
-    /// Resolved target directory: <project>/.claude/skills.
-    pub target_dir: String,
+    /// The tools / scopes this plan writes to, in selection order.
+    pub targets: Vec<ExportPlanTarget>,
     pub operations: Vec<FileOperation>,
     /// Must be empty before execute is allowed (DESIGN.md §3.2).
     pub conflicts: Vec<ExportConflict>,
@@ -340,8 +362,8 @@ pub struct ExportPlan {
     /// Per-asset security pre-check (DESIGN.md §1.11). A report with
     /// `requiresConfirmation` must be acknowledged before execute will write
     /// that asset; the preview renders these and the user accepts per-skill.
+    /// One report per selected asset (the source is scanned once, not per target).
     pub security_reports: Vec<SkillSecurityReport>,
-    pub managed_manifest: ManagedManifest,
     /// Sum of all operation sizes — the total bytes the export will write.
     #[specta(type = u32)]
     pub total_bytes: u64,

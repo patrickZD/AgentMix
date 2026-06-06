@@ -21,9 +21,11 @@ export type AssetKind = "skill";
 export type BackupPlan = {
 	/**  The target directory whose existing content is backed up before writes. */
 	targetPath: string,
-	/**  Destination archive: ~/.agentmix/backups/<project-hash>/<timestamp>.zip. */
+	/**  Destination archive: ~/.agentmix/backups/<root-hash>/<timestamp>.zip. */
 	backupArchive: string,
 	sizeBytes: number,
+	/**  Index into `ExportPlan.targets` of the target whose root is backed up. */
+	targetIndex: number,
 };
 
 /**
@@ -109,12 +111,13 @@ export type ExportItemSource = { type: "directory"; dir: string } | { type: "con
 
 /**
  *  The single object the Dry-run preview renders and execute consumes
- *  (DESIGN.md §3.2). v0.1 targets one directory (Claude Code project-level), so
- *  the multi-target / runtime-warning fields are omitted until v0.2.
+ *  (DESIGN.md §3.2). v0.2.0 supports multiple targets: one composition exported
+ *  to several tools / scopes at once. Each `FileOperation` / `BackupPlan` links
+ *  back to its target via `target_index`.
  */
 export type ExportPlan = {
-	/**  Resolved target directory: <project>/.claude/skills. */
-	targetDir: string,
+	/**  The tools / scopes this plan writes to, in selection order. */
+	targets: ExportPlanTarget[],
 	operations: FileOperation[],
 	/**  Must be empty before execute is allowed (DESIGN.md §3.2). */
 	conflicts: ExportConflict[],
@@ -123,11 +126,27 @@ export type ExportPlan = {
 	 *  Per-asset security pre-check (DESIGN.md §1.11). A report with
 	 *  `requiresConfirmation` must be acknowledged before execute will write
 	 *  that asset; the preview renders these and the user accepts per-skill.
+	 *  One report per selected asset (the source is scanned once, not per target).
 	 */
 	securityReports: SkillSecurityReport[],
-	managedManifest: ManagedManifest,
 	/**  Sum of all operation sizes — the total bytes the export will write. */
 	totalBytes: number,
+};
+
+/**
+ *  One resolved export target in a plan (DESIGN.md §3.2 `ExportPlan.targets`):
+ *  the tool's adapter, the chosen scope, the destination root(s) the writes
+ *  land in, and the AgentMix-managed ledger written at that root. v0.2.0 writes
+ *  one root per target (multi-path tools write only their primary path, T34),
+ *  so `destination_roots` usually holds one entry.
+ */
+export type ExportPlanTarget = {
+	adapter: ToolAdapter,
+	scope: ExportScope,
+	/**  Resolved absolute destination root(s), forward-slashed (DESIGN.md §4.8). */
+	destinationRoots: string[],
+	/**  The managed-asset ledger written alongside this target's exported skills. */
+	managedManifest: ManagedManifest,
 };
 
 /**
@@ -185,6 +204,11 @@ export type FileOperation = {
 	size: number,
 	/**  Id of the asset this operation belongs to. */
 	sourceAsset: string,
+	/**
+	 *  Index into `ExportPlan.targets` of the target this write belongs to, so
+	 *  the preview can group operations per tool / scope (multi-target, T32).
+	 */
+	targetIndex: number,
 };
 
 /**

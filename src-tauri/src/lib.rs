@@ -88,13 +88,19 @@ fn validate_merge_draft(
     agentmix_core::merge::validate_merge_draft(&draft, &existing_names, keeps_scripts)
 }
 
+/// Resolve the user's home directory (Windows `USERPROFILE`, else `HOME`). Used
+/// to resolve global-scope export targets and the per-user data root.
+fn home_dir() -> Result<PathBuf, String> {
+    std::env::var("USERPROFILE")
+        .or_else(|_| std::env::var("HOME"))
+        .map(PathBuf::from)
+        .map_err(|_| "could not resolve home directory".to_string())
+}
+
 /// Resolve the per-user AgentMix data root: ~/.agentmix (backups, update-check
 /// cache). Never inside a target project.
 fn agentmix_root() -> Result<PathBuf, String> {
-    let home = std::env::var("USERPROFILE")
-        .or_else(|_| std::env::var("HOME"))
-        .map_err(|_| "could not resolve home directory".to_string())?;
-    Ok(PathBuf::from(home).join(".agentmix"))
+    Ok(home_dir()?.join(".agentmix"))
 }
 
 /// Resolve the per-user backups root: ~/.agentmix/backups (never inside a target
@@ -115,9 +121,13 @@ fn build_export_plan(
     if !target.is_dir() {
         return Err(format!("not a directory: {target_project_path}"));
     }
+    // v0.2.0 still derives the target set here (Claude Code project default); the
+    // target selector (T33) will pass the user's chosen targets instead.
     Ok(agentmix_core::exporter::build_export_plan(
         &items,
+        &agentmix_core::tool_adapters::default_targets(),
         target,
+        &home_dir()?,
         &backups_root()?,
     ))
 }
