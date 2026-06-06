@@ -5,7 +5,7 @@
 > **范围决策待复审**：v0.2.0 = 多目标导出引擎，是从 DESIGN.md v0.2（17 项功能，跨多发布）中按依赖与风险切出的第一条主线。其余子里程碑见同目录 `plan.md` 文末大纲。复审可改向。
 
 ## Phase 0：地基
-- [ ] **T30** ToolAdapter 抽象（types，含 custom 形态）+ 内嵌 baseline `tool-adapters.json`（5 工具，`include_str!`）+ `resolve_destination_roots`（project/global scope，Windows 规范化）+ per-tool 硬分支守卫 — 依赖：无 — M
+- [x] **T30** ToolAdapter 抽象（types，含 custom 形态）+ 内嵌 baseline `tool-adapters.json`（5 工具，`include_str!`）+ `resolve_destination_roots`（project/global scope，Windows 规范化）+ per-tool 硬分支守卫 — 依赖：无 — M
 - [ ] **T38** PR CI workflow（push/PR 跑 `check:all`，不构建/不签名，与 release.yml 区分）— 依赖：无（独立，建议早做）— S
 
 ### Checkpoint J（T30）— 地基就位
@@ -51,7 +51,10 @@
 4. 全局备份用 destination-root-hash，目录仍 `~/.agentmix/backups/<hash>/`（T34）
 5. 加 PR CI，独立任务 T38
 
-## 后续子里程碑（大纲，详见同目录 plan.md）
+## 后续子里程碑大纲
+
+各子里程碑的详细拆分见同目录 plan.md。
+
 - v0.2.1 复现与来源生态（git2 / Git URL / Source Tracking / .agentmix.lock / Preset·Bundle + 矩阵远程刷新）
 - v0.2.2 AI 增强套件（keyring + reqwest / AI 合并·健康·修复 / 语义聚类）
 - v0.2.3 跨平台（macOS·Linux + 签名公证 + 原生菜单栏）
