@@ -130,17 +130,30 @@ export default function ExportPanel({
           return (
             <div
               key={adapter.id}
-              className={`rounded-lg border p-2.5 ${
-                target ? 'border-border bg-card' : 'border-border bg-muted opacity-70'
+              className={`rounded-lg border p-2.5 transition-all ${
+                target ? 'bg-card' : 'border-border bg-muted opacity-60 hover:opacity-90'
               }`}
+              style={target ? { borderColor: 'var(--am-blue)' } : undefined}
             >
-              <label className="flex items-center gap-1.5 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                {/* Visually-hidden real checkbox keeps keyboard + screen-reader
+                    support; the styled box is the brand-blue affordance. */}
                 <input
                   type="checkbox"
                   checked={!!target}
                   onChange={() => onToggleTarget(adapter.id)}
                   data-testid="export-target-tool"
+                  className="peer sr-only"
                 />
+                <span
+                  className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-[5px] border transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-blue-400"
+                  style={{
+                    borderColor: target ? 'var(--am-blue)' : 'var(--am-border, #cbd5e1)',
+                    background: target ? 'var(--am-blue)' : 'transparent',
+                  }}
+                >
+                  {target && <CheckIcon size={11} strokeWidth={3} color="#fff" />}
+                </span>
                 <span className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
                   {adapter.displayName}
                 </span>
