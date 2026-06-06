@@ -83,9 +83,9 @@
     "invalidNameWarn": "请重命名 {{count}} 个导出名不合法的 Skill",
     "confirmOverwrite": "确认覆盖目标中 {{count}} 个同名 Skill",
     "runtimeConflict": {
-      "bothActive": "运行时本「{{name}}」与已有的同名 Skill 都会加载并生效",
-      "exportedWins": "运行时本「{{name}}」优先生效，已有的同名 Skill 被遮蔽",
-      "existingWins": "运行时已有的同名 Skill 优先，本次导出的「{{name}}」被遮蔽"
+      "bothActive": "运行时本「{{name}}」与{{scope}}的同名 Skill 共存，都会加载",
+      "exportedWins": "运行时本「{{name}}」优先生效，覆盖{{scope}}的同名 Skill",
+      "existingWins": "运行时{{scope}}的同名 Skill 优先，本次导出的「{{name}}」被覆盖"
     },
     "capability": {
       "ignored": "Skill「{{name}}」使用了 `{{field}}`，该工具会忽略",

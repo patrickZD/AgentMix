@@ -366,16 +366,27 @@ export default function ExportPanel({
                       tool context is clear without repeating its name. */}
                   {plan.runtimeWarnings
                     .filter((w) => w.targetIndex === ti)
-                    .map((w) => (
-                      <p
-                        key={`rt:${w.exportedName}`}
-                        className="flex items-start gap-1"
-                        style={{ fontSize: '10px', color: 'var(--am-orange)' }}
-                      >
-                        <AlertTriangleIcon size={10} style={{ flexShrink: 0, marginTop: 1 }} />
-                        {t(`exportPanel.runtimeConflict.${w.kind}`, { name: w.exportedName })}
-                      </p>
-                    ))}
+                    .map((w) => {
+                      // The conflicting skill lives at the opposite scope from the
+                      // one being exported (project export <-> global existing).
+                      const otherScope =
+                        tg.scope === 'project'
+                          ? t('exportPanel.scopeGlobal')
+                          : t('exportPanel.scopeProject');
+                      return (
+                        <p
+                          key={`rt:${w.exportedName}`}
+                          className="flex items-start gap-1"
+                          style={{ fontSize: '10px', color: 'var(--am-orange)' }}
+                        >
+                          <AlertTriangleIcon size={10} style={{ flexShrink: 0, marginTop: 1 }} />
+                          {t(`exportPanel.runtimeConflict.${w.kind}`, {
+                            name: w.exportedName,
+                            scope: otherScope,
+                          })}
+                        </p>
+                      );
+                    })}
                   {/* Capability notes — warning-level field-compatibility hints
                       (DESIGN.md §1.10); shown under their tool's card, never block. */}
                   {plan.capabilityWarnings

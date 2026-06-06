@@ -83,9 +83,9 @@
     "invalidNameWarn": "Rename {{count}} skill(s) with an unsafe export name",
     "confirmOverwrite": "Confirm overwriting {{count}} existing skill(s)",
     "runtimeConflict": {
-      "bothActive": "Both this “{{name}}” and an existing same-named skill stay active at runtime",
-      "exportedWins": "This “{{name}}” takes precedence at runtime; an existing same-named skill is shadowed",
-      "existingWins": "An existing same-named skill takes precedence at runtime; this “{{name}}” is shadowed"
+      "bothActive": "Both this “{{name}}” and the {{scope}} skill of the same name load at runtime",
+      "exportedWins": "This “{{name}}” takes precedence at runtime, overriding the {{scope}} skill of the same name",
+      "existingWins": "The {{scope}} skill of the same name takes precedence at runtime; this “{{name}}” is overridden"
     },
     "capability": {
       "ignored": "Skill “{{name}}” uses `{{field}}`, which this tool ignores",
