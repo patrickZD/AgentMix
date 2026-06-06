@@ -9,4 +9,5 @@ pub mod merge;
 pub mod parser;
 pub mod scanner;
 pub mod security;
+pub mod tool_adapters;
 pub mod update;

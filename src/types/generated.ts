@@ -65,6 +65,12 @@ export type ConflictKind =
 "invalidName";
 
 /**
+ *  What a tool does when two skills share a name in the same location
+ *  (DESIGN.md §1.4). Feeds RuntimeConflict messaging (T35).
+ */
+export type DuplicateNameBehavior = "last-wins" | "show-both" | "error";
+
+/**
  *  What execute actually did. Returned by ExportCoordinator.execute (T13) and
  *  shown in the UI; backupArchive (if any) backs the "open backup folder" action.
  */
@@ -136,6 +142,27 @@ export type ExportRequestItem = {
 	exportedName: string,
 	/**  Source reference recorded in the manifest (e.g. sourceProjectId:relPath). */
 	sourceRef: string,
+};
+
+/**
+ *  Where exported assets land: per-project, or the user's global tool config
+ *  (DESIGN.md §3.2). v0.2.0 resolves `Project` (→ adapter.projectPaths under the
+ *  target project) and `Global` (→ adapter.userPaths under home).
+ */
+export type ExportScope = "project" | "global";
+
+/**
+ *  One export target the user selected (DESIGN.md §3.2): which tool, at which
+ *  scope, plus the destination root typed for a `Custom` tool.
+ */
+export type ExportTarget = {
+	tool: ToolId,
+	scope: ExportScope,
+	/**
+	 *  Set only when `tool == Custom`: the destination root the user supplied.
+	 *  Ignored for built-in tools (their roots resolve from the adapter).
+	 */
+	customPath: string | null,
 };
 
 /**
@@ -229,6 +256,19 @@ export type MergeDraftValidation = {
 };
 
 /**
+ *  How a tool resolves the same skill name found at more than one scope
+ *  (DESIGN.md §1.4). Feeds RuntimeConflict messaging (T35); path resolution
+ *  does not read it.
+ */
+export type Precedence = "project-first" | "user-first" | "merge-all";
+
+/**
+ *  Whether a tool picks up newly written skills without being restarted
+ *  (DESIGN.md §1.4). Informational; carried for the export summary.
+ */
+export type ReloadBehavior = "auto" | "restart-required";
+
+/**
  *  One high-risk line found in a script (DESIGN.md §1.11). Carries the rule, the
  *  script path relative to the skill directory, the 1-based line number, and the
  *  line text so the UI can highlight exactly what matched.
@@ -315,6 +355,47 @@ export type SourceProject = {
 	lastCheckedAt: string | null,
 	skills: Skill[],
 };
+
+/**
+ *  The full runtime profile of one export target tool (DESIGN.md §1.4). Built-in
+ *  instances are the embedded baseline; the pipeline reads behavior from this
+ *  data and never hard-branches on a tool id (architecture red line). Paths are
+ *  stored relative to their scope root: `project_paths` under the target
+ *  project, `user_paths` under the home directory; `admin_paths` are absolute
+ *  system dirs.
+ */
+export type ToolAdapter = {
+	id: ToolId,
+	displayName: string,
+	/**
+	 *  Project-level skills dirs, relative to the target project root. A tool may
+	 *  read several (OpenCode, Gemini); the exporter writes only the first (the
+	 *  tool's native primary path) — see the multi-path decision (T34).
+	 */
+	projectPaths: string[],
+	/**
+	 *  User-level skills dirs, relative to the home directory (the table's
+	 *  `~/.<tool>/skills/` without the leading `~/`). Empty when a tool has no
+	 *  user scope (Cursor).
+	 */
+	userPaths: string[],
+	/**
+	 *  System-level skills dirs (absolute). Only Codex ships one; v0.2.0 carries
+	 *  this as data but does not resolve admin scope as a selectable target.
+	 */
+	adminPaths?: string[],
+	precedence: Precedence,
+	duplicateNameBehavior: DuplicateNameBehavior,
+	reloadBehavior: ReloadBehavior,
+};
+
+/**
+ *  An AI coding tool an export can target. The five built-ins ship with baseline
+ *  `ToolAdapter` data (DESIGN.md §1.4); `Custom` is a user-defined target whose
+ *  destination root comes from `ExportTarget.custom_path`, not from a baseline.
+ *  Serialized as the tool id used across the matrix (`opencode` is one word).
+ */
+export type ToolId = "claude-code" | "cursor" | "codex" | "opencode" | "gemini-cli" | "custom";
 
 /**
  *  Result of an update check against GitHub Releases (DESIGN.md §1.16).

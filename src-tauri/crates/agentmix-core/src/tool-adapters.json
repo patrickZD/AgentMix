@@ -1,0 +1,55 @@
+{
+  "dataDate": "2026-06-06",
+  "adapters": [
+    {
+      "id": "claude-code",
+      "displayName": "Claude Code",
+      "projectPaths": [".claude/skills"],
+      "userPaths": [".claude/skills"],
+      "adminPaths": [],
+      "precedence": "project-first",
+      "duplicateNameBehavior": "last-wins",
+      "reloadBehavior": "restart-required"
+    },
+    {
+      "id": "cursor",
+      "displayName": "Cursor",
+      "projectPaths": [".cursor/skills"],
+      "userPaths": [],
+      "adminPaths": [],
+      "precedence": "project-first",
+      "duplicateNameBehavior": "last-wins",
+      "reloadBehavior": "restart-required"
+    },
+    {
+      "id": "codex",
+      "displayName": "Codex CLI",
+      "projectPaths": [".agents/skills"],
+      "userPaths": [".agents/skills"],
+      "adminPaths": ["/etc/codex/skills"],
+      "precedence": "merge-all",
+      "duplicateNameBehavior": "show-both",
+      "reloadBehavior": "restart-required"
+    },
+    {
+      "id": "opencode",
+      "displayName": "OpenCode",
+      "projectPaths": [".opencode/skills", ".claude/skills", ".agents/skills"],
+      "userPaths": [".config/opencode/skills"],
+      "adminPaths": [],
+      "precedence": "project-first",
+      "duplicateNameBehavior": "last-wins",
+      "reloadBehavior": "restart-required"
+    },
+    {
+      "id": "gemini-cli",
+      "displayName": "Gemini CLI",
+      "projectPaths": [".gemini/skills", ".agents/skills"],
+      "userPaths": [".agents/skills"],
+      "adminPaths": [],
+      "precedence": "project-first",
+      "duplicateNameBehavior": "last-wins",
+      "reloadBehavior": "restart-required"
+    }
+  ]
+}

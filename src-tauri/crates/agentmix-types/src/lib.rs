@@ -229,6 +229,102 @@ pub struct ExportRequestItem {
     pub source_ref: String,
 }
 
+/// An AI coding tool an export can target. The five built-ins ship with baseline
+/// `ToolAdapter` data (DESIGN.md §1.4); `Custom` is a user-defined target whose
+/// destination root comes from `ExportTarget.custom_path`, not from a baseline.
+/// Serialized as the tool id used across the matrix (`opencode` is one word).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "kebab-case")]
+pub enum ToolId {
+    ClaudeCode,
+    Cursor,
+    Codex,
+    #[serde(rename = "opencode")]
+    OpenCode,
+    GeminiCli,
+    Custom,
+}
+
+/// How a tool resolves the same skill name found at more than one scope
+/// (DESIGN.md §1.4). Feeds RuntimeConflict messaging (T35); path resolution
+/// does not read it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "kebab-case")]
+pub enum Precedence {
+    ProjectFirst,
+    UserFirst,
+    MergeAll,
+}
+
+/// What a tool does when two skills share a name in the same location
+/// (DESIGN.md §1.4). Feeds RuntimeConflict messaging (T35).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "kebab-case")]
+pub enum DuplicateNameBehavior {
+    LastWins,
+    ShowBoth,
+    Error,
+}
+
+/// Whether a tool picks up newly written skills without being restarted
+/// (DESIGN.md §1.4). Informational; carried for the export summary.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "kebab-case")]
+pub enum ReloadBehavior {
+    Auto,
+    RestartRequired,
+}
+
+/// The full runtime profile of one export target tool (DESIGN.md §1.4). Built-in
+/// instances are the embedded baseline; the pipeline reads behavior from this
+/// data and never hard-branches on a tool id (architecture red line). Paths are
+/// stored relative to their scope root: `project_paths` under the target
+/// project, `user_paths` under the home directory; `admin_paths` are absolute
+/// system dirs.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ToolAdapter {
+    pub id: ToolId,
+    pub display_name: String,
+    /// Project-level skills dirs, relative to the target project root. A tool may
+    /// read several (OpenCode, Gemini); the exporter writes only the first (the
+    /// tool's native primary path) — see the multi-path decision (T34).
+    pub project_paths: Vec<String>,
+    /// User-level skills dirs, relative to the home directory (the table's
+    /// `~/.<tool>/skills/` without the leading `~/`). Empty when a tool has no
+    /// user scope (Cursor).
+    pub user_paths: Vec<String>,
+    /// System-level skills dirs (absolute). Only Codex ships one; v0.2.0 carries
+    /// this as data but does not resolve admin scope as a selectable target.
+    #[serde(default)]
+    pub admin_paths: Vec<String>,
+    pub precedence: Precedence,
+    pub duplicate_name_behavior: DuplicateNameBehavior,
+    pub reload_behavior: ReloadBehavior,
+}
+
+/// Where exported assets land: per-project, or the user's global tool config
+/// (DESIGN.md §3.2). v0.2.0 resolves `Project` (→ adapter.projectPaths under the
+/// target project) and `Global` (→ adapter.userPaths under home).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "kebab-case")]
+pub enum ExportScope {
+    Project,
+    Global,
+}
+
+/// One export target the user selected (DESIGN.md §3.2): which tool, at which
+/// scope, plus the destination root typed for a `Custom` tool.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportTarget {
+    pub tool: ToolId,
+    pub scope: ExportScope,
+    /// Set only when `tool == Custom`: the destination root the user supplied.
+    /// Ignored for built-in tools (their roots resolve from the adapter).
+    pub custom_path: Option<String>,
+}
+
 /// The single object the Dry-run preview renders and execute consumes
 /// (DESIGN.md §3.2). v0.1 targets one directory (Claude Code project-level), so
 /// the multi-target / runtime-warning fields are omitted until v0.2.
