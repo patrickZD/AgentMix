@@ -167,7 +167,10 @@ fn build_item_operations(
                 .filter_map(Result::ok)
                 .filter(|e| e.file_type().is_file())
             {
-                let rel = entry.path().strip_prefix(source_dir).unwrap_or(entry.path());
+                let rel = entry
+                    .path()
+                    .strip_prefix(source_dir)
+                    .unwrap_or(entry.path());
                 // The asset's own SKILL.md is written with its `name:` normalized
                 // to the exported name, so its planned size is the rewritten size.
                 let size = if is_skill_md_rel(rel) {
@@ -439,10 +442,11 @@ pub fn execute(
     // Checked before any write so a later bad op cannot leave earlier files on
     // disk (DESIGN.md §1.11, §3.2).
     for op in &plan.operations {
-        let confined = plan
-            .targets
-            .get(op.target_index as usize)
-            .is_some_and(|t| t.destination_roots.iter().any(|root| is_confined(root, &op.path)));
+        let confined = plan.targets.get(op.target_index as usize).is_some_and(|t| {
+            t.destination_roots
+                .iter()
+                .any(|root| is_confined(root, &op.path))
+        });
         if !confined {
             return Err(format!(
                 "operation path `{}` escapes the target directory",
@@ -791,7 +795,10 @@ mod tests {
             .managed_manifest
             .manifest_path
             .ends_with("/.claude/skills/.agentmix-manifest.json"));
-        assert_eq!(target.managed_manifest.managed_assets[0].name, "code-review");
+        assert_eq!(
+            target.managed_manifest.managed_assets[0].name,
+            "code-review"
+        );
     }
 
     #[test]

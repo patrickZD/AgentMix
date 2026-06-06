@@ -158,7 +158,11 @@ mod tests {
     #[test]
     fn baseline_parses_the_five_builtin_adapters() {
         let adapters = builtin_adapters();
-        assert_eq!(adapters.len(), 5, "five built-in tools ship in the baseline");
+        assert_eq!(
+            adapters.len(),
+            5,
+            "five built-in tools ship in the baseline"
+        );
         for id in [
             ToolId::ClaudeCode,
             ToolId::Cursor,
@@ -319,7 +323,10 @@ mod tests {
         let (adapter, roots) =
             resolve_target(&target, Path::new("C:/proj"), Path::new("C:/home")).unwrap();
         assert_eq!(adapter.id, ToolId::Custom);
-        assert_eq!(adapter.duplicate_name_behavior, DuplicateNameBehavior::Error);
+        assert_eq!(
+            adapter.duplicate_name_behavior,
+            DuplicateNameBehavior::Error
+        );
         assert_eq!(roots, vec![PathBuf::from("C:/tools/my-skills")]);
     }
 
@@ -338,8 +345,12 @@ mod tests {
         // The stored paths use forward slashes; the resolved path must be a real
         // multi-segment path, not one component containing a slash.
         let a = builtin_adapter(ToolId::ClaudeCode).unwrap();
-        let roots =
-            resolve_destination_roots(a, ExportScope::Project, Path::new("C:/proj"), Path::new("/h"));
+        let roots = resolve_destination_roots(
+            a,
+            ExportScope::Project,
+            Path::new("C:/proj"),
+            Path::new("/h"),
+        );
         let segments: Vec<String> = roots[0]
             .components()
             .map(|c| c.as_os_str().to_string_lossy().to_string())

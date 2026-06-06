@@ -270,7 +270,10 @@ fn multi_target_exports_one_skill_to_two_tools_byte_identical() {
         Path::new("C:/home"),
         &backups,
     );
-    assert!(plan.conflicts.is_empty(), "same skill to two tools must not conflict");
+    assert!(
+        plan.conflicts.is_empty(),
+        "same skill to two tools must not conflict"
+    );
     assert_eq!(plan.targets.len(), 2);
     assert!(plan.targets[0].destination_roots[0].ends_with("/.claude/skills"));
     assert!(plan.targets[1].destination_roots[0].ends_with("/.cursor/skills"));
@@ -300,8 +303,12 @@ fn multi_target_exports_one_skill_to_two_tools_byte_identical() {
         );
     }
     // Each tool got its own manifest at its own root.
-    assert!(target.join(".claude/skills/.agentmix-manifest.json").is_file());
-    assert!(target.join(".cursor/skills/.agentmix-manifest.json").is_file());
+    assert!(target
+        .join(".claude/skills/.agentmix-manifest.json")
+        .is_file());
+    assert!(target
+        .join(".cursor/skills/.agentmix-manifest.json")
+        .is_file());
 }
 
 #[test]
@@ -340,7 +347,10 @@ fn multi_target_target_exists_is_evaluated_per_root() {
         .iter()
         .filter(|c| c.kind == ConflictKind::TargetExists)
         .count();
-    assert_eq!(target_exists, 1, "TargetExists must be per destination root");
+    assert_eq!(
+        target_exists, 1,
+        "TargetExists must be per destination root"
+    );
     // Only the CC root is backed up (the Cursor root has nothing to overwrite).
     assert_eq!(plan.backups.len(), 1);
 
