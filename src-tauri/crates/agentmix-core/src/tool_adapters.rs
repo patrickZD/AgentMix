@@ -88,6 +88,21 @@ pub fn resolve_destination_roots(
         .collect()
 }
 
+/// The v0.1-compatibility default export destination: Claude Code, project
+/// scope. The single-target export pipeline is wired here until the target
+/// selector (T33) lets the user choose tools and scopes. It lives in the
+/// (tool-aware) adapter provider so the export pipeline and the command layer
+/// never name a concrete tool — keeping them adapter-pure.
+pub fn default_destination_root(target_project_path: &Path) -> PathBuf {
+    let adapter =
+        builtin_adapter(ToolId::ClaudeCode).expect("claude-code is a built-in baseline adapter");
+    // Project scope ignores the home dir; pass an empty path for it.
+    resolve_destination_roots(adapter, ExportScope::Project, target_project_path, Path::new(""))
+        .into_iter()
+        .next()
+        .expect("claude-code defines a project path")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -227,6 +242,13 @@ mod tests {
             Path::new("C:/Users/dev"),
         );
         assert!(roots.is_empty());
+    }
+
+    #[test]
+    fn default_destination_root_is_claude_code_project_skills() {
+        // The v0.1-compat single-target default resolves to <project>/.claude/skills.
+        let root = default_destination_root(Path::new("C:/proj"));
+        assert_eq!(fwd(&root), "C:/proj/.claude/skills");
     }
 
     #[test]

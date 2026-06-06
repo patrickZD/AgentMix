@@ -8,7 +8,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use agentmix_types::{
@@ -43,7 +43,7 @@ fn item_scan_dir(item: &ExportRequestItem) -> Option<&str> {
 /// True when `name` is safe to use as a single directory segment under the
 /// target skills dir: non-empty, within the SKILL.md `name` length, and free of
 /// `.`/`..` traversal, path separators, or a drive prefix. This is the security
-/// boundary that keeps every export write confined to `.claude/skills/`
+/// boundary that keeps every export write confined to the destination root
 /// (DESIGN.md §1.11). Enforced in `execute` (the single writer) and surfaced in
 /// the preview, so a renamed asset can never steer a write outside the target.
 /// Also consulted by the merge-draft validation (crate::merge) so the
@@ -89,6 +89,44 @@ fn is_within(base: &str, candidate: &str) -> bool {
             .all(|(b, c)| b.eq_ignore_ascii_case(c))
 }
 
+/// Walk up from `p` to the nearest ancestor that exists on disk and return its
+/// canonical form (which resolves symlinks/junctions). `None` if no ancestor
+/// exists. Lets containment checks be symlink-safe even when the destination
+/// itself does not exist yet.
+fn nearest_existing_canonical(p: &Path) -> Option<PathBuf> {
+    let mut cur = Some(p);
+    while let Some(c) = cur {
+        if c.exists() {
+            return std::fs::canonicalize(c).ok();
+        }
+        cur = c.parent();
+    }
+    None
+}
+
+/// True when `candidate` is confined to `base`, robust against symlink/junction
+/// escape. First a lexical containment check (no I/O) rejects `..` traversal,
+/// absolute paths outside `base`, and cross-root injection; then a canonical
+/// check resolves any symlink/junction on the existing portion of both paths
+/// and confirms the candidate's real location is still inside the base's real
+/// location. The destination usually does not exist yet, so each side is
+/// canonicalized at its deepest existing ancestor (DESIGN.md §1.11, §3.2).
+fn is_confined(base: &str, candidate: &str) -> bool {
+    if !is_within(base, candidate) {
+        return false;
+    }
+    match (
+        nearest_existing_canonical(Path::new(base)),
+        nearest_existing_canonical(Path::new(candidate)),
+    ) {
+        (Some(real_base), Some(real_cand)) => {
+            is_within(&path_string(&real_base), &path_string(&real_cand))
+        }
+        // Nothing on disk yet to redirect a write — the lexical check stands.
+        _ => true,
+    }
+}
+
 /// Build the export plan for `items` into `target_project_path`'s
 /// `.claude/skills/` directory. Produces operations, conflicts, the backup plan
 /// and the managed manifest; writes nothing.
@@ -97,7 +135,11 @@ pub fn build_export_plan(
     target_project_path: &Path,
     backups_root: &Path,
 ) -> ExportPlan {
-    let target_dir = target_project_path.join(".claude").join("skills");
+    // Resolve the destination through the Claude Code project adapter (T31): the
+    // single-target default until the target selector (T33) lets the user choose
+    // tools and scopes. The pipeline asks the adapter provider for the root and
+    // never names a concrete tool, so it stays adapter-pure.
+    let target_dir = crate::tool_adapters::default_destination_root(target_project_path);
 
     let mut operations: Vec<FileOperation> = Vec::new();
     let mut conflicts: Vec<ExportConflict> = Vec::new();
@@ -316,16 +358,10 @@ pub fn execute(
         return Err("target already exists; confirm overwrite before exporting".to_string());
     }
 
-    // The plan must target a `.claude/skills` directory; refuse a tampered plan
-    // that points the writes elsewhere (DESIGN.md §1.11, §3.2).
-    if !plan.target_dir.ends_with("/.claude/skills") {
-        return Err("invalid target directory in plan".to_string());
-    }
-
     // Reject unsafe export names before anything touches the filesystem: a name
     // with a path separator, drive prefix, or `..` could steer a write outside
-    // `.claude/skills/`. Enforced here (the single writer) so a tampered plan or
-    // a direct IPC call cannot bypass the preview's check (DESIGN.md §1.11).
+    // the destination root. Enforced here (the single writer) so a tampered plan
+    // or a direct IPC call cannot bypass the preview's check (DESIGN.md §1.11).
     for item in items {
         if !is_safe_segment(&item.exported_name) {
             return Err(format!(
@@ -335,12 +371,15 @@ pub fn execute(
         }
     }
 
-    // Pre-flight: every planned write must land inside the target dir. Even a
-    // tampered plan (the whole object crosses the IPC boundary) cannot redirect
-    // a write outside `.claude/skills/`. Checked before any write so a later bad
-    // operation cannot leave earlier files on disk.
+    // Pre-flight: every planned write must land inside the plan's destination
+    // root, the tool-agnostic generalization of the old `.claude/skills` check
+    // (T31). Even a tampered plan (the whole object crosses the IPC boundary)
+    // cannot redirect a write outside that root — `is_confined` rejects `..`
+    // traversal, absolute paths, cross-root injection, and symlink/junction
+    // escape. Checked before any write so a later bad op cannot leave earlier
+    // files on disk (DESIGN.md §1.11, §3.2).
     for op in &plan.operations {
-        if !is_within(&plan.target_dir, &op.path) {
+        if !is_confined(&plan.target_dir, &op.path) {
             return Err(format!(
                 "operation path `{}` escapes the target directory",
                 op.path
@@ -607,6 +646,21 @@ mod tests {
             exported_name: exported_name.to_string(),
             source_ref: format!("merged:{exported_name}"),
         }
+    }
+
+    /// Create a Windows directory junction (`link` -> `target`). Junctions are
+    /// reparse points that `canonicalize` resolves like symlinks but, unlike
+    /// symlinks, need no admin privilege — so the symlink-escape defense is
+    /// testable headlessly. Returns whether the junction was created.
+    #[cfg(windows)]
+    fn make_junction(link: &Path, target: &Path) -> bool {
+        std::process::Command::new("cmd")
+            .args(["/C", "mklink", "/J"])
+            .arg(link)
+            .arg(target)
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
     }
 
     #[test]
@@ -1018,6 +1072,66 @@ mod tests {
         assert!(
             !escaped.exists(),
             "no write may land outside the target dir"
+        );
+    }
+
+    #[test]
+    fn execute_rejects_a_cross_root_operation_path() {
+        // A tampered op points into a sibling tool's root (.cursor/skills)
+        // instead of the plan's resolved root (.claude/skills). Confinement
+        // rejects it even though both look like legitimate skills dirs — the
+        // generalized check is not tied to one tool's path (T31).
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("src/code-review");
+        write_file(&src.join("SKILL.md"), "---\nname: code-review\n---\nbody");
+        let target = tmp.path().join("target");
+        let items = vec![item("a", &src, "code-review")];
+
+        let mut plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+        let cross = target
+            .join(".cursor")
+            .join("skills")
+            .join("code-review")
+            .join("SKILL.md");
+        plan.operations[0].path = path_string(&cross);
+        let err = execute(&plan, &items, &[], false).unwrap_err();
+
+        assert!(err.contains("escapes the target"), "got: {err}");
+        assert!(!cross.exists());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn execute_rejects_an_operation_path_escaping_through_a_junction() {
+        // Lexically the op stays under .claude/skills, but a junction segment
+        // redirects the real write outside the project. The canonical layer of
+        // is_confined must resolve the junction and reject it (symlink escape).
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("src/code-review");
+        write_file(&src.join("SKILL.md"), "---\nname: code-review\n---\nbody");
+        let target = tmp.path().join("target");
+        let items = vec![item("a", &src, "code-review")];
+
+        let mut plan = build_export_plan(&items, &target, &tmp.path().join("backups"));
+
+        // The skills dir holds a junction pointing OUTSIDE the project.
+        let skills_dir = target.join(".claude").join("skills");
+        std::fs::create_dir_all(&skills_dir).unwrap();
+        let outside = tmp.path().join("outside");
+        std::fs::create_dir_all(&outside).unwrap();
+        let junction = skills_dir.join("sneak");
+        assert!(
+            make_junction(&junction, &outside),
+            "could not create a junction; cannot exercise the symlink-escape defense"
+        );
+
+        plan.operations[0].path = path_string(&junction.join("evil.md"));
+        let err = execute(&plan, &items, &[], false).unwrap_err();
+
+        assert!(err.contains("escapes the target"), "got: {err}");
+        assert!(
+            !outside.join("evil.md").exists(),
+            "no write may land outside the target via a junction"
         );
     }
 
