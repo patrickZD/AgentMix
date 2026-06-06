@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { exportGate } from './exportGate';
-import type { ExportConflict, ExportPlan, SkillSecurityReport } from '@/types';
+import type { ExportConflict, ExportPlan, RuntimeConflict, SkillSecurityReport } from '@/types';
 
 function plan(
   conflicts: ExportConflict[],
   opCount = 2,
   securityReports: SkillSecurityReport[] = [],
+  runtimeWarnings: RuntimeConflict[] = [],
 ): ExportPlan {
   return {
     targets: [],
@@ -18,6 +19,7 @@ function plan(
       targetIndex: 0,
     })),
     conflicts,
+    runtimeWarnings,
     backups: [],
     securityReports,
     totalBytes: 20,
@@ -102,5 +104,14 @@ describe('exportGate', () => {
     const gate = exportGate(plan([], 2, [benign]), false, []);
     expect(gate.unacknowledgedRisks).toBe(0);
     expect(gate.canExport).toBe(true);
+  });
+
+  it('allows export despite runtime warnings (warning-level, never blocks)', () => {
+    const warnings: RuntimeConflict[] = [
+      { exportedName: 'code-review', kind: 'exportedWins', targetIndex: 0 },
+      { exportedName: 'deploy', kind: 'bothActive', targetIndex: 0 },
+    ];
+    // RuntimeConflict is informational: the gate must not consider it.
+    expect(exportGate(plan([], 2, [], warnings), false).canExport).toBe(true);
   });
 });

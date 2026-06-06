@@ -37,6 +37,7 @@ const emptyPlan: ExportPlan = {
     },
   ],
   conflicts: [],
+  runtimeWarnings: [],
   backups: [],
   securityReports: [],
   totalBytes: 1,

@@ -361,6 +361,21 @@ export default function ExportPanel({
                       })}
                     </p>
                   )}
+                  {/* Runtime resolution notes — warning-level, never block export
+                      (DESIGN.md §1.2). Rendered under their tool's card so the
+                      tool context is clear without repeating its name. */}
+                  {plan.runtimeWarnings
+                    .filter((w) => w.targetIndex === ti)
+                    .map((w) => (
+                      <p
+                        key={`rt:${w.exportedName}`}
+                        className="flex items-start gap-1"
+                        style={{ fontSize: '10px', color: 'var(--am-orange)' }}
+                      >
+                        <AlertTriangleIcon size={10} style={{ flexShrink: 0, marginTop: 1 }} />
+                        {t(`exportPanel.runtimeConflict.${w.kind}`, { name: w.exportedName })}
+                      </p>
+                    ))}
                   <div className="overflow-y-auto scrollbar-thin" style={{ maxHeight: 120 }}>
                     {ops.map((op) => (
                       <div

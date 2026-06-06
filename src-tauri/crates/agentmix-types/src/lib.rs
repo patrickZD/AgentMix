@@ -346,6 +346,35 @@ pub struct ExportPlanTarget {
     pub managed_manifest: ManagedManifest,
 }
 
+/// How a target tool resolves the same skill name appearing at more than one
+/// scope it reads, once this export lands (DESIGN.md §1.2 / §1.4). Computed from
+/// the adapter's `precedence` + `duplicateNameBehavior`; the frontend maps it to
+/// a warning message. Warning-level only — RuntimeConflict never blocks export.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum RuntimeConflictKind {
+    /// Both copies load and stay visible (show-both / merge-all, e.g. Codex).
+    BothActive,
+    /// The copy being exported takes precedence; the existing one is shadowed.
+    ExportedWins,
+    /// The existing copy takes precedence; the one being exported is shadowed.
+    ExistingWins,
+}
+
+/// A runtime resolution note (DESIGN.md §1.2): the skill being exported shares a
+/// name with one the target tool already reads from another scope, so the tool
+/// faces two same-named skills at runtime. Warning-level — it informs the user of
+/// the tool's runtime behavior and never blocks export (the only blocker is
+/// ExportConflict). Linked to its target via `target_index`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct RuntimeConflict {
+    pub exported_name: String,
+    pub kind: RuntimeConflictKind,
+    /// Index into `ExportPlan.targets` of the target this note belongs to.
+    pub target_index: u32,
+}
+
 /// The single object the Dry-run preview renders and execute consumes
 /// (DESIGN.md §3.2). v0.2.0 supports multiple targets: one composition exported
 /// to several tools / scopes at once. Each `FileOperation` / `BackupPlan` links
@@ -358,6 +387,10 @@ pub struct ExportPlan {
     pub operations: Vec<FileOperation>,
     /// Must be empty before execute is allowed (DESIGN.md §3.2).
     pub conflicts: Vec<ExportConflict>,
+    /// Runtime resolution notes (DESIGN.md §1.2): warning-level, never block
+    /// export. Empty when no exported skill collides with an existing same-named
+    /// skill at another scope the target tool reads.
+    pub runtime_warnings: Vec<RuntimeConflict>,
     pub backups: Vec<BackupPlan>,
     /// Per-asset security pre-check (DESIGN.md §1.11). A report with
     /// `requiresConfirmation` must be acknowledged before execute will write

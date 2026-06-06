@@ -121,6 +121,12 @@ export type ExportPlan = {
 	operations: FileOperation[],
 	/**  Must be empty before execute is allowed (DESIGN.md §3.2). */
 	conflicts: ExportConflict[],
+	/**
+	 *  Runtime resolution notes (DESIGN.md §1.2): warning-level, never block
+	 *  export. Empty when no exported skill collides with an existing same-named
+	 *  skill at another scope the target tool reads.
+	 */
+	runtimeWarnings: RuntimeConflict[],
 	backups: BackupPlan[],
 	/**
 	 *  Per-asset security pre-check (DESIGN.md §1.11). A report with
@@ -291,6 +297,34 @@ export type Precedence = "project-first" | "user-first" | "merge-all";
  *  (DESIGN.md §1.4). Informational; carried for the export summary.
  */
 export type ReloadBehavior = "auto" | "restart-required";
+
+/**
+ *  A runtime resolution note (DESIGN.md §1.2): the skill being exported shares a
+ *  name with one the target tool already reads from another scope, so the tool
+ *  faces two same-named skills at runtime. Warning-level — it informs the user of
+ *  the tool's runtime behavior and never blocks export (the only blocker is
+ *  ExportConflict). Linked to its target via `target_index`.
+ */
+export type RuntimeConflict = {
+	exportedName: string,
+	kind: RuntimeConflictKind,
+	/**  Index into `ExportPlan.targets` of the target this note belongs to. */
+	targetIndex: number,
+};
+
+/**
+ *  How a target tool resolves the same skill name appearing at more than one
+ *  scope it reads, once this export lands (DESIGN.md §1.2 / §1.4). Computed from
+ *  the adapter's `precedence` + `duplicateNameBehavior`; the frontend maps it to
+ *  a warning message. Warning-level only — RuntimeConflict never blocks export.
+ */
+export type RuntimeConflictKind = 
+/**  Both copies load and stay visible (show-both / merge-all, e.g. Codex). */
+"bothActive" | 
+/**  The copy being exported takes precedence; the existing one is shadowed. */
+"exportedWins" | 
+/**  The existing copy takes precedence; the one being exported is shadowed. */
+"existingWins";
 
 /**
  *  One high-risk line found in a script (DESIGN.md §1.11). Carries the rule, the

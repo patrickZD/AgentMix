@@ -20,6 +20,8 @@ export type {
   ConflictCandidate,
   ConflictKind,
   ExportConflict,
+  RuntimeConflict,
+  RuntimeConflictKind,
   ExportPlan,
   ExportPlanTarget,
   ExportRequestItem,

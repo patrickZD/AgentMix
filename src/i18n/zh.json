@@ -82,6 +82,11 @@
     "nameCollisionWarn": "请先在组合清单解决 {{count}} 个名称冲突",
     "invalidNameWarn": "请重命名 {{count}} 个导出名不合法的 Skill",
     "confirmOverwrite": "确认覆盖目标中 {{count}} 个同名 Skill",
+    "runtimeConflict": {
+      "bothActive": "运行时本「{{name}}」与已有的同名 Skill 都会加载并生效",
+      "exportedWins": "运行时本「{{name}}」优先生效，已有的同名 Skill 被遮蔽",
+      "existingWins": "运行时已有的同名 Skill 优先，本次导出的「{{name}}」被遮蔽"
+    },
     "export": "导出",
     "exportWithCount": "导出 {{count}} 个 Skill",
     "exporting": "正在导出…",

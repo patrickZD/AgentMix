@@ -28,7 +28,7 @@
 - [x] **T34** 其余适配器（Codex / OpenCode / Gemini）+ 多路径工具默认只写主路径 + 全局 scope 解析（`~/.<tool>/skills/`）+ 全局备份（destination-root-hash）+ 覆盖显式确认 — 依赖：T33 — M
 
 ## Phase 4：冲突与兼容性显化
-- [ ] **T35** RuntimeConflict 检测与显化（adapter behavior + 目标已有同名 + scope；警告级不阻断）+ UI — 依赖：T34 — M
+- [x] **T35** RuntimeConflict 检测与显化（adapter behavior + 目标已有同名 + scope；警告级不阻断）+ UI — 依赖：T34 — M
 - [ ] **T36** Capability Linter（内嵌 `compatibility-matrix.json` + 逐字段校验；警告级不阻断）+ UI — 依赖：T34（可与 T35 并行）— M
 
 ### Checkpoint M（T34–T36）— 全工具 + scope + 两类警告

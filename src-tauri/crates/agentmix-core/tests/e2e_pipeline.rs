@@ -11,7 +11,7 @@ use std::path::Path;
 use agentmix_core::{exporter, scanner, tool_adapters};
 use agentmix_types::{
     ConflictKind, ExportItemSource, ExportPlan, ExportRequestItem, ExportScope, ExportTarget,
-    FileOperationKind, Skill, ToolId,
+    FileOperationKind, RuntimeConflictKind, Skill, ToolId,
 };
 
 /// Write a minimal valid skill (name matches its directory) under `root/dir`.
@@ -508,4 +508,63 @@ fn global_scope_export_writes_under_home_and_requires_confirm_to_overwrite() {
     let written =
         std::fs::read_to_string(home.join(".claude/skills/code-review/SKILL.md")).unwrap();
     assert!(written.contains("name: code-review") && !written.contains("stale global content"));
+}
+
+#[test]
+fn runtime_warning_when_project_export_shadows_an_existing_global_skill() {
+    // Claude Code is project-first / last-wins. Exporting `code-review` at project
+    // scope when the user already has a global `code-review` raises a runtime
+    // warning (the project copy wins, the global one is shadowed) — NOT a blocking
+    // conflict: the roots differ, so there is no TargetExists, and execute runs.
+    let tmp = tempfile::tempdir().unwrap();
+    let items = one_skill_items(tmp.path());
+    let target = tmp.path().join("target-project");
+    let backups = tmp.path().join("backups");
+    let home = tmp.path().join("home");
+    std::fs::create_dir_all(home.join(".claude/skills/code-review")).unwrap();
+
+    let targets = vec![ExportTarget {
+        tool: ToolId::ClaudeCode,
+        scope: ExportScope::Project,
+        custom_path: None,
+    }];
+    let plan = exporter::build_export_plan(&items, &targets, &target, &home, &backups);
+
+    assert_eq!(plan.runtime_warnings.len(), 1);
+    assert_eq!(plan.runtime_warnings[0].exported_name, "code-review");
+    assert_eq!(
+        plan.runtime_warnings[0].kind,
+        RuntimeConflictKind::ExportedWins
+    );
+    // Warning-level: no ExportConflict, and execute succeeds without confirmation.
+    assert!(plan.conflicts.is_empty());
+    exporter::execute(&plan, &items, &[], false).unwrap();
+    assert!(target.join(".claude/skills/code-review/SKILL.md").is_file());
+}
+
+#[test]
+fn runtime_warning_for_codex_reports_both_active_and_does_not_block() {
+    // Codex is merge-all / show-both: a same-named skill at another scope means
+    // both copies stay active at runtime. Still warning-level, never blocking.
+    let tmp = tempfile::tempdir().unwrap();
+    let items = one_skill_items(tmp.path());
+    let target = tmp.path().join("target-project");
+    let backups = tmp.path().join("backups");
+    let home = tmp.path().join("home");
+    std::fs::create_dir_all(home.join(".agents/skills/code-review")).unwrap();
+
+    let targets = vec![ExportTarget {
+        tool: ToolId::Codex,
+        scope: ExportScope::Project,
+        custom_path: None,
+    }];
+    let plan = exporter::build_export_plan(&items, &targets, &target, &home, &backups);
+
+    assert_eq!(plan.runtime_warnings.len(), 1);
+    assert_eq!(
+        plan.runtime_warnings[0].kind,
+        RuntimeConflictKind::BothActive
+    );
+    assert!(plan.conflicts.is_empty());
+    exporter::execute(&plan, &items, &[], false).unwrap();
 }

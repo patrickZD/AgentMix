@@ -14,7 +14,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use agentmix_types::{
     BackupPlan, ConflictCandidate, ConflictKind, ExecutionReport, ExportConflict, ExportItemSource,
     ExportPlan, ExportPlanTarget, ExportRequestItem, ExportScope, ExportTarget, FileOperation,
-    FileOperationKind, FileSource, ManagedAsset, ManagedManifest, SkillSecurityReport, ToolAdapter,
+    FileOperationKind, FileSource, ManagedAsset, ManagedManifest, RuntimeConflict,
+    SkillSecurityReport, ToolAdapter,
 };
 use walkdir::WalkDir;
 
@@ -250,6 +251,7 @@ pub fn build_export_plan(
 ) -> ExportPlan {
     let mut operations: Vec<FileOperation> = Vec::new();
     let mut conflicts: Vec<ExportConflict> = Vec::new();
+    let mut runtime_warnings: Vec<RuntimeConflict> = Vec::new();
     let mut backups: Vec<BackupPlan> = Vec::new();
     let mut security_reports: Vec<SkillSecurityReport> = Vec::new();
     let mut plan_targets: Vec<ExportPlanTarget> = Vec::new();
@@ -332,6 +334,19 @@ pub fn build_export_plan(
                     asset_ids: vec![item.asset_id.clone()],
                 });
             }
+            // Warning-level note (never blocks): the tool will see this name at
+            // another scope it reads, so its precedence / duplicate behavior
+            // decides the runtime outcome (§1.2). Adapter-driven, no per-tool branch.
+            if let Some(rc) = crate::runtime_conflict::detect_runtime_conflict(
+                &adapter,
+                scope,
+                &item.exported_name,
+                target_project_path,
+                home_dir,
+                ti,
+            ) {
+                runtime_warnings.push(rc);
+            }
             let (item_ops, content_hash, had_overwrite) =
                 build_item_operations(item, &skill_target, ti);
             target_has_overwrite |= had_overwrite;
@@ -376,6 +391,7 @@ pub fn build_export_plan(
         targets: plan_targets,
         operations,
         conflicts,
+        runtime_warnings,
         backups,
         security_reports,
         total_bytes,

@@ -82,6 +82,11 @@
     "nameCollisionWarn": "Resolve {{count}} name conflict(s) in the combo first",
     "invalidNameWarn": "Rename {{count}} skill(s) with an unsafe export name",
     "confirmOverwrite": "Confirm overwriting {{count}} existing skill(s)",
+    "runtimeConflict": {
+      "bothActive": "Both this “{{name}}” and an existing same-named skill stay active at runtime",
+      "exportedWins": "This “{{name}}” takes precedence at runtime; an existing same-named skill is shadowed",
+      "existingWins": "An existing same-named skill takes precedence at runtime; this “{{name}}” is shadowed"
+    },
     "export": "Export",
     "exportWithCount": "Export {{count}} Skills",
     "exporting": "Exporting…",
