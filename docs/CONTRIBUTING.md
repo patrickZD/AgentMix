@@ -1,11 +1,11 @@
 # 贡献指南
 
-AgentMix v0.1.5 Beta。改动前先读 `docs/DESIGN.md`（工程设计与架构红线）、`docs/PRD.md`（产品范围）与根目录 `CLAUDE.md`（编码与提交约定）。本文只补开发流程的操作细节。
+AgentMix v0.2.0。改动前先读 `docs/DESIGN.md`（工程设计与架构红线）、`docs/PRD.md`（产品范围）与根目录 `CLAUDE.md`（编码与提交约定）。本文只补开发流程的操作细节。
 
 ## 环境
 
 - Node.js 20+、pnpm（仓库锁定 `pnpm@9.15.9`）、Rust stable。
-- 仅 Windows 目标（v0.1）。
+- 仅 Windows 目标（macOS / Linux 在后续版本）。
 
 ```
 pnpm install
