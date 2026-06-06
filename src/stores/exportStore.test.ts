@@ -59,6 +59,7 @@ beforeEach(() => {
   useExportStore.setState({
     targetPath: null,
     recentTargetPaths: [],
+    selectedTargets: [{ tool: 'claude-code', scope: 'project', customPath: null }],
     plan: null,
     building: false,
     buildError: null,
@@ -117,13 +118,73 @@ describe('exportStore recent target paths (T26)', () => {
   });
 });
 
+describe('exportStore target selection (T33)', () => {
+  it('adds a tool (default project scope) and removes it on toggle', () => {
+    const store = useExportStore.getState();
+    store.toggleTarget('cursor');
+    expect(useExportStore.getState().selectedTargets).toEqual([
+      { tool: 'claude-code', scope: 'project', customPath: null },
+      { tool: 'cursor', scope: 'project', customPath: null },
+    ]);
+    useExportStore.getState().toggleTarget('cursor');
+    expect(useExportStore.getState().selectedTargets).toEqual([
+      { tool: 'claude-code', scope: 'project', customPath: null },
+    ]);
+  });
+
+  it('switches a selected tool between project and global scope', () => {
+    useExportStore.getState().setTargetScope('claude-code', 'global');
+    expect(useExportStore.getState().selectedTargets).toEqual([
+      { tool: 'claude-code', scope: 'global', customPath: null },
+    ]);
+  });
+
+  it('invalidates a built preview when the target set changes', () => {
+    useExportStore.setState({ plan: emptyPlan, overwriteConfirmed: true });
+    useExportStore.getState().toggleTarget('cursor');
+    const s = useExportStore.getState();
+    expect(s.plan).toBeNull();
+    expect(s.overwriteConfirmed).toBe(false);
+  });
+
+  it('invalidates a built preview when a scope changes', () => {
+    useExportStore.setState({ plan: emptyPlan, overwriteConfirmed: true });
+    useExportStore.getState().setTargetScope('claude-code', 'global');
+    expect(useExportStore.getState().plan).toBeNull();
+  });
+});
+
 describe('exportStore.buildPlan', () => {
-  it('does nothing without a target path', async () => {
+  it('does nothing without a target path when a project-scope target is selected', async () => {
     await useExportStore.getState().buildPlan([]);
     expect(mockBuild).not.toHaveBeenCalled();
   });
 
-  it('builds and stores the plan for the chosen target', async () => {
+  it('does nothing when no targets are selected', async () => {
+    useExportStore.setState({ targetPath: 'C:/proj', selectedTargets: [] });
+    await useExportStore.getState().buildPlan([]);
+    expect(mockBuild).not.toHaveBeenCalled();
+  });
+
+  it('builds for a global-only target without requiring a project path', async () => {
+    mockBuild.mockResolvedValue(emptyPlan);
+    useExportStore.setState({
+      targetPath: null,
+      selectedTargets: [{ tool: 'claude-code', scope: 'global', customPath: null }],
+    });
+
+    await useExportStore.getState().buildPlan([]);
+
+    // Global-scope export resolves under home, so an empty project path is passed.
+    expect(mockBuild).toHaveBeenCalledWith(
+      [],
+      [{ tool: 'claude-code', scope: 'global', customPath: null }],
+      '',
+    );
+    expect(useExportStore.getState().plan).toEqual(emptyPlan);
+  });
+
+  it('builds and stores the plan for the chosen targets', async () => {
     mockBuild.mockResolvedValue(emptyPlan);
     useExportStore.setState({ targetPath: 'C:/proj' });
 
@@ -137,7 +198,11 @@ describe('exportStore.buildPlan', () => {
     ];
     await useExportStore.getState().buildPlan(items);
 
-    expect(mockBuild).toHaveBeenCalledWith(items, 'C:/proj');
+    expect(mockBuild).toHaveBeenCalledWith(
+      items,
+      [{ tool: 'claude-code', scope: 'project', customPath: null }],
+      'C:/proj',
+    );
     const s = useExportStore.getState();
     expect(s.plan).toEqual(emptyPlan);
     expect(s.building).toBe(false);

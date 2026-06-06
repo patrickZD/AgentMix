@@ -4,8 +4,9 @@ use agentmix_core::update::{
     evaluate_cache, load_cache, save_cache, CacheDecision, CachedUpdate, UpdateCheckCache,
 };
 use agentmix_types::{
-    ConflictCandidate, ExecutionReport, ExportConflict, ExportPlan, ExportRequestItem,
-    MergeDraftValidation, SourceProject, UpdateCheckResult, UpdateDownloadProgress,
+    ConflictCandidate, ExecutionReport, ExportConflict, ExportPlan, ExportRequestItem, ExportScope,
+    ExportTarget, MergeDraftValidation, SourceProject, ToolAdapter, UpdateCheckResult,
+    UpdateDownloadProgress,
 };
 use tauri::Emitter;
 use tauri_plugin_dialog::DialogExt;
@@ -110,22 +111,33 @@ fn backups_root() -> Result<PathBuf, String> {
     Ok(agentmix_root()?.join("backups"))
 }
 
-/// Build the Dry-run ExportPlan for the selected assets into the target project.
-/// Only produces the plan; no user files are written (DESIGN.md §1.12).
+/// The built-in tool adapters, for the data-driven target selector (T33). The
+/// UI renders tools and their available scopes from this data and never branches
+/// on a concrete tool id.
+#[tauri::command]
+fn list_tool_adapters() -> Vec<ToolAdapter> {
+    agentmix_core::tool_adapters::builtin_adapters().to_vec()
+}
+
+/// Build the Dry-run ExportPlan for the selected assets into the chosen targets.
+/// Only produces the plan; no user files are written (DESIGN.md §1.12). Project-
+/// scope targets resolve under `target_project_path`; global-scope targets
+/// resolve under the user's home, so a project path is required only when a
+/// project-scope target is selected.
 #[tauri::command]
 fn build_export_plan(
     items: Vec<ExportRequestItem>,
+    targets: Vec<ExportTarget>,
     target_project_path: String,
 ) -> Result<ExportPlan, String> {
     let target = std::path::Path::new(&target_project_path);
-    if !target.is_dir() {
+    let needs_project = targets.iter().any(|t| t.scope == ExportScope::Project);
+    if needs_project && !target.is_dir() {
         return Err(format!("not a directory: {target_project_path}"));
     }
-    // v0.2.0 still derives the target set here (Claude Code project default); the
-    // target selector (T33) will pass the user's chosen targets instead.
     Ok(agentmix_core::exporter::build_export_plan(
         &items,
-        &agentmix_core::tool_adapters::default_targets(),
+        &targets,
         target,
         &home_dir()?,
         &backups_root()?,
@@ -314,6 +326,7 @@ pub fn run() {
         pick_directory,
         detect_conflicts,
         validate_merge_draft,
+        list_tool_adapters,
         build_export_plan,
         execute_export,
         open_path,
@@ -327,6 +340,7 @@ pub fn run() {
         pick_directory,
         detect_conflicts,
         validate_merge_draft,
+        list_tool_adapters,
         build_export_plan,
         execute_export,
         open_path,
