@@ -17,22 +17,23 @@ import type {
   ComboItem,
   ExecutionReport,
   ExportPlan,
+  ExportScope,
+  ExportTarget,
   MergedComboItem,
   SourceProject,
+  ToolAdapter,
+  ToolId,
 } from '../types';
-
-// v0.1 ships a single export target. The other tools are shown but deferred.
-const TARGET_TOOLS: ReadonlyArray<{ label: string; level: string; color: string; active: boolean }> = [
-  { label: 'Claude Code', level: 'project', color: '#D97706', active: true },
-  { label: 'Cursor', level: 'project', color: '#2563EB', active: false },
-  { label: 'Codex CLI', level: 'global', color: '#7C3AED', active: false },
-  { label: 'OpenCode', level: 'project', color: '#059669', active: false },
-];
 
 interface ExportPanelProps {
   comboItems?: ComboItem[];
   mergedItems?: MergedComboItem[];
   plan?: ExportPlan | null;
+  // The built-in tool adapters (data-driven selector) and the user's selection.
+  adapters?: ToolAdapter[];
+  selectedTargets?: ExportTarget[];
+  onToggleTarget?: (tool: ToolId) => void;
+  onSetTargetScope?: (tool: ToolId, scope: ExportScope) => void;
   targetPath?: string | null;
   // Quick-pick targets (T26): persisted recents + the loaded source projects.
   recentTargetPaths?: string[];
@@ -63,6 +64,10 @@ export default function ExportPanel({
   comboItems = [],
   mergedItems = [],
   plan = null,
+  adapters = [],
+  selectedTargets = [],
+  onToggleTarget = () => {},
+  onSetTargetScope = () => {},
   targetPath = null,
   recentTargetPaths = [],
   sourceProjects = [],
@@ -85,7 +90,10 @@ export default function ExportPanel({
 
   // Merged entries export alongside the regular items (T25).
   const itemCount = comboItems.length + mergedItems.length;
-  const canPreview = !!targetPath && itemCount > 0 && !building;
+  // A project-scope target needs the project path; a global-only export does not.
+  const hasProjectTarget = selectedTargets.some((tg) => tg.scope === 'project');
+  const targetsReady = selectedTargets.length > 0 && (!hasProjectTarget || !!targetPath);
+  const canPreview = targetsReady && itemCount > 0 && !building;
   const gate = exportGate(plan, overwriteConfirmed, acknowledgedRiskIds);
   // Resolve an asset id to the name it exports as, for risk-card headings.
   const skillName = (assetId: string) =>
@@ -96,14 +104,9 @@ export default function ExportPanel({
   const createCount = plan?.operations.filter((o) => o.kind === 'create').length ?? 0;
   const overwriteCount = plan?.operations.filter((o) => o.kind === 'overwrite').length ?? 0;
   const affectedSkills = plan ? new Set(plan.operations.map((o) => o.sourceAsset)).size : 0;
-  // Strip whichever target's destination root prefixes the op path, for a
-  // compact display. Per-target grouping of the operations list lands in T33.
-  const relPath = (p: string) => {
-    const root = plan?.targets
-      .flatMap((tg) => tg.destinationRoots)
-      .find((r) => p.startsWith(`${r}/`));
-    return root ? p.slice(root.length + 1) : p;
-  };
+  // Display an op path relative to its target's destination root.
+  const relTo = (root: string, p: string) =>
+    p.startsWith(`${root}/`) ? p.slice(root.length + 1) : p;
 
   return (
     <div data-cmp="ExportPanel" className="flex flex-col bg-card" style={{ minHeight: 0 }}>
@@ -119,107 +122,153 @@ export default function ExportPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-thin py-2 px-3 flex flex-col gap-2" style={{ minHeight: 0 }}>
-        {/* Target tools — Claude Code active, others deferred */}
-        {TARGET_TOOLS.map((tool) => (
-          <div
-            key={tool.label}
-            className={`rounded-lg border p-2.5 ${
-              tool.active ? 'border-border bg-card' : 'border-border bg-muted opacity-60'
-            }`}
-          >
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold" style={{ fontSize: '12px', color: tool.color }}>
-                {tool.label}
-              </span>
-              <span
-                className="rounded px-1 text-muted-foreground bg-secondary"
-                style={{ fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase' }}
-              >
-                {tool.level}
-              </span>
-              {!tool.active && (
-                <span className="text-muted-foreground" style={{ fontSize: '9.5px', fontWeight: 600 }}>
-                  {t('exportPanel.deferred')}
+        {/* Target tools — data-driven multi-select from the baseline adapters */}
+        {adapters.map((adapter) => {
+          const target = selectedTargets.find((tg) => tg.tool === adapter.id);
+          const supportsProject = adapter.projectPaths.length > 0;
+          const supportsGlobal = adapter.userPaths.length > 0;
+          return (
+            <div
+              key={adapter.id}
+              className={`rounded-lg border p-2.5 ${
+                target ? 'border-border bg-card' : 'border-border bg-muted opacity-70'
+              }`}
+            >
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!target}
+                  onChange={() => onToggleTarget(adapter.id)}
+                  data-testid="export-target-tool"
+                />
+                <span className="font-semibold text-foreground" style={{ fontSize: '12px' }}>
+                  {adapter.displayName}
                 </span>
-              )}
-            </div>
+              </label>
 
-            {/* Target project path picker (active tool only) */}
-            {tool.active && (
-              <>
-                <Tooltip title={targetPath ?? t('exportPanel.selectTarget')} placement="top">
-                  <button
-                    onClick={onPickTarget}
-                    data-testid="export-target"
-                    className="flex items-center gap-1 mt-1.5 w-full text-left group/path"
-                  >
-                    <FolderIcon size={11} className="text-muted-foreground flex-shrink-0" />
-                    <span
-                      className="truncate group-hover/path:text-foreground transition-colors"
+              {/* Per-target scope toggle — only the scopes the tool actually has */}
+              {target && (supportsProject || supportsGlobal) && (
+                <div className="flex items-center gap-1 mt-1.5">
+                  {supportsProject && (
+                    <button
+                      onClick={() => onSetTargetScope(adapter.id, 'project')}
+                      data-testid="export-scope-project"
+                      className={`rounded px-1.5 py-0.5 font-semibold transition-colors ${
+                        target.scope === 'project'
+                          ? 'text-primary-foreground'
+                          : 'bg-secondary text-muted-foreground'
+                      }`}
                       style={{
-                        minWidth: 0,
-                        fontSize: '10.5px',
-                        fontFamily: 'monospace',
-                        color: targetPath ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
+                        fontSize: '10px',
+                        background: target.scope === 'project' ? 'var(--am-blue)' : undefined,
                       }}
                     >
-                      {targetPath ?? t('exportPanel.selectTarget')}
+                      {t('exportPanel.scopeProject')}
+                    </button>
+                  )}
+                  {supportsGlobal && (
+                    <button
+                      onClick={() => onSetTargetScope(adapter.id, 'global')}
+                      data-testid="export-scope-global"
+                      className={`rounded px-1.5 py-0.5 font-semibold transition-colors ${
+                        target.scope === 'global'
+                          ? 'text-primary-foreground'
+                          : 'bg-secondary text-muted-foreground'
+                      }`}
+                      style={{
+                        fontSize: '10px',
+                        background: target.scope === 'global' ? 'var(--am-blue)' : undefined,
+                      }}
+                    >
+                      {t('exportPanel.scopeGlobal')}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {adapters.length > 0 && selectedTargets.length === 0 && (
+          <p className="text-muted-foreground" style={{ fontSize: '10px' }}>
+            {t('exportPanel.noTargetsSelected')}
+          </p>
+        )}
+
+        {/* Project path picker — needed when any selected target is project-scope */}
+        {hasProjectTarget && (
+          <div className="rounded-lg border border-border bg-card p-2.5">
+            <Tooltip title={targetPath ?? t('exportPanel.selectTarget')} placement="top">
+              <button
+                onClick={onPickTarget}
+                data-testid="export-target"
+                className="flex items-center gap-1 w-full text-left group/path"
+              >
+                <FolderIcon size={11} className="text-muted-foreground flex-shrink-0" />
+                <span
+                  className="truncate group-hover/path:text-foreground transition-colors"
+                  style={{
+                    minWidth: 0,
+                    fontSize: '10.5px',
+                    fontFamily: 'monospace',
+                    color: targetPath ? 'var(--am-blue)' : 'var(--am-text-muted, #94A3B8)',
+                  }}
+                >
+                  {targetPath ?? t('exportPanel.selectTarget')}
+                </span>
+              </button>
+            </Tooltip>
+
+            {/* Quick picks: recent targets, then loaded source projects. */}
+            {(recentTargetPaths.length > 0 || sourceProjects.length > 0) && (
+              <div className="mt-1.5 flex flex-col gap-0.5">
+                {recentTargetPaths.length > 0 && (
+                  <p
+                    className="text-muted-foreground"
+                    style={{ fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase' }}
+                  >
+                    {t('exportPanel.recentTargets')}
+                  </p>
+                )}
+                {recentTargetPaths.map((path) => (
+                  <button
+                    key={path}
+                    onClick={() => onSelectTarget(path)}
+                    data-testid="export-target-recent"
+                    className="text-left truncate rounded px-1 py-0.5 hover:bg-secondary transition-colors"
+                    style={{ fontSize: '10px', fontFamily: 'monospace' }}
+                    title={path}
+                  >
+                    {path}
+                  </button>
+                ))}
+                {sourceProjects.length > 0 && (
+                  <p
+                    className="text-muted-foreground mt-0.5"
+                    style={{ fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase' }}
+                  >
+                    {t('exportPanel.fromSourceProjects')}
+                  </p>
+                )}
+                {sourceProjects.map((project) => (
+                  <button
+                    key={project.id}
+                    onClick={() => onSelectTarget(project.rootPath)}
+                    data-testid="export-target-source"
+                    className="text-left truncate rounded px-1 py-0.5 hover:bg-secondary transition-colors"
+                    style={{ fontSize: '10px' }}
+                    title={project.rootPath}
+                  >
+                    {project.name}
+                    <span className="text-muted-foreground ml-1" style={{ fontFamily: 'monospace' }}>
+                      {project.rootPath}
                     </span>
                   </button>
-                </Tooltip>
-
-                {/* Quick picks: recent targets, then loaded source projects. */}
-                {(recentTargetPaths.length > 0 || sourceProjects.length > 0) && (
-                  <div className="mt-1.5 flex flex-col gap-0.5">
-                    {recentTargetPaths.length > 0 && (
-                      <p
-                        className="text-muted-foreground"
-                        style={{ fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase' }}
-                      >
-                        {t('exportPanel.recentTargets')}
-                      </p>
-                    )}
-                    {recentTargetPaths.map((path) => (
-                      <button
-                        key={path}
-                        onClick={() => onSelectTarget(path)}
-                        data-testid="export-target-recent"
-                        className="text-left truncate rounded px-1 py-0.5 hover:bg-secondary transition-colors"
-                        style={{ fontSize: '10px', fontFamily: 'monospace' }}
-                        title={path}
-                      >
-                        {path}
-                      </button>
-                    ))}
-                    {sourceProjects.length > 0 && (
-                      <p
-                        className="text-muted-foreground mt-0.5"
-                        style={{ fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase' }}
-                      >
-                        {t('exportPanel.fromSourceProjects')}
-                      </p>
-                    )}
-                    {sourceProjects.map((project) => (
-                      <button
-                        key={project.id}
-                        onClick={() => onSelectTarget(project.rootPath)}
-                        data-testid="export-target-source"
-                        className="text-left truncate rounded px-1 py-0.5 hover:bg-secondary transition-colors"
-                        style={{ fontSize: '10px' }}
-                        title={project.rootPath}
-                      >
-                        {project.name}
-                        <span className="text-muted-foreground ml-1" style={{ fontFamily: 'monospace' }}>
-                          {project.rootPath}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
+                ))}
+              </div>
             )}
           </div>
-        ))}
+        )}
 
         {/* Preview (Dry-run) trigger */}
         <button
@@ -238,7 +287,9 @@ export default function ExportPanel({
           <p className="text-muted-foreground text-center" style={{ fontSize: '10px' }}>
             {itemCount === 0
               ? t('exportPanel.previewNeedsCombo')
-              : t('exportPanel.noTarget')}
+              : selectedTargets.length === 0
+                ? t('exportPanel.noTargetsSelected')
+                : t('exportPanel.noTarget')}
           </p>
         )}
 
@@ -269,29 +320,72 @@ export default function ExportPanel({
               <span className="text-muted-foreground">{formatBytes(plan.totalBytes)}</span>
             </div>
 
-            {/* Backup location */}
-            {plan.backups.map((b) => (
-              <p key={b.backupArchive} className="text-muted-foreground" style={{ fontSize: '10px', fontFamily: 'monospace' }}>
-                {t('exportPanel.backupAt', { path: b.backupArchive, size: formatBytes(b.sizeBytes) })}
-              </p>
-            ))}
-
-            {/* Operations list */}
-            <div className="overflow-y-auto scrollbar-thin" style={{ maxHeight: 140 }}>
-              {plan.operations.map((op) => (
-                <div key={op.path} className="flex items-center gap-1.5 py-0.5" style={{ fontSize: '10.5px' }}>
-                  {op.kind === 'create' ? (
-                    <FilePlusIcon size={10} style={{ color: 'var(--am-green)', flexShrink: 0 }} />
-                  ) : (
-                    <FileEditIcon size={10} style={{ color: 'var(--am-orange)', flexShrink: 0 }} />
+            {/* Per-target groups: each tool / scope, its root, backup and ops */}
+            {plan.targets.map((tg, ti) => {
+              const root = tg.destinationRoots[0] ?? '';
+              const ops = plan.operations.filter((op) => op.targetIndex === ti);
+              const backup = plan.backups.find((b) => b.targetIndex === ti);
+              return (
+                <div
+                  key={`${tg.adapter.id}:${tg.scope}:${ti}`}
+                  className="flex flex-col gap-1 rounded-md border border-border p-2"
+                >
+                  <div className="flex items-center gap-1.5" style={{ fontSize: '10.5px' }}>
+                    <span className="font-semibold text-foreground">{tg.adapter.displayName}</span>
+                    <span
+                      className="rounded px-1 bg-secondary text-muted-foreground"
+                      style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase' }}
+                    >
+                      {tg.scope === 'project'
+                        ? t('exportPanel.scopeProject')
+                        : t('exportPanel.scopeGlobal')}
+                    </span>
+                    <span
+                      className="truncate text-muted-foreground"
+                      style={{ fontFamily: 'monospace', fontSize: '9.5px' }}
+                      title={root}
+                    >
+                      {root}
+                    </span>
+                  </div>
+                  {backup && (
+                    <p
+                      className="text-muted-foreground"
+                      style={{ fontSize: '10px', fontFamily: 'monospace' }}
+                    >
+                      {t('exportPanel.backupAt', {
+                        path: backup.backupArchive,
+                        size: formatBytes(backup.sizeBytes),
+                      })}
+                    </p>
                   )}
-                  <span className="flex-1 truncate text-foreground" style={{ fontFamily: 'monospace' }}>
-                    {relPath(op.path)}
-                  </span>
-                  <span className="text-muted-foreground flex-shrink-0">{formatBytes(op.size)}</span>
+                  <div className="overflow-y-auto scrollbar-thin" style={{ maxHeight: 120 }}>
+                    {ops.map((op) => (
+                      <div
+                        key={op.path}
+                        className="flex items-center gap-1.5 py-0.5"
+                        style={{ fontSize: '10.5px' }}
+                      >
+                        {op.kind === 'create' ? (
+                          <FilePlusIcon size={10} style={{ color: 'var(--am-green)', flexShrink: 0 }} />
+                        ) : (
+                          <FileEditIcon size={10} style={{ color: 'var(--am-orange)', flexShrink: 0 }} />
+                        )}
+                        <span
+                          className="flex-1 truncate text-foreground"
+                          style={{ fontFamily: 'monospace' }}
+                        >
+                          {relTo(root, op.path)}
+                        </span>
+                        <span className="text-muted-foreground flex-shrink-0">
+                          {formatBytes(op.size)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
 
             {/* Conflict reports */}
             {gate.nameCollisions > 0 && (
@@ -437,9 +531,11 @@ export default function ExportPanel({
             {t('exportPanel.emptyComboFull')}
           </p>
         )}
-        {itemCount > 0 && !targetPath && (
+        {itemCount > 0 && !targetsReady && (
           <p className="text-muted-foreground text-center" style={{ fontSize: '10.5px' }}>
-            {t('exportPanel.noTarget')}
+            {selectedTargets.length === 0
+              ? t('exportPanel.noTargetsSelected')
+              : t('exportPanel.noTarget')}
           </p>
         )}
         {gate.unacknowledgedRisks > 0 && (

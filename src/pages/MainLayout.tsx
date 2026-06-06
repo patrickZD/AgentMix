@@ -20,9 +20,9 @@ import MergeWorkbench from '../components/MergeWorkbench';
 import { categoryLabelKey } from '@/lib/skillView';
 import { resolveView } from '@/lib/viewRouting';
 import { pickDirectory } from '@/lib/scan';
-import { openPath } from '@/lib/exporter';
+import { listToolAdapters, openPath } from '@/lib/exporter';
 import { changeLanguage } from '@/i18n';
-import type { SourceProject, Skill } from '../types';
+import type { SourceProject, Skill, ToolAdapter } from '../types';
 import { useProjectStore } from '@/stores/projectStore';
 import { useCompositionStore } from '@/stores/compositionStore';
 import { useExportStore } from '@/stores/exportStore';
@@ -283,6 +283,7 @@ export default function MainLayout() {
   const {
     targetPath,
     recentTargetPaths,
+    selectedTargets,
     plan,
     building,
     buildError,
@@ -292,12 +293,21 @@ export default function MainLayout() {
     executeError,
     report,
     setTargetPath,
+    toggleTarget,
+    setTargetScope,
     buildPlan,
     setOverwriteConfirmed,
     acknowledgeRisk,
     execute,
     resetPlan,
   } = useExportStore();
+  // Built-in tool adapters drive the data-driven target selector (T33).
+  const [toolAdapters, setToolAdapters] = useState<ToolAdapter[]>([]);
+  useEffect(() => {
+    listToolAdapters()
+      .then(setToolAdapters)
+      .catch(() => setToolAdapters([]));
+  }, []);
   const {
     view,
     selectedSkill,
@@ -646,6 +656,10 @@ export default function MainLayout() {
                     comboItems={comboItems}
                     mergedItems={mergedItems}
                     plan={plan}
+                    adapters={toolAdapters}
+                    selectedTargets={selectedTargets}
+                    onToggleTarget={toggleTarget}
+                    onSetTargetScope={setTargetScope}
                     targetPath={targetPath}
                     recentTargetPaths={recentTargetPaths}
                     sourceProjects={projects}

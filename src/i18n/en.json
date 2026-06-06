@@ -65,8 +65,10 @@
   },
   "exportPanel": {
     "titleFull": "Export Targets",
-    "deferred": "v0.2",
     "selectTarget": "Select target project…",
+    "scopeProject": "Project",
+    "scopeGlobal": "Global",
+    "noTargetsSelected": "Select at least one tool to export to",
     "recentTargets": "Recent targets",
     "fromSourceProjects": "Loaded source projects",
     "preview": "Preview (Dry-run)",

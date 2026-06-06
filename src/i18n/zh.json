@@ -65,8 +65,10 @@
   },
   "exportPanel": {
     "titleFull": "导出目标",
-    "deferred": "v0.2",
     "selectTarget": "选择目标项目…",
+    "scopeProject": "项目级",
+    "scopeGlobal": "全局",
+    "noTargetsSelected": "至少选择一个导出工具",
     "recentTargets": "最近用过",
     "fromSourceProjects": "已导入的源项目",
     "preview": "生成预览 (Dry-run)",
