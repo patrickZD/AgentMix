@@ -29,7 +29,7 @@
 
 ## Phase 4：冲突与兼容性显化
 - [x] **T35** RuntimeConflict 检测与显化（adapter behavior + 目标已有同名 + scope；警告级不阻断）+ UI — 依赖：T34 — M
-- [ ] **T36** Capability Linter（内嵌 `compatibility-matrix.json` + 逐字段校验；警告级不阻断）+ UI — 依赖：T34（可与 T35 并行）— M
+- [x] **T36** Capability Linter（内嵌 `compatibility-matrix.json` + 逐字段校验；警告级不阻断）+ UI — 依赖：T34（可与 T35 并行）— M
 
 ### Checkpoint M（T34–T36）— 全工具 + scope + 两类警告
 - [ ] 五工具 + project/global 端到端可导出；两类警告正确显示且不阻断；ExportConflict 仍阻断；全门禁绿；人工复核
@@ -48,8 +48,8 @@
 1. 矩阵远程刷新延后到 v0.2.1，v0.2.0 只内嵌 baseline；需在 DESIGN.md 加注（T37 改前确认）
 2. 多路径工具只写各工具原生主路径（OpenCode→`.opencode/`，Gemini→`.gemini/`），不写共享 `.claude/`·`.agents/`（T34）
 3. custom 适配器纳入最小形态：用户自填路径 + 默认 last-wins/同名报错（T30+T33）
-4. 全局备份用 destination-root-hash，目录仍 `~/.agentmix/backups/<hash>/`（T34）
-5. 加 PR CI，独立任务 T38
+4. 全局级备份与项目级统一按目标根目录算 hash，写入 `~/.agentmix/backups/<hash>/`，在 T34 落地。
+5. 新增 push / PR 跑 check:all 的 PR CI，拆为独立任务 T38。
 
 ## 后续子里程碑大纲
 

@@ -10,8 +10,8 @@ use std::path::Path;
 
 use agentmix_core::{exporter, scanner, tool_adapters};
 use agentmix_types::{
-    ConflictKind, ExportItemSource, ExportPlan, ExportRequestItem, ExportScope, ExportTarget,
-    FileOperationKind, RuntimeConflictKind, Skill, ToolId,
+    CapabilityStatus, ConflictKind, ExportItemSource, ExportPlan, ExportRequestItem, ExportScope,
+    ExportTarget, FileOperationKind, RuntimeConflictKind, Skill, ToolId,
 };
 
 /// Write a minimal valid skill (name matches its directory) under `root/dir`.
@@ -567,4 +567,56 @@ fn runtime_warning_for_codex_reports_both_active_and_does_not_block() {
     );
     assert!(plan.conflicts.is_empty());
     exporter::execute(&plan, &items, &[], false).unwrap();
+}
+
+#[test]
+fn capability_warning_when_allowed_tools_exports_to_cursor_but_not_claude_code() {
+    // A skill that uses Claude Code's native `allowed-tools` frontmatter field.
+    let tmp = tempfile::tempdir().unwrap();
+    let source = tmp.path().join("source-repo");
+    let dir = source.join("code-review");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("SKILL.md"),
+        "---\nname: code-review\ndescription: Use when reviewing code.\nallowed-tools:\n  - Bash\n---\n# code-review\n",
+    )
+    .unwrap();
+    let project = scanner::scan_project(&source);
+    assert_eq!(project.skills.len(), 1);
+    let items: Vec<_> = project
+        .skills
+        .iter()
+        .map(|s| item_from(s, &s.name))
+        .collect();
+    let backups = tmp.path().join("backups");
+    let home = tmp.path().join("home");
+
+    // Cursor ignores allowed-tools -> one capability warning. Warning-level: no
+    // conflict, and execute still runs.
+    let to_cursor = vec![ExportTarget {
+        tool: ToolId::Cursor,
+        scope: ExportScope::Project,
+        custom_path: None,
+    }];
+    let target = tmp.path().join("target-cursor");
+    let plan = exporter::build_export_plan(&items, &to_cursor, &target, &home, &backups);
+    assert_eq!(plan.capability_warnings.len(), 1);
+    assert_eq!(plan.capability_warnings[0].field, "allowed-tools");
+    assert_eq!(
+        plan.capability_warnings[0].status,
+        CapabilityStatus::Ignored
+    );
+    assert_eq!(plan.capability_warnings[0].exported_name, "code-review");
+    assert!(plan.conflicts.is_empty());
+    exporter::execute(&plan, &items, &[], false).unwrap();
+
+    // Claude Code supports allowed-tools natively -> no capability warning.
+    let to_cc = vec![ExportTarget {
+        tool: ToolId::ClaudeCode,
+        scope: ExportScope::Project,
+        custom_path: None,
+    }];
+    let target_cc = tmp.path().join("target-cc");
+    let plan_cc = exporter::build_export_plan(&items, &to_cc, &target_cc, &home, &backups);
+    assert!(plan_cc.capability_warnings.is_empty());
 }

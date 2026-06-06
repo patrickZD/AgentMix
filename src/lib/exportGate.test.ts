@@ -1,12 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { exportGate } from './exportGate';
-import type { ExportConflict, ExportPlan, RuntimeConflict, SkillSecurityReport } from '@/types';
+import type {
+  CapabilityWarning,
+  ExportConflict,
+  ExportPlan,
+  RuntimeConflict,
+  SkillSecurityReport,
+} from '@/types';
 
 function plan(
   conflicts: ExportConflict[],
   opCount = 2,
   securityReports: SkillSecurityReport[] = [],
   runtimeWarnings: RuntimeConflict[] = [],
+  capabilityWarnings: CapabilityWarning[] = [],
 ): ExportPlan {
   return {
     targets: [],
@@ -20,6 +27,7 @@ function plan(
     })),
     conflicts,
     runtimeWarnings,
+    capabilityWarnings,
     backups: [],
     securityReports,
     totalBytes: 20,
@@ -106,12 +114,17 @@ describe('exportGate', () => {
     expect(gate.canExport).toBe(true);
   });
 
-  it('allows export despite runtime warnings (warning-level, never blocks)', () => {
-    const warnings: RuntimeConflict[] = [
+  it('allows export despite runtime and capability warnings (warning-level, never blocks)', () => {
+    const runtimeWarnings: RuntimeConflict[] = [
       { exportedName: 'code-review', kind: 'exportedWins', targetIndex: 0 },
       { exportedName: 'deploy', kind: 'bothActive', targetIndex: 0 },
     ];
-    // RuntimeConflict is informational: the gate must not consider it.
-    expect(exportGate(plan([], 2, [], warnings), false).canExport).toBe(true);
+    const capabilityWarnings: CapabilityWarning[] = [
+      { exportedName: 'code-review', field: 'allowed-tools', status: 'ignored', targetIndex: 0 },
+    ];
+    // Both warning kinds are informational: the gate must not consider them.
+    expect(exportGate(plan([], 2, [], runtimeWarnings, capabilityWarnings), false).canExport).toBe(
+      true,
+    );
   });
 });

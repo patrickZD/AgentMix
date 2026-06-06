@@ -40,6 +40,28 @@ export type BinaryAsset = {
 };
 
 /**
+ *  How a target tool treats a given SKILL.md frontmatter field (DESIGN.md
+ *  §1.10). `Supported` raises no warning; the other three do (the field is
+ *  dropped, rejected, or only experimentally handled by that tool).
+ */
+export type CapabilityStatus = "supported" | "ignored" | "error" | "experimental";
+
+/**
+ *  A cross-tool compatibility note (DESIGN.md §1.10): a skill uses a frontmatter
+ *  `field` that the target tool does not fully support. Warning-level — like
+ *  RuntimeConflict it never blocks export. Linked to its target via
+ *  `target_index`; the status is anything but `Supported`.
+ */
+export type CapabilityWarning = {
+	exportedName: string,
+	/**  The SKILL.md frontmatter field, e.g. `allowed-tools`. */
+	field: string,
+	status: CapabilityStatus,
+	/**  Index into `ExportPlan.targets` of the target this note belongs to. */
+	targetIndex: number,
+};
+
+/**
  *  One asset competing for a name in the export target, fed to conflict
  *  detection. Kept asset-kind-agnostic: only the id and the name it would be
  *  written as matter, so the pipeline never branches on a concrete asset type.
@@ -127,6 +149,12 @@ export type ExportPlan = {
 	 *  skill at another scope the target tool reads.
 	 */
 	runtimeWarnings: RuntimeConflict[],
+	/**
+	 *  Cross-tool compatibility notes (DESIGN.md §1.10): warning-level, never
+	 *  block export. One per (skill field, target) the target tool does not fully
+	 *  support.
+	 */
+	capabilityWarnings: CapabilityWarning[],
 	backups: BackupPlan[],
 	/**
 	 *  Per-asset security pre-check (DESIGN.md §1.11). A report with

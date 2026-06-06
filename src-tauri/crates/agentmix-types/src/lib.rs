@@ -375,6 +375,33 @@ pub struct RuntimeConflict {
     pub target_index: u32,
 }
 
+/// How a target tool treats a given SKILL.md frontmatter field (DESIGN.md
+/// §1.10). `Supported` raises no warning; the other three do (the field is
+/// dropped, rejected, or only experimentally handled by that tool).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum CapabilityStatus {
+    Supported,
+    Ignored,
+    Error,
+    Experimental,
+}
+
+/// A cross-tool compatibility note (DESIGN.md §1.10): a skill uses a frontmatter
+/// `field` that the target tool does not fully support. Warning-level — like
+/// RuntimeConflict it never blocks export. Linked to its target via
+/// `target_index`; the status is anything but `Supported`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CapabilityWarning {
+    pub exported_name: String,
+    /// The SKILL.md frontmatter field, e.g. `allowed-tools`.
+    pub field: String,
+    pub status: CapabilityStatus,
+    /// Index into `ExportPlan.targets` of the target this note belongs to.
+    pub target_index: u32,
+}
+
 /// The single object the Dry-run preview renders and execute consumes
 /// (DESIGN.md §3.2). v0.2.0 supports multiple targets: one composition exported
 /// to several tools / scopes at once. Each `FileOperation` / `BackupPlan` links
@@ -391,6 +418,10 @@ pub struct ExportPlan {
     /// export. Empty when no exported skill collides with an existing same-named
     /// skill at another scope the target tool reads.
     pub runtime_warnings: Vec<RuntimeConflict>,
+    /// Cross-tool compatibility notes (DESIGN.md §1.10): warning-level, never
+    /// block export. One per (skill field, target) the target tool does not fully
+    /// support.
+    pub capability_warnings: Vec<CapabilityWarning>,
     pub backups: Vec<BackupPlan>,
     /// Per-asset security pre-check (DESIGN.md §1.11). A report with
     /// `requiresConfirmation` must be acknowledged before execute will write

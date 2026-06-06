@@ -22,6 +22,8 @@ export type {
   ExportConflict,
   RuntimeConflict,
   RuntimeConflictKind,
+  CapabilityWarning,
+  CapabilityStatus,
   ExportPlan,
   ExportPlanTarget,
   ExportRequestItem,

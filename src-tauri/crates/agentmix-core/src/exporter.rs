@@ -12,10 +12,10 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use agentmix_types::{
-    BackupPlan, ConflictCandidate, ConflictKind, ExecutionReport, ExportConflict, ExportItemSource,
-    ExportPlan, ExportPlanTarget, ExportRequestItem, ExportScope, ExportTarget, FileOperation,
-    FileOperationKind, FileSource, ManagedAsset, ManagedManifest, RuntimeConflict,
-    SkillSecurityReport, ToolAdapter,
+    BackupPlan, CapabilityWarning, ConflictCandidate, ConflictKind, ExecutionReport,
+    ExportConflict, ExportItemSource, ExportPlan, ExportPlanTarget, ExportRequestItem, ExportScope,
+    ExportTarget, FileOperation, FileOperationKind, FileSource, ManagedAsset, ManagedManifest,
+    RuntimeConflict, SkillSecurityReport, ToolAdapter,
 };
 use walkdir::WalkDir;
 
@@ -252,6 +252,7 @@ pub fn build_export_plan(
     let mut operations: Vec<FileOperation> = Vec::new();
     let mut conflicts: Vec<ExportConflict> = Vec::new();
     let mut runtime_warnings: Vec<RuntimeConflict> = Vec::new();
+    let mut capability_warnings: Vec<CapabilityWarning> = Vec::new();
     let mut backups: Vec<BackupPlan> = Vec::new();
     let mut security_reports: Vec<SkillSecurityReport> = Vec::new();
     let mut plan_targets: Vec<ExportPlanTarget> = Vec::new();
@@ -284,6 +285,26 @@ pub fn build_export_plan(
             security_reports.push(scan_skill_security(Path::new(scan_dir), &item.asset_id));
         }
     }
+
+    // Capability linter input (§1.10): the frontmatter field names each item
+    // uses, parsed once — the SKILL.md is the same regardless of target. A
+    // directory-backed item reads its SKILL.md; a content-backed item's draft is
+    // its SKILL.md. Compared per target inside the loop below.
+    let item_fields: HashMap<&str, Vec<String>> = items
+        .iter()
+        .map(|item| {
+            let content = match &item.source {
+                ExportItemSource::Directory { dir } => {
+                    std::fs::read_to_string(Path::new(dir).join(SKILL_FILE)).unwrap_or_default()
+                }
+                ExportItemSource::Content { content, .. } => content.clone(),
+            };
+            (
+                item.asset_id.as_str(),
+                crate::parser::frontmatter_field_names(&content),
+            )
+        })
+        .collect();
 
     // Resolve every target up front, dropping any that cannot resolve (a custom
     // target with no path). The kept order is the `target_index` space that the
@@ -347,6 +368,17 @@ pub fn build_export_plan(
             ) {
                 runtime_warnings.push(rc);
             }
+            // Capability notes (§1.10, warning-level): fields this tool does not
+            // fully support. Driven by the matrix + the tool id as data — no
+            // per-tool branch.
+            if let Some(fields) = item_fields.get(item.asset_id.as_str()) {
+                capability_warnings.extend(crate::capability::lint_fields(
+                    &item.exported_name,
+                    fields,
+                    adapter.id,
+                    ti,
+                ));
+            }
             let (item_ops, content_hash, had_overwrite) =
                 build_item_operations(item, &skill_target, ti);
             target_has_overwrite |= had_overwrite;
@@ -392,6 +424,7 @@ pub fn build_export_plan(
         operations,
         conflicts,
         runtime_warnings,
+        capability_warnings,
         backups,
         security_reports,
         total_bytes,

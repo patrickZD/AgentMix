@@ -376,6 +376,23 @@ export default function ExportPanel({
                         {t(`exportPanel.runtimeConflict.${w.kind}`, { name: w.exportedName })}
                       </p>
                     ))}
+                  {/* Capability notes — warning-level field-compatibility hints
+                      (DESIGN.md §1.10); shown under their tool's card, never block. */}
+                  {plan.capabilityWarnings
+                    .filter((w) => w.targetIndex === ti)
+                    .map((w) => (
+                      <p
+                        key={`cap:${w.exportedName}:${w.field}`}
+                        className="flex items-start gap-1"
+                        style={{ fontSize: '10px', color: 'var(--am-orange)' }}
+                      >
+                        <AlertTriangleIcon size={10} style={{ flexShrink: 0, marginTop: 1 }} />
+                        {t(`exportPanel.capability.${w.status}`, {
+                          name: w.exportedName,
+                          field: w.field,
+                        })}
+                      </p>
+                    ))}
                   <div className="overflow-y-auto scrollbar-thin" style={{ maxHeight: 120 }}>
                     {ops.map((op) => (
                       <div

@@ -87,6 +87,11 @@
       "exportedWins": "运行时本「{{name}}」优先生效，已有的同名 Skill 被遮蔽",
       "existingWins": "运行时已有的同名 Skill 优先，本次导出的「{{name}}」被遮蔽"
     },
+    "capability": {
+      "ignored": "Skill「{{name}}」使用了 `{{field}}`，该工具会忽略",
+      "error": "Skill「{{name}}」使用了 `{{field}}`，该工具不支持，会报错",
+      "experimental": "Skill「{{name}}」使用了 `{{field}}`，在该工具中为实验性"
+    },
     "export": "导出",
     "exportWithCount": "导出 {{count}} 个 Skill",
     "exporting": "正在导出…",

@@ -1,0 +1,10 @@
+{
+  "dataDate": "2026-06-06",
+  "entries": [
+    { "tool": "claude-code", "field": "allowed-tools", "status": "supported" },
+    { "tool": "cursor", "field": "allowed-tools", "status": "ignored" },
+    { "tool": "codex", "field": "allowed-tools", "status": "ignored" },
+    { "tool": "opencode", "field": "allowed-tools", "status": "ignored" },
+    { "tool": "gemini-cli", "field": "allowed-tools", "status": "ignored" }
+  ]
+}

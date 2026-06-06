@@ -87,6 +87,11 @@
       "exportedWins": "This “{{name}}” takes precedence at runtime; an existing same-named skill is shadowed",
       "existingWins": "An existing same-named skill takes precedence at runtime; this “{{name}}” is shadowed"
     },
+    "capability": {
+      "ignored": "Skill “{{name}}” uses `{{field}}`, which this tool ignores",
+      "error": "Skill “{{name}}” uses `{{field}}`, which this tool rejects",
+      "experimental": "Skill “{{name}}” uses `{{field}}` — experimental in this tool"
+    },
     "export": "Export",
     "exportWithCount": "Export {{count}} Skills",
     "exporting": "Exporting…",

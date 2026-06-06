@@ -74,6 +74,24 @@ pub fn parse_frontmatter(content: &str) -> ParsedFrontmatter {
     }
 }
 
+/// The top-level frontmatter field names in a SKILL.md, in document order. The
+/// capability linter (§1.10) compares these against the per-tool matrix. Returns
+/// empty when there is no parseable frontmatter mapping.
+pub fn frontmatter_field_names(content: &str) -> Vec<String> {
+    let Some(yaml) = extract_frontmatter_block(content) else {
+        return Vec::new();
+    };
+    let Ok(value) = serde_yaml::from_str::<serde_yaml::Value>(&yaml) else {
+        return Vec::new();
+    };
+    let Some(map) = value.as_mapping() else {
+        return Vec::new();
+    };
+    map.keys()
+        .filter_map(|k| k.as_str().map(|s| s.to_string()))
+        .collect()
+}
+
 /// Classify a parsed SKILL.md against its parent directory name.
 ///
 /// - `Invalid`: parse failure, missing/empty name or description, or name does
@@ -183,6 +201,15 @@ mod tests {
         let fm = parse_frontmatter("## Role\nNo frontmatter at all.");
         assert!(!fm.parse_ok);
         assert_eq!(classify(&fm, "anything"), AssetCategory::Invalid);
+    }
+
+    #[test]
+    fn field_names_list_top_level_frontmatter_keys() {
+        let content = "---\nname: code-review\ndescription: Reviews code.\nallowed-tools:\n  - Bash\n---\nbody";
+        let names = frontmatter_field_names(content);
+        assert_eq!(names, vec!["name", "description", "allowed-tools"]);
+        // No frontmatter -> no fields (not a panic).
+        assert!(frontmatter_field_names("no frontmatter").is_empty());
     }
 
     #[test]
