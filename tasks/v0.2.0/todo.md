@@ -19,7 +19,7 @@
 
 ## Phase 2：多目标真实跑通
 - [x] **T32** 多目标 plan/execute（`targets[]`，operations 关联 target）+ target-aware ExportConflict（四维）+ Cursor 第二适配器 + CC+Cursor headless e2e（建议 2 个 checkpoint commit）— 依赖：T31 — M–L
-- [ ] **T33** 目标选择器 UI（多选 + project/global scope）+ exportStore 多目标 + Dry-run 分目标渲染 + en/zh 文案 — 依赖：T32 — M
+- [x] **T33** 目标选择器 UI（多选 + project/global scope）+ exportStore 多目标 + Dry-run 分目标渲染 + en/zh 文案 — 依赖：T32 — M
 
 ### Checkpoint L（T32–T33）— 多目标 golden path
 - [ ] 人工跑通：1 skill → 选 CC + Cursor → 分目标预览 → 导出 → 两目标内容一致；多目标 headless e2e + 全门禁绿；人工复核
