@@ -12,7 +12,7 @@
 - [ ] adapter 数据与路径解析单测全过；TS 类型同步无漂移；硬分支守卫生效；人工复核
 
 ## Phase 1：管线改走 adapter（关键风险隔离）
-- [ ] **T31** 现有 Claude Code 导出改走 adapter（单目标，行为不变；现有 headless e2e 逐字节通过）+ execute 路径限制泛化（confined 于 destination roots，逃逸用例全拒）— 依赖：T30 — M
+- [x] **T31** 现有 Claude Code 导出改走 adapter（单目标，行为不变；现有 headless e2e 逐字节通过）+ execute 路径限制泛化（confined 于 destination roots，逃逸用例全拒）— 依赖：T30 — M
 
 ### Checkpoint K（T31）— 行为零回归换抽象
 - [ ] Claude Code 导出零回归（headless 逐字节）；逃逸用例全拒；全门禁绿；人工复核
