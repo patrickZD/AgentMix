@@ -10,7 +10,8 @@ use std::path::Path;
 
 use agentmix_core::{exporter, scanner, tool_adapters};
 use agentmix_types::{
-    ConflictKind, ExportItemSource, ExportPlan, ExportRequestItem, FileOperationKind, Skill,
+    ConflictKind, ExportItemSource, ExportPlan, ExportRequestItem, ExportScope, ExportTarget,
+    FileOperationKind, Skill, ToolId,
 };
 
 /// Write a minimal valid skill (name matches its directory) under `root/dir`.
@@ -228,4 +229,128 @@ fn merged_path_conflict_merge_resolves_and_exports_draft() {
             op.path
         );
     }
+}
+
+/// Claude Code + Cursor, both at project scope — the v0.2.0 multi-target case.
+fn cc_and_cursor() -> Vec<ExportTarget> {
+    vec![
+        ExportTarget {
+            tool: ToolId::ClaudeCode,
+            scope: ExportScope::Project,
+            custom_path: None,
+        },
+        ExportTarget {
+            tool: ToolId::Cursor,
+            scope: ExportScope::Project,
+            custom_path: None,
+        },
+    ]
+}
+
+#[test]
+fn multi_target_exports_one_skill_to_two_tools_byte_identical() {
+    let tmp = tempfile::tempdir().unwrap();
+    let source = tmp.path().join("source-repo");
+    write_skill(&source, "code-review", "code-review", "reviewing code");
+    let project = scanner::scan_project(&source);
+    let items: Vec<_> = project
+        .skills
+        .iter()
+        .map(|s| item_from(s, &s.name))
+        .collect();
+    let target = tmp.path().join("target-project");
+    let backups = tmp.path().join("backups");
+
+    // One skill, two tools: a single item -> no NameCollision, distinct roots ->
+    // no TargetExists (decision 22).
+    let plan = exporter::build_export_plan(
+        &items,
+        &cc_and_cursor(),
+        &target,
+        Path::new("C:/home"),
+        &backups,
+    );
+    assert!(plan.conflicts.is_empty(), "same skill to two tools must not conflict");
+    assert_eq!(plan.targets.len(), 2);
+    assert!(plan.targets[0].destination_roots[0].ends_with("/.claude/skills"));
+    assert!(plan.targets[1].destination_roots[0].ends_with("/.cursor/skills"));
+    // Every op references a real target, and the two tools split the operations.
+    assert!(plan
+        .operations
+        .iter()
+        .all(|o| (o.target_index as usize) < plan.targets.len()));
+    assert!(plan.operations.iter().any(|o| o.target_index == 0));
+    assert!(plan.operations.iter().any(|o| o.target_index == 1));
+
+    let report = exporter::execute(&plan, &items, &[], false).unwrap();
+    assert_eq!(report.skills_exported, 1);
+
+    // Both destinations hold the skill, byte-identical to each other (same source,
+    // name unchanged), and the plan's sizes match what landed (DoD-3, all targets).
+    let cc = target.join(".claude/skills/code-review/SKILL.md");
+    let cursor = target.join(".cursor/skills/code-review/SKILL.md");
+    assert!(cc.is_file() && cursor.is_file());
+    assert_eq!(std::fs::read(&cc).unwrap(), std::fs::read(&cursor).unwrap());
+    for op in &plan.operations {
+        assert_eq!(
+            std::fs::metadata(&op.path).unwrap().len(),
+            op.size,
+            "plan/execute byte parity for {}",
+            op.path
+        );
+    }
+    // Each tool got its own manifest at its own root.
+    assert!(target.join(".claude/skills/.agentmix-manifest.json").is_file());
+    assert!(target.join(".cursor/skills/.agentmix-manifest.json").is_file());
+}
+
+#[test]
+fn multi_target_target_exists_is_evaluated_per_root() {
+    let tmp = tempfile::tempdir().unwrap();
+    let source = tmp.path().join("source-repo");
+    write_skill(&source, "code-review", "code-review", "reviewing code");
+    let project = scanner::scan_project(&source);
+    let items: Vec<_> = project
+        .skills
+        .iter()
+        .map(|s| item_from(s, &s.name))
+        .collect();
+    let target = tmp.path().join("target-project");
+    let backups = tmp.path().join("backups");
+
+    // The skill already exists at the Claude Code root, but NOT at the Cursor root.
+    std::fs::create_dir_all(target.join(".claude/skills/code-review")).unwrap();
+    std::fs::write(
+        target.join(".claude/skills/code-review/SKILL.md"),
+        "stale content",
+    )
+    .unwrap();
+
+    let plan = exporter::build_export_plan(
+        &items,
+        &cc_and_cursor(),
+        &target,
+        Path::new("C:/home"),
+        &backups,
+    );
+
+    // Exactly one TargetExists (the CC root); the clean Cursor root produces none.
+    let target_exists = plan
+        .conflicts
+        .iter()
+        .filter(|c| c.kind == ConflictKind::TargetExists)
+        .count();
+    assert_eq!(target_exists, 1, "TargetExists must be per destination root");
+    // Only the CC root is backed up (the Cursor root has nothing to overwrite).
+    assert_eq!(plan.backups.len(), 1);
+
+    // Without overwrite consent, execute refuses (nothing written to Cursor either).
+    assert!(exporter::execute(&plan, &items, &[], false).is_err());
+    assert!(!target.join(".cursor").exists());
+
+    // With consent, the CC skill is overwritten and the Cursor skill is created.
+    exporter::execute(&plan, &items, &[], true).unwrap();
+    assert!(target.join(".cursor/skills/code-review/SKILL.md").is_file());
+    let cc = std::fs::read_to_string(target.join(".claude/skills/code-review/SKILL.md")).unwrap();
+    assert!(cc.contains("name: code-review") && !cc.contains("stale content"));
 }
