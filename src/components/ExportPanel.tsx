@@ -331,9 +331,11 @@ export default function ExportPanel({
                   className="flex flex-col gap-1 rounded-md border border-border p-2"
                 >
                   <div className="flex items-center gap-1.5" style={{ fontSize: '10.5px' }}>
-                    <span className="font-semibold text-foreground">{tg.adapter.displayName}</span>
+                    <span className="font-semibold text-foreground flex-shrink-0 whitespace-nowrap">
+                      {tg.adapter.displayName}
+                    </span>
                     <span
-                      className="rounded px-1 bg-secondary text-muted-foreground"
+                      className="rounded px-1 bg-secondary text-muted-foreground flex-shrink-0 whitespace-nowrap"
                       style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase' }}
                     >
                       {tg.scope === 'project'
@@ -341,7 +343,7 @@ export default function ExportPanel({
                         : t('exportPanel.scopeGlobal')}
                     </span>
                     <span
-                      className="truncate text-muted-foreground"
+                      className="flex-1 min-w-0 truncate text-right text-muted-foreground"
                       style={{ fontFamily: 'monospace', fontSize: '9.5px' }}
                       title={root}
                     >
