@@ -352,7 +352,7 @@ export default function ExportPanel({
                   </div>
                   {backup && (
                     <p
-                      className="text-muted-foreground"
+                      className="text-muted-foreground break-all"
                       style={{ fontSize: '10px', fontFamily: 'monospace' }}
                     >
                       {t('exportPanel.backupAt', {
