@@ -2,6 +2,43 @@
 
 本文件记录 AgentMix 的版本变更。格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.2.0] — 多目标导出 — 2026-06-06
+
+把导出从"只支持 Claude Code 项目级"扩展到多工具、多范围。范围与边界以 `docs/DESIGN.md` 为准。
+
+### 新增
+
+- 多目标导出：一次把选中的 Skill 导出到多个 AI 工具——Claude Code、Cursor、Codex、OpenCode、Gemini CLI，也可填自定义路径。预览按目标分组，分别显示写入位置、备份与每个文件的改动。
+- 导出范围可选项目级或全局：项目级写进当前项目，全局写进你账号下对应工具的目录（不必自己找路径）。全局覆盖同样先备份并需你确认。
+- 运行时提示：当导出的 Skill 与目标工具里已存在的同名 Skill 处在不同位置时，按该工具的实际行为提示运行结果（哪个优先、或两者共存）。只提示，不阻止导出。
+- 兼容性提示：当 Skill 用到目标工具不支持的字段时（例如 `allowed-tools` 在 Cursor 会被忽略），给出提示。只提示，不阻止导出。
+
+### 变更
+
+- 导出目标从单一 Claude Code 项目级，升级为可多选工具并选择导出范围。
+- 多路径工具默认只写各自原生主目录（如 OpenCode 写 `.opencode/skills/`、Gemini 写 `.gemini/skills/`），不写多份副本。
+- 备份目录按目标根路径区分，项目级与全局级各自独立备份。
+
+### 已知限制 / 不在 v0.2.0
+
+- 仍仅 Windows x64。
+- 内置的工具路径与字段兼容性数据随版本发布，暂不支持联网刷新（后续版本再加）。
+- 同名冲突仍需先解决（重命名 / 保留一个 / 合并）才能导出。
+- AI 辅助合并 / 健康检查、来源更新检测与复现（`.agentmix.lock`、Git URL）、Skill 编辑器、macOS / Linux 等仍在后续版本。
+
+### 测试
+
+- `pnpm check:all` 全绿（type-check、ESLint、4 个 lint 守卫含 `lint:i18n:keys` 全等校验与按工具硬分支守卫、Vitest、cargo fmt / clippy、cargo test 含多目标 headless e2e）。
+
+### 安装包与校验
+
+> 由 GitHub Actions 流水线签名构建于 windows-latest。SHA-256 校验值由 CI 资产回填。
+
+| 文件 | 大小 | SHA-256 |
+|---|---|---|
+| `AgentMix_0.2.0_x64_en-US.msi` | — | `（CI 回填）` |
+| `AgentMix_0.2.0_x64-setup.exe` | — | `（CI 回填）` |
+
 ## [0.1.5] — Beta 过渡 — 2026-06-03
 
 alpha → beta 过渡，让产品进入长期使用可接受的状态。范围与边界以 `docs/DESIGN.md` 为准。

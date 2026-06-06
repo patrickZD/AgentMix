@@ -1,6 +1,6 @@
 [package]
 name = "agentmix-types"
-version = "0.1.5"
+version = "0.2.0"
 edition = "2021"
 description = "Cross-end data models for AgentMix — the single source of truth for shared types"
 

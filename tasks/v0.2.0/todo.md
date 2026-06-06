@@ -32,7 +32,7 @@
 - [x] **T36** Capability Linter（内嵌 `compatibility-matrix.json` + 逐字段校验；警告级不阻断）+ UI — 依赖：T34（可与 T35 并行）— M
 
 ### Checkpoint M（T34–T36）— 全工具 + scope + 两类警告
-- [ ] 五工具 + project/global 端到端可导出；两类警告正确显示且不阻断；ExportConflict 仍阻断；全门禁绿；人工复核
+- [x] 五工具 + project/global 端到端可导出；两类警告正确显示且不阻断；ExportConflict 仍阻断；全门禁绿；人工复核（2026-06-06 通过）
 
 ## Phase 5：收口与发布
 - [ ] **T37** i18n 全等（zh=en，新增 key）+ 版本 bump + CHANGELOG 0.2.0 + DESIGN.md 加注（确认）+ README 边界更新（确认）+ tag → release workflow → draft → 核验 → publish + 0.1.5→0.2.0 自动更新流验证 — 依赖：全部 — M
@@ -58,4 +58,4 @@
 - v0.2.1 复现与来源生态（git2 / Git URL / Source Tracking / .agentmix.lock / Preset·Bundle + 矩阵远程刷新）
 - v0.2.2 AI 增强套件（keyring + reqwest / AI 合并·健康·修复 / 语义聚类）
 - v0.2.3 跨平台（macOS·Linux + 签名公证 + 原生菜单栏）
-- v0.2.4 散件（Skill 编辑器 / 脚手架 / 引用检测 / 安全白名单）
+- v0.2.4 散件（Skill 编辑器 / 脚手架 / 引用检测 / 安全白名单 / 合并条目再编辑）

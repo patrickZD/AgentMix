@@ -1,6 +1,6 @@
 [package]
 name = "agentmix"
-version = "0.1.5"
+version = "0.2.0"
 description = "AgentMix — scan, mix and export Agent Skills to AI coding tools"
 authors = ["AgentMix"]
 edition = "2021"
