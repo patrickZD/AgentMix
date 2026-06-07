@@ -35,10 +35,10 @@
 - [x] 五工具 + project/global 端到端可导出；两类警告正确显示且不阻断；ExportConflict 仍阻断；全门禁绿；人工复核（2026-06-06 通过）
 
 ## Phase 5：收口与发布
-- [ ] **T37** i18n 全等（zh=en，新增 key）+ 版本 bump + CHANGELOG 0.2.0 + DESIGN.md 加注（确认）+ README 边界更新（确认）+ tag → release workflow → draft → 核验 → publish + 0.1.5→0.2.0 自动更新流验证 — 依赖：全部 — M
+- [x] **T37** i18n 全等（zh=en，新增 key）+ 版本 bump + CHANGELOG 0.2.0 + DESIGN.md 加注（确认）+ README 边界更新（确认）+ tag → release workflow → draft → 核验 → publish + 0.1.5→0.2.0 自动更新流验证 — 依赖：全部 — M
 
 ### Checkpoint N（T37）— 发布
-- [ ] v0.2.0 DoD 全绿；Release 发布；自动更新流验证；人工复核
+- [ ] v0.2.0 DoD 全绿；Release 已于 2026-06-07 发布；0.1.5→0.2.0 自动更新流验证待人工跑；人工复核
 
 ---
 
