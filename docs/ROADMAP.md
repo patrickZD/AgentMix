@@ -41,7 +41,7 @@ v0.1 明确**不**包含：手动合并工作台、自动更新、i18n 翻译完
 
 v0.2 拆成五个子里程碑顺序交付（详见 `tasks/v0.2.0/plan.md` 文末大纲），不再一次性铺开。
 
-### v0.2.0 多目标导出引擎（进行中）
+### v0.2.0 多目标导出引擎（已完成）
 
 - 多目标导出：Claude Code / Cursor / Codex CLI / OpenCode / Gemini CLI + custom（按 ToolAdapter 配置，DESIGN.md §1.4）
 - 全局路径导出（作用范围选「项目级 / 全局」，选「全局」时路径由 AgentMix 自动解析，用户无需知道该路径）

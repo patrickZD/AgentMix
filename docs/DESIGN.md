@@ -164,6 +164,8 @@ interface ToolAdapter {
 > **关于 Codex `.codex/skills`**：早期文档版本曾出现 `.codex/skills` 路径描述，2026 年中以后的官方位置为 `.agents/skills` 系列。AgentMix 内置矩阵以 `.agents/skills` 为准，不再适配 `.codex/skills`。
 >
 > **路径权威性**：以上数据并非通过实时探测各工具版本得出，而是由社区维护的 `tool-adapters.json` 文件（§1.10 同源）随 AgentMix 版本发布并支持远程更新。UI 角落显示数据新鲜度，超过 14 天提示用户检查。
+>
+> **v0.2.0 收窄**：v0.2.0 只随版本内嵌 baseline `tool-adapters.json`（标注数据日期），不含远程更新与新鲜度 UI；二者延后到引入网络的 v0.2.1。
 
 导出时区分**写入策略**与**备份**两层：
 
@@ -289,6 +291,8 @@ Preset 是 AgentMix 私有 schema，记录：来源项目引用列表（按 sour
 不同 AI 工具支持的 SKILL.md 特性不同。例如 `allowed-tools` 字段是 Claude Code 实验性能力，Cursor / Codex 可能不识别。AgentMix 维护一份能力矩阵 `compatibility-matrix.json`，记录每个目标工具对各个 SKILL.md 字段的支持状态（`supported` / `ignored` / `error` / `experimental`）。导出前自动比对并提示，例如"此 Skill 使用了 `allowed-tools`，在 Cursor 中会被忽略"。
 
 矩阵分三层维护：(1) 内嵌基线矩阵随 AgentMix 版本发布；(2) 启动时从社区仓库远程更新；(3) UI 角落显示"兼容性数据更新于 X 天前"，超过 14 天提示告警。设计上明确承认这不是与官方实时同步——但通过社区 PR 机制集中维护，对绝大多数用户场景足够。矩阵 schema 设计为 PR 友好的扁平 JSON，任何用户发现支持变更都可一行修改提交 PR。
+
+> **v0.2.0 收窄**：v0.2.0 只内嵌 baseline `compatibility-matrix.json`（标注数据日期），逐字段校验为警告级、不阻断导出；远程更新与新鲜度提示延后到 v0.2.1。
 
 ### 1.11 安全预检与威胁模型
 
