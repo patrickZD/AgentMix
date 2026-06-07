@@ -22,8 +22,8 @@
 
 | 文件 | 大小 | SHA-256 |
 |---|---|---|
-| `AgentMix_0.2.1_x64_en-US.msi` | 待回填 | 待回填 |
-| `AgentMix_0.2.1_x64-setup.exe` | 待回填 | 待回填 |
+| `AgentMix_0.2.1_x64_en-US.msi` | 5.02 MB | `b15ea31d6cd9037f10c98a5197fcab50f73e1278642e2a21e26aa1d7aede559c` |
+| `AgentMix_0.2.1_x64-setup.exe` | 3.54 MB | `2e153cca2f5a0a55041b911f2ed1a395497a31128788d13a1dbfa824dc8b71cb` |
 
 ## [0.2.0] — 多目标导出 — 2026-06-06
 
