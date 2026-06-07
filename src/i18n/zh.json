@@ -127,13 +127,13 @@
     "showInvalid": "显示无效候选",
     "showInvalidDesc": "在来源面板中列出未通过校验的 Skill",
     "autoCheckUpdates": "自动检查更新",
-    "autoCheckUpdatesDesc": "启动时检查 GitHub Releases，每天至多一次",
+    "autoCheckUpdatesDesc": "每次启动检查是否有新版本",
     "checkUpdates": "检查更新",
     "checkingUpdates": "正在检查…",
     "upToDate": "已是最新版本",
     "updateFound": "可更新到 {{version}}",
     "viewUpdate": "查看更新",
-    "footer": "AgentMix v0.1.5",
+    "footer": "AgentMix v0.2.0",
     "close": "关闭"
   },
   "badge": {

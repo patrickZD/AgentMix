@@ -86,7 +86,9 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
 
   startupCheck: async () => {
     if (!get().autoCheckEnabled) return;
-    await get().check(false);
+    // Force a fresh network check on every launch so a release published since
+    // the last launch shows immediately, not suppressed by a cached "no update".
+    await get().check(true);
   },
 
   openModal: () => set({ modalOpen: true }),

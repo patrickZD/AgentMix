@@ -127,13 +127,13 @@
     "showInvalid": "Show invalid candidates",
     "showInvalidDesc": "List skills that fail validation in the source panel",
     "autoCheckUpdates": "Check for updates automatically",
-    "autoCheckUpdatesDesc": "Checks GitHub Releases at launch, at most once a day",
+    "autoCheckUpdatesDesc": "Checks for a new release on every launch",
     "checkUpdates": "Check for updates",
     "checkingUpdates": "Checking…",
     "upToDate": "You're on the latest version",
     "updateFound": "Version {{version}} is available",
     "viewUpdate": "View update",
-    "footer": "AgentMix v0.1.5",
+    "footer": "AgentMix v0.2.0",
     "close": "Close"
   },
   "badge": {

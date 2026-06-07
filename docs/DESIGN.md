@@ -399,7 +399,7 @@ v0.1 alpha 阶段不含自动更新机制——alpha 用户预期手动升级，
 **更新通道**：GitHub Releases。Release 由 CI 签名（Tauri 强制要求），公钥嵌入 App，私钥保存在 GitHub Actions secret。
 
 **检测流程**：
-1. 启动后异步请求 GitHub Releases API（缓存 24 小时，避免 rate limit）
+1. 每次启动异步请求 release 的 latest.json（该 endpoint 是发布资产、非 GitHub API，无 rate limit 顾虑）；结果缓存到本地，记录上次检查时间
 2. 比对当前版本与最新 release tag
 3. 有新版本 → 设置 / 帮助图标显示红点徽标
 4. 用户点击徽标 → modal 展示 changelog（来自 release body） + 三选项：**立即更新** / **稍后** / **跳过此版本**

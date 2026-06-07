@@ -58,10 +58,10 @@ describe('updateStore.startupCheck (auto-check gate)', () => {
     expect(mockCheck).not.toHaveBeenCalled();
   });
 
-  it('checks (non-forced) when the switch is on and records the result', async () => {
+  it('forces a fresh network check every launch (not a cached result) and records it', async () => {
     mockCheck.mockResolvedValue(updateFound);
     await useUpdateStore.getState().startupCheck();
-    expect(mockCheck).toHaveBeenCalledWith(false);
+    expect(mockCheck).toHaveBeenCalledWith(true);
     const s = useUpdateStore.getState();
     expect(s.availableVersion).toBe('0.1.5');
     expect(s.notes).toBe('release notes');
