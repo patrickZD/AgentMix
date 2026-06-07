@@ -1,6 +1,10 @@
 /// <reference types="vite/client" />
 /// <reference types="react" />
 
+// Injected by Vite (see vite.config.ts `define`): the package.json version at
+// build time, used as the app-version fallback outside the Tauri webview.
+declare const __APP_VERSION__: string;
+
 declare namespace React {}
 declare namespace JSX {
   type Element = React.JSX.Element

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { AppView } from '../types';
+import { useUiStore } from '@/stores/uiStore';
 
 interface WelcomeScreenProps {
   onAddProject?: () => void;
@@ -34,6 +35,7 @@ export default function WelcomeScreen({
   onNavigate = () => {},
 }: WelcomeScreenProps) {
   const { t } = useTranslation();
+  const appVersion = useUiStore((s) => s.appVersion);
   return (
     <div
       data-cmp="WelcomeScreen"
@@ -155,7 +157,7 @@ export default function WelcomeScreen({
             onClick={(e) => e.preventDefault()}
           >
             <ZapIcon size={11} />
-            v0.2.0
+            v{appVersion}
           </a>
         </div>
       </div>

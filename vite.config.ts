@@ -14,6 +14,15 @@ const lucideIconNames = Object.keys(lucide).filter(
   (k) => /^[A-Z]/.test(k) && k.endsWith("Icon")
 );
 
+// Build-time fallback for the displayed app version (footer / welcome screen).
+// Sourced from package.json — the file the version bump always touches — so the
+// label tracks the release automatically instead of a hand-edited literal.
+// Inside the Tauri webview getVersion() returns the actual running version; this
+// covers `vite dev` in a plain browser and unit tests.
+const appVersion = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8")
+).version as string;
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -39,6 +48,9 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
   },
   // Tauri integration: keep the dev server on a fixed port so tauri.conf.json
   // devUrl matches, and don't clear Vite logs (Tauri prints its own above).

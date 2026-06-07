@@ -1,6 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUiStore } from './uiStore';
 import { makeSkill, makeProject } from '@/test/fixtures';
+
+vi.mock('@/lib/appVersion', () => ({
+  APP_VERSION: '0.0.0-test',
+  readAppVersion: vi.fn(async () => '7.7.7'),
+}));
 
 beforeEach(() =>
   useUiStore.setState({
@@ -9,6 +14,7 @@ beforeEach(() =>
     leftCollapsed: false,
     selectedSkill: null,
     selectedProject: null,
+    appVersion: '0.0.0-test',
   }),
 );
 
@@ -32,5 +38,11 @@ describe('uiStore', () => {
 
     expect(useUiStore.getState().selectedSkill?.id).toBe('s1');
     expect(useUiStore.getState().selectedProject?.id).toBe('p1');
+  });
+
+  it('loadAppVersion refines the label from the build-time seed to the running version', async () => {
+    expect(useUiStore.getState().appVersion).toBe('0.0.0-test');
+    await useUiStore.getState().loadAppVersion();
+    expect(useUiStore.getState().appVersion).toBe('7.7.7');
   });
 });

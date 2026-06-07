@@ -133,7 +133,7 @@
     "upToDate": "已是最新版本",
     "updateFound": "可更新到 {{version}}",
     "viewUpdate": "查看更新",
-    "footer": "AgentMix v0.2.0",
+    "footer": "AgentMix v{{version}}",
     "close": "关闭"
   },
   "badge": {

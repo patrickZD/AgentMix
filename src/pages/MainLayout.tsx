@@ -101,6 +101,7 @@ function SkillPreviewPanel({
 function SettingsDialog({
   open,
   onClose,
+  version,
   showInvalid,
   onShowInvalidToggle,
   autoCheckUpdates,
@@ -113,6 +114,8 @@ function SettingsDialog({
 }: {
   open: boolean;
   onClose: () => void;
+  // Running app version shown in the footer.
+  version: string;
   showInvalid: boolean;
   onShowInvalidToggle: () => void;
   autoCheckUpdates: boolean;
@@ -246,7 +249,7 @@ function SettingsDialog({
           <hr className="border-border" />
 
           <p className="text-muted-foreground" style={{ fontSize: '11px' }}>
-            {t('settings.footer')}
+            {t('settings.footer', { version })}
           </p>
         </div>
 
@@ -315,11 +318,13 @@ export default function MainLayout() {
     showInvalid,
     settingsOpen,
     leftCollapsed,
+    appVersion,
     setView,
     selectSkill,
     toggleShowInvalid,
     setSettingsOpen,
     toggleLeftCollapsed,
+    loadAppVersion,
   } = useUiStore();
   const {
     availableVersion,
@@ -503,6 +508,7 @@ export default function MainLayout() {
   // the download-progress subscription for the modal's progress bar (T21).
   useEffect(() => {
     void startupCheck();
+    void loadAppVersion();
     let unlisten: (() => void) | undefined;
     let cancelled = false;
     void onUpdateDownloadProgress(setUpdateProgress).then((un) => {
@@ -513,7 +519,7 @@ export default function MainLayout() {
       cancelled = true;
       unlisten?.();
     };
-  }, [startupCheck, setUpdateProgress]);
+  }, [startupCheck, loadAppVersion, setUpdateProgress]);
 
   // Whenever the selection changes, re-detect conflicts via the Rust composer
   // (the authoritative single source) and drop any now-stale Dry-run preview.
@@ -699,6 +705,7 @@ export default function MainLayout() {
       <SettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        version={appVersion}
         showInvalid={showInvalid}
         onShowInvalidToggle={toggleShowInvalid}
         autoCheckUpdates={autoCheckEnabled}
