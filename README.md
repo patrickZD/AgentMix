@@ -2,17 +2,17 @@
 
 > 从任意项目扫描、挑选、组合 Agent Skills，导出到 AI 编程工具的本地开源桌面工具。
 
-v0.2.0 支持 Windows x64，可同时导出到 Claude Code、Cursor、Codex、OpenCode、Gemini CLI（项目级与全局），也可填自定义路径。
+v0.2.1 支持 Windows x64，可同时导出到 Claude Code、Cursor、Codex、OpenCode、Gemini CLI（项目级与全局），也可填自定义路径。
 
 ## 安装
 
 从 GitHub Releases 下载 Windows x64 安装包（择一），用随附的 SHA-256 校验完整性：
 
 ```powershell
-Get-FileHash .\AgentMix_0.2.0_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\AgentMix_0.2.1_x64-setup.exe -Algorithm SHA256
 ```
 
-- `AgentMix_0.2.0_x64_en-US.msi`（MSI 安装包）或 `AgentMix_0.2.0_x64-setup.exe`（NSIS 安装程序）
+- `AgentMix_0.2.1_x64_en-US.msi`（MSI 安装包）或 `AgentMix_0.2.1_x64-setup.exe`（NSIS 安装程序）
 - 安装包未获 Authenticode 代码签名，Windows SmartScreen 提示「未知发布者」时选「仍要运行」。
 
 从源码构建（需 Node.js 20+、pnpm、Rust stable）：
@@ -44,7 +44,7 @@ target-project/
 
 演示动图待补：`docs/demo.gif`。
 
-## 范围与边界（v0.2.0）
+## 范围与边界（v0.2.1）
 
 - 平台仅 Windows x64。导出目标为 Claude Code、Cursor、Codex、OpenCode、Gemini CLI 及自定义路径，支持项目级与全局；多路径工具默认只写各自原生主目录。自动更新从 v0.1.5 起生效。
 - 同名冲突仍需先解决（重命名 / 保留一个 / 合并）才能导出；运行时提示与字段兼容性提示只提示、不阻断。

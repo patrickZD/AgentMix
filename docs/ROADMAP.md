@@ -39,7 +39,7 @@ v0.1 明确**不**包含：手动合并工作台、自动更新、i18n 翻译完
 
 ## Phase 2：v0.2——跨平台与 AI 生态
 
-v0.2 拆成五个子里程碑顺序交付（详见 `tasks/v0.2.0/plan.md` 文末大纲），不再一次性铺开。
+v0.2 的功能拆成五个子里程碑（v0.2.0 / v0.2.2 / v0.2.3 / v0.2.4 / v0.2.5）顺序交付（详见 `tasks/v0.2.0/plan.md` 文末大纲），不再一次性铺开；其间按需发布 patch（如 v0.2.1）。
 
 ### v0.2.0 多目标导出引擎（已完成）
 
@@ -48,7 +48,11 @@ v0.2 拆成五个子里程碑顺序交付（详见 `tasks/v0.2.0/plan.md` 文末
 - **RuntimeConflict 显化**（多目标导出后才真正显化，警告级不阻断，DESIGN.md §1.2）
 - **跨工具兼容性预检**（Capability Linter，内嵌 compatibility-matrix 逐字段校验，DESIGN.md §1.10）
 
-### v0.2.1 复现与来源生态
+### v0.2.1（patch）更新检查与版本号修正（已完成）
+
+不在功能里程碑序列内的修复版：自动更新改为每次启动联网检查；设置 / 欢迎页版本号改为读取运行版本（修 v0.2.0 升级后仍显示 `v0.1.5`）。详见 CHANGELOG `[0.2.1]`。
+
+### v0.2.2 复现与来源生态
 
 - **Git URL 导入**（DESIGN.md §1.8 配套）
 - **Source Tracking + 来源仓库更新检测**（DESIGN.md §1.8）
@@ -56,7 +60,7 @@ v0.2 拆成五个子里程碑顺序交付（详见 `tasks/v0.2.0/plan.md` 文末
 - 配置集 Preset / Bundle（DESIGN.md §1.7）
 - tool-adapters / compatibility-matrix 远程刷新与新鲜度提示
 
-### v0.2.2 AI 增强套件
+### v0.2.3 AI 增强套件
 
 - **OS keychain 密钥管理**（`keyring` crate，DESIGN.md §4.7）——所有 AI 功能的统一入口
 - **AI 合并工作台 AI 辅助模式**（DESIGN.md §1.3）
@@ -64,11 +68,11 @@ v0.2 拆成五个子里程碑顺序交付（详见 `tasks/v0.2.0/plan.md` 文末
 - **AI 一键修复**：每条健康问题旁按钮，**强制 diff 预览**（DESIGN.md §1.5）
 - **语义聚类与颜色高亮**：Voyage embedding API + HDBSCAN（DESIGN.md §1.18）
 
-### v0.2.3 跨平台
+### v0.2.4 跨平台
 
 - macOS / Linux 平台支持，**原生菜单栏**（macOS 文化要求）
 
-### v0.2.4 散件
+### v0.2.5 散件
 
 - Skill 编辑器（内置 CodeMirror 实时预览与 frontmatter 校验，DESIGN.md §1.6）
 - **Skill 脚手架（内嵌 skill-creator 方法论）**（DESIGN.md §1.13）

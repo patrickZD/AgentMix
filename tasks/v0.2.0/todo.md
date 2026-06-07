@@ -53,9 +53,9 @@
 
 ## 后续子里程碑大纲
 
-各子里程碑的详细拆分见同目录 plan.md。
+各子里程碑的详细拆分见同目录 plan.md。v0.2.1 已发为 patch（更新检查与版本号修正），下列功能里程碑顺延 +1。
 
-- v0.2.1 复现与来源生态（git2 / Git URL / Source Tracking / .agentmix.lock / Preset·Bundle + 矩阵远程刷新）
-- v0.2.2 AI 增强套件（keyring + reqwest / AI 合并·健康·修复 / 语义聚类）
-- v0.2.3 跨平台（macOS·Linux + 签名公证 + 原生菜单栏）
-- v0.2.4 散件（Skill 编辑器 / 脚手架 / 引用检测 / 安全白名单 / 合并条目再编辑）
+- v0.2.2 复现与来源生态（git2 / Git URL / Source Tracking / .agentmix.lock / Preset·Bundle + 矩阵远程刷新）
+- v0.2.3 AI 增强套件（keyring + reqwest / AI 合并·健康·修复 / 语义聚类）
+- v0.2.4 跨平台（macOS·Linux + 签名公证 + 原生菜单栏）
+- v0.2.5 散件（Skill 编辑器 / 脚手架 / 引用检测 / 安全白名单 / 合并条目再编辑）

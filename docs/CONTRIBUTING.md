@@ -1,6 +1,6 @@
 # 贡献指南
 
-AgentMix v0.2.0。改动前先读 `docs/DESIGN.md`（工程设计与架构红线）、`docs/PRD.md`（产品范围）与根目录 `CLAUDE.md`（编码与提交约定）。本文只补开发流程的操作细节。
+AgentMix v0.2.1。改动前先读 `docs/DESIGN.md`（工程设计与架构红线）、`docs/PRD.md`（产品范围）与根目录 `CLAUDE.md`（编码与提交约定）。本文只补开发流程的操作细节。
 
 ## 环境
 

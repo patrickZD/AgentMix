@@ -2,12 +2,28 @@
 
 本文件记录 AgentMix 的版本变更。格式参考 Keep a Changelog，版本号遵循语义化版本。
 
-## [Unreleased]
+## [0.2.1] — 更新检查与版本号修正 — 2026-06-07
 
-### 变更
+修复 v0.2.0 的两个已知问题，无新功能、范围不变。
 
-- 自动更新改为每次启动都联网检查新版本（此前每天至多一次、24h 缓存）；新发布的版本下次启动即提示。检查 endpoint 为 release 资产 `latest.json`、非 GitHub API；本地缓存改为记录上次检查结果与时间。
+### 修复
+
+- 自动更新改为每次启动都联网检查新版本（此前每天至多一次、24h 缓存会压制启动检查）；新发布的版本下次启动即提示。检查 endpoint 为 release 资产 `latest.json`、非 GitHub API；本地缓存改为记录上次检查结果与时间。
 - 设置 / 欢迎页底部版本号改为读取应用运行版本（Tauri `getVersion()`，非 Tauri 环境回退到构建期 package.json 版本），发版只需 bump 版本号、无需手动改文案。此前写死，升级到 v0.2.0 后仍显示 `v0.1.5`。
+
+### 测试
+
+- `pnpm check:all` 全绿（type-check、ESLint、4 个 lint 守卫、Vitest、cargo fmt / clippy、cargo test 含多目标 headless e2e）。
+- 0.2.0 → 0.2.1 自动更新流人工验证（发布后核验）。
+
+### 安装包与校验
+
+> 由 GitHub Actions 流水线签名构建于 windows-latest。SHA-256 校验值由 CI 资产回填。
+
+| 文件 | 大小 | SHA-256 |
+|---|---|---|
+| `AgentMix_0.2.1_x64_en-US.msi` | 待回填 | 待回填 |
+| `AgentMix_0.2.1_x64-setup.exe` | 待回填 | 待回填 |
 
 ## [0.2.0] — 多目标导出 — 2026-06-06
 
