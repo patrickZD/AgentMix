@@ -8,7 +8,7 @@ use agentmix_types::{
     ExportTarget, MergeDraftValidation, SourceProject, ToolAdapter, UpdateCheckResult,
     UpdateDownloadProgress,
 };
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_updater::UpdaterExt;
 
@@ -314,7 +314,21 @@ pub fn run() {
     // (the single writer), so the webview gets no direct filesystem surface.
     // The updater is likewise driven only via the Rust commands below (zero
     // new npm deps, plan decision 4); its JS API is never exposed.
-    let builder = tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+    // Single-instance must be registered first (plugin contract): a second
+    // launch hands its argv to this callback in the running process instead of
+    // starting a new one, so we focus the existing window. Desktop-only.
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }));
+    }
+    let builder = builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build());
 

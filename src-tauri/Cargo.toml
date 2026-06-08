@@ -36,3 +36,6 @@ tauri-plugin-fs = "2"
 # Auto-update via GitHub Releases latest.json with signature verification
 # (DESIGN.md §1.16, plan T20; dependency confirmed in plan decision 4).
 tauri-plugin-updater = "2"
+# Single-instance guard: a second launch focuses the existing window instead of
+# spawning a new process. Desktop-only; registered first in lib.rs.
+tauri-plugin-single-instance = "2"
